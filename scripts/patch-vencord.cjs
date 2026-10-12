@@ -363,13 +363,15 @@ if (action === "install") {
                 settingsObj.plugins.FakeNitro.useHyperLinks = true;
                 settingsObj.plugins.FakeProfileThemes = settingsObj.plugins.FakeProfileThemes || {};
                 settingsObj.plugins.FakeProfileThemes.enabled = true;
+                settingsObj.plugins.SoundboardEverywhere = settingsObj.plugins.SoundboardEverywhere || {};
+                settingsObj.plugins.SoundboardEverywhere.enabled = true;
             }
 
             fs.mkdirSync(path.dirname(sPath), { recursive: true });
             fs.writeFileSync(sPath, JSON.stringify(settingsObj, null, 4));
             logOk(`Auto-enabled VoiceMessages plugin in ${sPath}`);
             if (enableFakeNitro) {
-                logOk(`Auto-enabled FakeNitro and FakeProfileThemes in ${sPath}`);
+                logOk(`Auto-enabled FakeNitro, FakeProfileThemes, and SoundboardEverywhere in ${sPath}`);
             }
         } catch (err) {
             logWarn(`Could not write settings to ${sPath}: ${err.message}`);

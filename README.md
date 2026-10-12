@@ -75,21 +75,21 @@ For Windows 10/11 users, a standalone native Windows executable is included:
 
 ---
 
-### Vencord Free Nitro & Soundboard Mechanics
+### Vencord Free Nitro & Soundboard Everywhere Plugin
 
-When Option `[2]` (or `--nitro`) is selected, Vencord's built-in **`FakeNitro`** and **`FakeProfileThemes`** are pre-configured:
+When Option `[2]` (or `--nitro`) is selected, Vencord's built-in **`FakeNitro`**, **`FakeProfileThemes`**, and our custom **`SoundboardEverywhere`** plugin are pre-configured:
 
 - **Cross-Server Emojis**: Send custom animated and static emojis from any server without a Nitro subscription. Vencord intercepts and transforms them into high-quality Discord CDN links or hyperlinks.
-- **Custom Stickers**: Access and send custom stickers in chat.
+- **Custom Stickers**: Access and send custom stickers across all chats.
 - **1080p 60FPS / Source Streaming**: Unlocks high-definition, high-framerate screensharing in voice channels and direct calls.
 - **Fake Profile Themes**: Customize gradient accents on your profile visible to other users.
 
-#### How Discord Handles Soundboard:
-- **Client Picker Unlocked**: In Vencord, the soundboard picker marks sounds as available.
-- **Backend Voice Gateway Verification**: Unlike emojis and stickers (which are sent as standard chat message text that Discord accepts), playing a soundboard sound in a live voice channel triggers Discord's WebRTC voice gateway (`GUILD_SOUNDBOARD_SOUND_PLAY`). Discord's **backend voice servers** reject cross-server sound triggers if your account lacks an active paid Nitro subscription.
-- **Workaround & Solutions**:
-  1. **Server Soundboard Slots**: Upload up to 8 of your favorite soundboard sounds directly to your own server or friend's server. Sounds native to the server can be played by *anyone* in the voice call for free without Nitro!
-  2. **Native Voice Notes**: With this plugin installed, you can record or upload any sound clip and send it instantly as an authentic Discord Voice Note in chat!
+#### `SoundboardEverywhere` Plugin (Bypasses Nitro Soundboard Limits):
+- **Universal Soundboard Picker**: Unlocks external sounds from any server in the sound picker (`available: true`, `USE_EXTERNAL_SOUNDS`).
+- **Direct Microphone Web Audio Routing**: Instead of relying on Discord's backend server (which drops cross-server soundboard triggers for non-Nitro users), the plugin intercepts the sound trigger, fetches the lossless audio stream directly from Discord's CDN, and **mixes it into your microphone input** via Web Audio API. 
+  - Every participant in your voice channel or call hears the sound immediately in pristine digital fidelity!
+  - Works on any server, voice channel, or private call without a Nitro subscription!
+- **Soundmojis in Text Chat**: Sending `<sound:...:...>` soundmojis in chat automatically converts them into playable Discord CDN links so anyone can listen to them directly from the message.
 
 ---
 

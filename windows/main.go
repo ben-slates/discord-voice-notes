@@ -43,7 +43,7 @@ func main() {
 		fmt.Print(banner)
 		fmt.Println("Select an option:")
 		fmt.Println("  [1] Install Discord Voice Notes & Vencord (Standard)")
-		fmt.Println("  [2] Install Voice Notes + Enable Free Nitro (FakeNitro)")
+		fmt.Println("  [2] Install Voice Notes + Enable Free Nitro (FakeNitro & Soundboard Everywhere)")
 		fmt.Println("  [3] Install Custom Themes (Kemono Friends, GGO Kirito, Akame Ga Kill)")
 		fmt.Println("  [4] Run System Diagnostics (Doctor)")
 		fmt.Println("  [5] Restore Vanilla Discord (Unpatch / Revert)")
@@ -323,6 +323,13 @@ func updateSettings(enableFakeNitro bool) error {
 			}
 			fpt["enabled"] = true
 			plugins["FakeProfileThemes"] = fpt
+
+			sbe, _ := plugins["SoundboardEverywhere"].(map[string]interface{})
+			if sbe == nil {
+				sbe = make(map[string]interface{})
+			}
+			sbe["enabled"] = true
+			plugins["SoundboardEverywhere"] = sbe
 		}
 
 		settings["plugins"] = plugins

@@ -391,8 +391,8 @@ OPTIONS:
             Patches official Discord app.asar and modular desktop core.
 
     -2, -n, --nitro, --fake-nitro
-            Install Voice Notes + auto-enable Free Nitro (FakeNitro & Profile Themes).
-            Unlocks custom emojis, custom stickers, and 1080p 60FPS streaming.
+            Install Voice Notes + auto-enable Free Nitro (FakeNitro, Profile Themes & Soundboard Everywhere).
+            Unlocks custom emojis, custom stickers, 1080p 60FPS streaming, and cross-server soundboard.
 
     -3, -t, --themes
             Install all bundled custom themes:
@@ -514,7 +514,7 @@ while true; do
     banner
     echo -e "${BOLD}Select an option:${NC}"
     echo -e "  ${GREEN}[1]${NC} Install Discord Voice Notes & Vencord (Standard)"
-    echo -e "  ${MAGENTA}[2]${NC} Install Voice Notes + Enable Free Nitro (FakeNitro)"
+    echo -e "  ${MAGENTA}[2]${NC} Install Voice Notes + Enable Free Nitro (FakeNitro & Soundboard Everywhere)"
     echo -e "  ${CYAN}[3]${NC} Install Custom Themes (Kemono Friends, GGO Kirito, Akame Ga Kill)"
     echo -e "  ${BLUE}[4]${NC} Run System Diagnostics (Doctor)"
     echo -e "  ${YELLOW}[5]${NC} Restore Vanilla Discord (Unpatch / Revert)"
