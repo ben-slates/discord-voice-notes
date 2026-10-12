@@ -1,0 +1,72 @@
+# Maintainer: Ben Slates <contact@discord-voice-notes.local>
+# Contributor: Discord Voice Notes Contributors
+
+pkgname=discord-voice-notes
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Native voice message recording add-on & Vencord manager for Discord on Linux (Arch / Manjaro)"
+arch=('any')
+url="https://github.com/ben-slates/discord-voice-notes"
+license=('MIT')
+depends=('nodejs>=18.0.0' 'curl' 'sox' 'alsa-utils')
+optdepends=(
+    'discord: Official Discord client from Arch extra repository'
+    'libnotify: Desktop notifications support'
+)
+provides=('discord-voice-notes')
+conflicts=('discord-voice-notes')
+install="discord-voice-notes.install"
+
+package() {
+    # If building from repo root or PKGBUILD directory
+    local src_dir="${srcdir}/.."
+    if [ ! -f "${src_dir}/setup.sh" ]; then
+        src_dir="${startdir}/.."
+    fi
+    if [ ! -f "${src_dir}/setup.sh" ]; then
+        src_dir="."
+    fi
+
+    install -d "${pkgdir}/usr/bin"
+    install -d "${pkgdir}/usr/share/discord-voice-notes"
+    install -d "${pkgdir}/usr/share/discord-voice-notes/scripts"
+    install -d "${pkgdir}/usr/share/discord-voice-notes/themes"
+    install -d "${pkgdir}/usr/share/licenses/${pkgname}"
+
+    # Install CLI entrypoint
+    cat << 'EOF' > "${pkgdir}/usr/bin/discord-voice-notes"
+#!/usr/bin/env bash
+# Discord Voice Notes CLI Wrapper for Arch Linux
+set -e
+SHARE_DIR="/usr/share/discord-voice-notes"
+if [ -f "${SHARE_DIR}/setup.sh" ]; then
+    exec bash "${SHARE_DIR}/setup.sh" "$@"
+else
+    echo "Error: ${SHARE_DIR}/setup.sh not found." >&2
+    exit 1
+fi
+EOF
+    chmod 755 "${pkgdir}/usr/bin/discord-voice-notes"
+
+    # Copy files
+    cp -rf "${src_dir}/setup.sh" "${pkgdir}/usr/share/discord-voice-notes/"
+    cp -rf "${src_dir}/scripts/"* "${pkgdir}/usr/share/discord-voice-notes/scripts/"
+    cp -rf "${src_dir}/themes/"* "${pkgdir}/usr/share/discord-voice-notes/themes/"
+    if [ -d "${src_dir}/vencord" ]; then
+        cp -rf "${src_dir}/vencord" "${pkgdir}/usr/share/discord-voice-notes/"
+    fi
+    if [ -d "${src_dir}/plugin" ]; then
+        cp -rf "${src_dir}/plugin" "${pkgdir}/usr/share/discord-voice-notes/"
+    fi
+    if [ -d "${src_dir}/dist/plugin" ]; then
+        mkdir -p "${pkgdir}/usr/share/discord-voice-notes/dist"
+        cp -rf "${src_dir}/dist/plugin" "${pkgdir}/usr/share/discord-voice-notes/dist/"
+    fi
+
+    chmod 755 "${pkgdir}/usr/share/discord-voice-notes/setup.sh"
+    chmod 755 "${pkgdir}/usr/share/discord-voice-notes/scripts/"*.sh 2>/dev/null || true
+
+    # License & Docs
+    install -Dm644 "${src_dir}/LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+    install -Dm644 "${src_dir}/README.md" "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+}

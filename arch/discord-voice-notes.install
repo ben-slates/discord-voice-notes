@@ -1,0 +1,26 @@
+post_install() {
+    echo "================================================================"
+    echo " Discord Voice Notes for Arch Linux successfully installed!"
+    echo "================================================================"
+    echo ""
+    echo "To configure Discord Voice Notes and Vencord:"
+    echo "  1. Run the setup assistant:"
+    echo "       sudo discord-voice-notes"
+    echo "  2. Or enable Voice Notes + Free Nitro directly:"
+    echo "       sudo discord-voice-notes --nitro"
+    echo "  3. Deploy custom themes:"
+    echo "       sudo discord-voice-notes --themes"
+    echo "  4. Restore Discord to vanilla stock anytime:"
+    echo "       sudo discord-voice-notes --restore"
+    echo "================================================================"
+}
+
+post_upgrade() {
+    post_install
+}
+
+post_remove() {
+    echo "Discord Voice Notes package has been removed."
+    echo "If you wish to remove user configuration and themes, run:"
+    echo "  rm -rf ~/.config/Vencord"
+}

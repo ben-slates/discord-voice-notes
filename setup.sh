@@ -31,6 +31,14 @@ fi
 export TARGET_USER
 export TARGET_HOME
 
+DISTRO_NAME="Linux"
+DISTRO_ID="generic"
+if [ -f /etc/os-release ]; then
+    DISTRO_NAME=$(grep -E '^PRETTY_NAME=' /etc/os-release | cut -d= -f2 | tr -d '"' || true)
+    DISTRO_ID=$(grep -E '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"' || true)
+    [ -z "${DISTRO_NAME}" ] && DISTRO_NAME="${DISTRO_ID:-Linux}"
+fi
+
 VENCORD_DIR="${TARGET_HOME}/.config/Vencord"
 VENCORD_THEMES_DIR="${VENCORD_DIR}/themes"
 VENCORD_SETTINGS_DIR="${VENCORD_DIR}/settings"
@@ -38,9 +46,10 @@ VENCORD_SETTINGS_DIR="${VENCORD_DIR}/settings"
 banner() {
     clear 2>/dev/null || true
     echo -e "${CYAN}==================================================================${NC}"
-    echo -e "${BOLD}${CYAN}   Discord Voice Notes & Vencord Setup Tool (Debian / Linux)      ${NC}"
+    echo -e "${BOLD}${CYAN}   Discord Voice Notes & Vencord Setup Tool (Linux / Multi-Distro)${NC}"
     echo -e "${CYAN}==================================================================${NC}"
     echo -e "${BLUE}--> Target User:${NC}   ${BOLD}${TARGET_USER}${NC} (${TARGET_HOME})"
+    echo -e "${BLUE}--> System Distro:${NC} ${DISTRO_NAME} (${DISTRO_ID})"
     
     # Check Discord detection
     local discord_status="${YELLOW}Searching...${NC}"
@@ -49,7 +58,7 @@ banner() {
     elif [ -d "/usr/share/discord" ]; then
         discord_status="${GREEN}/usr/share/discord${NC}"
     elif [ -d "/opt/discord" ]; then
-        discord_status="${GREEN}/opt/discord${NC}"
+        discord_status="${GREEN}/opt/discord (Arch standard)${NC}"
     elif [ -d "${TARGET_HOME}/.config/discord" ]; then
         discord_status="${GREEN}${TARGET_HOME}/.config/discord${NC}"
     else
@@ -107,17 +116,24 @@ close_discord() {
 }
 
 install_audio_deps() {
-    if [ "$(id -u)" -eq 0 ] && command -v apt-get >/dev/null 2>&1; then
-        local need_install=0
-        for pkg in sox libsox-fmt-all; do
-            if ! dpkg -s "$pkg" >/dev/null 2>&1; then
-                need_install=1
-                break
+    if [ "$(id -u)" -eq 0 ]; then
+        if command -v pacman >/dev/null 2>&1; then
+            if ! pacman -Q sox >/dev/null 2>&1; then
+                echo -e "${BLUE}--> Installing recommended audio packages via pacman (sox, alsa-utils)...${NC}"
+                pacman -S --noconfirm --needed sox alsa-utils >/dev/null 2>&1 || true
             fi
-        done
-        if [ $need_install -eq 1 ]; then
-            echo -e "${BLUE}--> Installing recommended audio packages (sox, libsox-fmt-all)...${NC}"
-            apt-get update -qq && apt-get install -y -qq sox libsox-fmt-all libasound2 >/dev/null 2>&1 || true
+        elif command -v apt-get >/dev/null 2>&1; then
+            local need_install=0
+            for pkg in sox libsox-fmt-all; do
+                if ! dpkg -s "$pkg" >/dev/null 2>&1; then
+                    need_install=1
+                    break
+                fi
+            done
+            if [ $need_install -eq 1 ]; then
+                echo -e "${BLUE}--> Installing recommended audio packages via apt (sox, libsox-fmt-all)...${NC}"
+                apt-get update -qq && apt-get install -y -qq sox libsox-fmt-all libasound2 >/dev/null 2>&1 || true
+            fi
         fi
     fi
 }
@@ -307,9 +323,21 @@ do_clean_wipe() {
     rm -rf "${TARGET_HOME}/.config/discord/"[0-9]*/modules/discord_desktop_core 2>/dev/null || true
     echo -e "${GREEN}    [OK] Discord caches purged.${NC}"
 
-    echo -e "${BLUE}--> [4/4] Checking Debian package status...${NC}"
-    if dpkg -s discord-voice-notes >/dev/null 2>&1; then
-        echo -e "${YELLOW}    Package discord-voice-notes is currently installed.${NC}"
+    echo -e "${BLUE}--> [4/4] Checking installed system packages...${NC}"
+    if command -v pacman >/dev/null 2>&1 && pacman -Q discord-voice-notes >/dev/null 2>&1; then
+        echo -e "${YELLOW}    Arch Linux package discord-voice-notes is currently installed.${NC}"
+        if [ "${NON_INTERACTIVE:-0}" = "1" ]; then
+            pacman -Rns --noconfirm discord-voice-notes >/dev/null 2>&1 || true
+            echo -e "${GREEN}    [OK] Arch package discord-voice-notes removed.${NC}"
+        else
+            read -r -p "    Do you also want to remove the Arch package? (y/N): " rm_pkg
+            if [[ "${rm_pkg}" =~ ^[yY]$ ]]; then
+                pacman -Rns --noconfirm discord-voice-notes || true
+                echo -e "${GREEN}    [OK] Arch package discord-voice-notes removed.${NC}"
+            fi
+        fi
+    elif command -v dpkg >/dev/null 2>&1 && dpkg -s discord-voice-notes >/dev/null 2>&1; then
+        echo -e "${YELLOW}    Debian package discord-voice-notes is currently installed.${NC}"
         if [ "${NON_INTERACTIVE:-0}" = "1" ]; then
             apt-get purge -y discord-voice-notes >/dev/null 2>&1 || apt-get remove -y discord-voice-notes >/dev/null 2>&1 || true
             echo -e "${GREEN}    [OK] Debian package discord-voice-notes purged.${NC}"
@@ -321,7 +349,7 @@ do_clean_wipe() {
             fi
         fi
     else
-        echo -e "${GREEN}    [OK] Debian package not installed or already removed.${NC}"
+        echo -e "${GREEN}    [OK] System package not installed or already removed.${NC}"
     fi
 
     fix_permissions
@@ -335,7 +363,7 @@ do_clean_wipe() {
 
 show_help() {
     cat << EOF
-Discord Voice Notes & Vencord All-in-One CLI Assistant (Linux / Debian)
+Discord Voice Notes & Vencord All-in-One CLI Assistant (Linux - Arch / Debian / Kali / Ubuntu)
 
 USAGE:
     ./setup.sh [OPTIONS]

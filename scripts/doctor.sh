@@ -57,20 +57,20 @@ if [ -f /etc/os-release ]; then
         else
             info "Debian-based system detected (${OS_VERSION_ID:-rolling}). Compatible with Debian package."
         fi
+    elif [ "${ID:-}" = "arch" ] || [ "${ID_LIKE:-}" = "arch" ] || [ "${ID:-}" = "manjaro" ] || [ "${ID:-}" = "endeavouros" ]; then
+        pass "Arch Linux family detected (${PRETTY_NAME:-$ID}) - supported."
     else
-        warn "Non-Debian distribution detected (${ID:-}). Some packaging features may not apply."
-        ((WARNINGS++))
+        info "Linux distribution detected (${PRETTY_NAME:-${ID:-unknown}}). Generic setup supported."
     fi
 else
-    warn "Could not read /etc/os-release."
-    ((WARNINGS++))
+    info "Could not read /etc/os-release (generic Linux assumed)."
 fi
 
 ARCH=$(uname -m)
 if [ "${ARCH}" = "x86_64" ]; then
     pass "CPU Architecture is x86_64 (amd64) - supported."
 else
-    fail "CPU Architecture is ${ARCH}. Official Discord Linux .deb targets x86_64."
+    fail "CPU Architecture is ${ARCH}. Official Discord Linux targets x86_64."
     ((FATAL_ERRORS++))
 fi
 echo ""
@@ -97,11 +97,15 @@ else
     ((WARNINGS++))
 fi
 
-if command -v dpkg-deb >/dev/null 2>&1; then
+if command -v pacman >/dev/null 2>&1; then
+    pass "Arch Linux package manager (pacman) detected."
+    if command -v makepkg >/dev/null 2>&1; then
+        pass "makepkg is available for Arch packaging."
+    fi
+elif command -v dpkg-deb >/dev/null 2>&1; then
     pass "dpkg-deb is available for Debian packaging."
 else
-    warn "dpkg-deb not found. Install 'dpkg' package."
-    ((WARNINGS++))
+    info "Generic package manager environment."
 fi
 echo ""
 

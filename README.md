@@ -17,38 +17,45 @@ A Debian-compatible add-on that enables users of the official Discord Linux desk
 
 ## Installation Guide
 
-### Method 1: Using the Debian Package (.deb) (Recommended)
+### Method 1: Linux Distributions (Debian, Arch, Ubuntu, Kali, Manjaro)
 
-1. **Install the Debian package**:
+#### Option A: Arch Linux / Manjaro (Pacman / PKGBUILD)
+1. **Install via Pacman package**:
+   ```bash
+   sudo pacman -U ./discord-voice-notes-1.0.0-1-any.pkg.tar.zst
+   ```
+2. **Or build using PKGBUILD**:
+   ```bash
+   cd arch && makepkg -si
+   ```
+
+#### Option B: Debian / Kali / Ubuntu (.deb)
+1. **Install via APT / dpkg**:
    ```bash
    sudo apt install ./discord-voice-notes.deb
-   ```
-   *(Or using dpkg: `sudo dpkg -i ./discord-voice-notes.deb && sudo apt install -f`)*
-
-2. **Run the Diagnostic Doctor**:
-   ```bash
-   discord-voice-notes --doctor
+   # OR: sudo dpkg -i ./discord-voice-notes.deb && sudo apt install -f
    ```
 
-3. **Interactive Setup Script (Same Experience as Windows EXE)**:
-   You can run the interactive setup tool anytime:
-   ```bash
-   sudo ./setup.sh
-   # OR after installing the .deb package:
-   sudo discord-voice-notes
-   ```
-   This opens the interactive CLI menu:
-   - `[1]` Install Voice Notes & Vencord (Standard)
-   - `[2]` Install Voice Notes + Enable Free Nitro (FakeNitro & Profile Themes)
-   - `[3]` Install Custom Themes (New Kemono Friends & GGO Kirito)
-   - `[4]` Run System Diagnostics (Doctor)
-   - `[5]` Restore Vanilla Discord (Unpatch / Revert)
-   - `[6]` Exit
+#### Option C: Universal Multi-Distro Script (`setup.sh`)
+On any Linux distribution (Arch, Debian, Ubuntu, Kali, Fedora, etc.):
+```bash
+sudo ./setup.sh
+# OR after package installation:
+sudo discord-voice-notes
+```
+This opens the interactive CLI menu:
+- `[1]` Install Voice Notes & Vencord (Standard)
+- `[2]` Install Voice Notes + Enable Free Nitro (FakeNitro & Profile Themes)
+- `[3]` Install Custom Themes (Kemono Friends, GGO Kirito, Akame Ga Kill)
+- `[4]` Run System Diagnostics (Doctor)
+- `[5]` Restore Vanilla Discord (Unpatch / Revert)
+- `[6]` Complete Clean Wipe (Remove All & Revert to Vanilla)
+- `[7]` Exit
 
-4. **Activate in Discord**:
-   - Open Discord.
-   - In any chat, right-click the '+' attachment button and click 'Send Voice Message', or use the dedicated microphone button in the toolbar.
-   - If FakeNitro was selected, custom emojis, stickers, and 1080p 60FPS streaming are immediately unlocked!
+#### Activation in Discord:
+- Open Discord.
+- In any chat, right-click the '+' attachment button and click 'Send Voice Message', or use the microphone button in the toolbar.
+- If FakeNitro was selected, custom emojis, stickers, and 1080p 60FPS streaming are immediately unlocked!
 
 ---
 
@@ -144,7 +151,10 @@ discord-voice-notes/
 │   ├── install.sh          # Plugin installation assistant
 │   ├── uninstall.sh        # Uninstaller script
 │   └── restore-discord.sh  # Vanilla Discord restoration script
-└── debian/                 # Debian packaging definitions
+├── arch/                   # Arch Linux packaging definitions
+│   ├── PKGBUILD            # makepkg build recipe
+│   └── discord-voice-notes.install # Arch post-installation hook
+├── debian/                 # Debian packaging definitions
     ├── control             # Package dependencies and metadata
     ├── rules               # debhelper build rules
     ├── postinst            # Post-installation hook
