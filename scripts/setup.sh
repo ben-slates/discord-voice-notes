@@ -170,6 +170,21 @@ do_install() {
         ENABLE_FAKE_NITRO=0 node "${patcher_script}" install
     fi
 
+    if [ "${enable_nitro}" = "1" ]; then
+        local bridge_script="${ROOT_DIR}/scripts/audio-bridge/linux-bridge.sh"
+        if [ ! -f "${bridge_script}" ]; then
+            bridge_script="/usr/share/discord-voice-notes/scripts/audio-bridge/linux-bridge.sh"
+        fi
+        if [ -f "${bridge_script}" ] && command -v pactl >/dev/null 2>&1; then
+            echo -e "\n${BLUE}--> [Audio Bridge] Setting up Discord Soundboard loopback device...${NC}"
+            if [ -n "${REAL_USER}" ] && [ "${REAL_USER}" != "root" ]; then
+                su - "${REAL_USER}" -c "bash \"${bridge_script}\" start" 2>/dev/null || bash "${bridge_script}" start 2>/dev/null || true
+            else
+                bash "${bridge_script}" start 2>/dev/null || true
+            fi
+        fi
+    fi
+
     fix_permissions
 
     echo -e "\n${GREEN}=======================================================${NC}"
@@ -180,7 +195,10 @@ do_install() {
     echo " 1. Launch Discord."
     echo " 2. In any text channel or DM, right-click the '+' attachment button and click 'Send Voice Message'."
     if [ "${enable_nitro}" = "1" ]; then
-        echo " 3. FakeNitro is active! You can now use custom emojis, stickers, and 1080p 60FPS streaming."
+        echo " 3. FakeNitro & SoundboardEverywhere are active!"
+        echo "    * Custom emojis, stickers, and 1080p 60FPS streaming are unlocked."
+        echo "    * External soundboards: In Discord Settings > Voice & Video:"
+        echo "      Set Input Device to 'Discord Soundboard Microphone' (or Default) to stream soundboard sounds into calls!"
     fi
 
     pause

@@ -86,9 +86,14 @@ When Option `[2]` (or `--nitro`) is selected, Vencord's built-in **`FakeNitro`**
 
 #### `SoundboardEverywhere` Plugin (Bypasses Nitro Soundboard Limits):
 - **Universal Soundboard Picker**: Unlocks external sounds from any server in the sound picker (`available: true`, `USE_EXTERNAL_SOUNDS`).
-- **Direct Microphone Web Audio Routing**: Instead of relying on Discord's backend server (which drops cross-server soundboard triggers for non-Nitro users), the plugin intercepts the sound trigger, fetches the lossless audio stream directly from Discord's CDN, and **mixes it into your microphone input** via Web Audio API. 
-  - Every participant in your voice channel or call hears the sound immediately in pristine digital fidelity!
-  - Works on any server, voice channel, or private call without a Nitro subscription!
+- **Dual-Engine Audio Routing (Web Audio + Native OS Audio Bridge)**:
+  - Official Discord Desktop (Electron) uses a proprietary C++ voice engine (`discord_voice.node`) that captures hardware microphones directly from OS audio daemons (ALSA/PulseAudio/PipeWire/WASAPI).
+  - To enable sounds everywhere on Discord Desktop without Nitro, Option `[2]` deploys an automated **Native Loopback Audio Bridge** (`scripts/audio-bridge/linux-bridge.sh` on Linux):
+    - Automatically creates a high-performance, low-latency null sink (`DiscordSoundboardBridge_Sink`).
+    - Loops your physical microphone into the sink with $\le 10\text{ ms}$ latency.
+    - Creates a virtual microphone (`DiscordSoundboardBridge_Mic`) which streams both your voice and the soundboard audio.
+    - On Discord: Go to **User Settings > Voice & Video > Input Device** and select **`Discord Soundboard Microphone`** (or **`CABLE Output`** on Windows).
+  - For browser clients / Vesktop, the plugin falls back to direct DOM `MediaStreamAudioSourceNode` Web Audio injection.
 - **Soundmojis in Text Chat**: Sending `<sound:...:...>` soundmojis in chat automatically converts them into playable Discord CDN links so anyone can listen to them directly from the message.
 
 ---

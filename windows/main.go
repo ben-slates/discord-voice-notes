@@ -491,7 +491,9 @@ func doInstall(enableFakeNitro bool, reader *bufio.Reader) {
 		fmt.Println("  1. Launch Discord.")
 		fmt.Println("  2. In any chat, right-click the '+' attachment button and click 'Send Voice Message'.")
 		if enableFakeNitro {
-			fmt.Println("  3. FakeNitro is active! You can now use custom emojis and stream in 1080p 60FPS.")
+			fmt.Println("  3. FakeNitro & Soundboard Everywhere are active!")
+			fmt.Println("     - Custom emojis and 1080p 60FPS streaming are unlocked.")
+			fmt.Println("     - Soundboard sounds can be previewed or injected directly into voice calls.")
 		}
 	} else {
 		fmt.Println("\n[!] Could not patch any Discord installations. Check permissions or close Discord.")

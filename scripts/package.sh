@@ -70,6 +70,10 @@ if [ -f "${ROOT_DIR}/scripts/patch-vencord.cjs" ]; then
     cp -f "${ROOT_DIR}/scripts/patch-vencord.cjs" "${STAGE_DIR}/usr/share/discord-voice-notes/scripts/"
     chmod 755 "${STAGE_DIR}/usr/share/discord-voice-notes/scripts/patch-vencord.cjs"
 fi
+if [ -d "${ROOT_DIR}/scripts/audio-bridge" ]; then
+    cp -rf "${ROOT_DIR}/scripts/audio-bridge" "${STAGE_DIR}/usr/share/discord-voice-notes/scripts/"
+    chmod 755 "${STAGE_DIR}/usr/share/discord-voice-notes/scripts/audio-bridge/"*.sh
+fi
 chmod 755 "${STAGE_DIR}/usr/share/discord-voice-notes/scripts/"*.sh
 
 # Copy themes

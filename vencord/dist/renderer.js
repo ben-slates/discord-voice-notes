@@ -427,24 +427,48 @@ var Sb = h({
         return false;
     },
     async playSound(sound) {
-        const inputs = [..._sb_mixedInputs.values()];
-        if (inputs.length === 0) return;
-        const controller = new AbortController();
-        const active = { controller, sources: [] };
-        _sb_playbacks.add(active);
         try {
-            const [{ input: firstInput }] = inputs;
-            const { context } = firstInput;
-            await context.resume();
             const cdn = window.GLOBAL_ENV?.CDN_HOST || "cdn.discordapp.com";
-            const response = await fetch("https://" + cdn + "/soundboard-sounds/" + encodeURIComponent(sound.soundId), { signal: controller.signal });
-            if (!response.ok) throw new Error("Status " + response.status);
-            const buffer = await context.decodeAudioData(await response.arrayBuffer());
-            if (!_sb_playbacks.has(active)) return;
-            const volume = Math.max(0, Math.min(1, sound.volume ?? 1));
-            _sb_startPlaybackSources(buffer, volume, active, inputs);
-        } catch (_) {
-            _sb_stopPlayback(active);
+            const soundUrl = "https://" + cdn + "/soundboard-sounds/" + encodeURIComponent(sound.soundId);
+
+            // 1. Web Audio playback for Web/Vesktop clients
+            const inputs = [..._sb_mixedInputs.values()];
+            if (inputs.length > 0) {
+                const controller = new AbortController();
+                const active = { controller, sources: [] };
+                _sb_playbacks.add(active);
+                try {
+                    const [{ input: firstInput }] = inputs;
+                    const { context } = firstInput;
+                    await context.resume();
+                    const response = await fetch(soundUrl, { signal: controller.signal });
+                    if (response.ok) {
+                        const buffer = await context.decodeAudioData(await response.arrayBuffer());
+                        if (_sb_playbacks.has(active)) {
+                            const volume = Math.max(0, Math.min(1, sound.volume ?? 1));
+                            _sb_startPlaybackSources(buffer, volume, active, inputs);
+                        }
+                    }
+                } catch (_) {
+                    _sb_stopPlayback(active);
+                }
+            }
+
+            // 2. Local audio monitoring so user hears what they played
+            try {
+                const audio = new Audio(soundUrl);
+                audio.volume = Math.max(0, Math.min(1, sound.volume ?? 1));
+                audio.play().catch(() => {});
+            } catch (_) {}
+
+            // 3. Audio Bridge notification / trigger
+            try {
+                if (window.VencordNative?.pluginHelpers?.SoundboardBridge?.controlBridge) {
+                    window.VencordNative.pluginHelpers.SoundboardBridge.controlBridge("status");
+                }
+            } catch (_) {}
+        } catch (e) {
+            console.error("[SoundboardEverywhere] playSound error:", e);
         }
     },
     onBeforeMessageSend(channelId, msg) {

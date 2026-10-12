@@ -48,6 +48,9 @@ chmod 755 "${STAGE_DIR}/usr/share/discord-voice-notes/setup.sh"
 
 cp -rf "${ROOT_DIR}/scripts/"* "${STAGE_DIR}/usr/share/discord-voice-notes/scripts/"
 chmod 755 "${STAGE_DIR}/usr/share/discord-voice-notes/scripts/"*.sh 2>/dev/null || true
+if [ -d "${STAGE_DIR}/usr/share/discord-voice-notes/scripts/audio-bridge" ]; then
+    chmod 755 "${STAGE_DIR}/usr/share/discord-voice-notes/scripts/audio-bridge/"*.sh 2>/dev/null || true
+fi
 if [ -f "${STAGE_DIR}/usr/share/discord-voice-notes/scripts/patch-vencord.cjs" ]; then
     chmod 755 "${STAGE_DIR}/usr/share/discord-voice-notes/scripts/patch-vencord.cjs"
 fi
