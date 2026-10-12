@@ -58,6 +58,9 @@ EOF
     if [ -d "${src_dir}/plugin" ]; then
         cp -rf "${src_dir}/plugin" "${pkgdir}/usr/share/discord-voice-notes/"
     fi
+    if [ -d "${src_dir}/plugins" ]; then
+        cp -rf "${src_dir}/plugins" "${pkgdir}/usr/share/discord-voice-notes/"
+    fi
     if [ -d "${src_dir}/dist/plugin" ]; then
         mkdir -p "${pkgdir}/usr/share/discord-voice-notes/dist"
         cp -rf "${src_dir}/dist/plugin" "${pkgdir}/usr/share/discord-voice-notes/dist/"

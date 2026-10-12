@@ -1,7 +1,7 @@
 /**
  * @name GGO Kirito
  * @author VaporousCreeper
- * @version 1.4.2
+ * @version 1.4.3
  * @description A theme with Kirito and Deathgun fighting in GGO (Gun Gale Online) - Modernized for Vencord & Visual Refresh
  * @source https://github.com/ben-slates/discord-voice-notes/blob/main/themes/GGOKirito.theme.css
  * @website https://github.com/ben-slates/discord-voice-notes
@@ -1291,30 +1291,45 @@ body,
 
 /* Direct Messages Sidebar Containers (Universal & Visual Refresh) */
 .privateChannels__35e86,
+.privateChannels_e6b769,
+.privateChannels__93472,
 [class*="privateChannels"],
 .sidebar__5e434,
+.sidebar_c48ade,
+.sidebar_ded4da,
 [class*="sidebar_"],
 .container__2637a,
 [class*="container__2637a"],
 .scroller__99e7c,
+.scroller_c47fa9,
 [class*="scroller__99e7c"],
-[class*="sidebarList"] {
+[class*="sidebarList"],
+#app-mount .sidebarList__5e434.sidebarListRounded__5e434 .privateChannels_e6b769,
+#app-mount .sidebarList__5e434.sidebarListRounded__5e434 .privateChannels_e6b769 .scroller__99e7c,
+#app-mount .sidebar_c48ade .privateChannels__35e86,
+#app-mount .sidebar_c48ade .scroller__99e7c {
     background: transparent !important;
     background-color: transparent !important;
 }
 
 /* DM Channel Item Rows & Interactive Buttons */
 .channel__972a0,
+.channel_c91bad,
 [class*="channel__972a0"],
+[class*="channel_c91bad"],
 [class*="interactive__972a0"],
+[class*="interactive_c91bad"],
 [class*="categoryItem_"] {
     margin-bottom: 2px;
     border-radius: 8px;
     transition: background-color 0.2s ease-in-out;
 }
 .channel__972a0:hover,
+.channel_c91bad:hover,
 [class*="channel__972a0"]:hover,
+[class*="channel_c91bad"]:hover,
 [class*="interactive__972a0"]:hover,
+[class*="interactive_c91bad"]:hover,
 [class*="categoryItem_"]:hover,
 [class*="interactiveSelected"],
 .interactive-1vLZ_I.interactiveSelected__972a0 {
@@ -1323,7 +1338,8 @@ body,
 
 /* Direct Messages Header (Direct Messages Title Pill) */
 [class*="privateChannelsHeaderContainer"],
-.privateChannelsHeaderContainer__99e7c {
+.privateChannelsHeaderContainer__99e7c,
+.privateChannelsHeaderContainer_f03ee7 {
     background-color: var(--primary3-colour) !important;
     padding: 10px 12px;
     border-radius: 8px;
@@ -1332,18 +1348,43 @@ body,
 
 /* Friends Tab & Direct Messages Main View (Active Now & Tab Body) */
 .container__133bf,
+.container_c2739f,
 [class*="container__133bf"],
+[class*="container_c2739f"],
 .container__9293f,
 [class*="container__9293f"],
 .tabBody__133bf,
+.tabBody_c2739f,
 [class*="tabBody"],
 .container__7d20c,
 [class*="container__7d20c"],
 .peopleColumn__133bf,
+.peopleColumn_c2739f,
 [class*="peopleColumn"],
 .nowPlayingColumn__133bf,
+.nowPlayingColumn_c2739f,
 [class*="nowPlayingColumn"],
-[class*="nowPlayingSidebar"] {
+[class*="nowPlayingSidebar"],
+.homeWrapper__0920e,
+.homeWrapperNormal__0920e,
+[class*="homeWrapper"] {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* Chat view inside Direct Message conversation */
+#app-mount .chat_f75fb0,
+#app-mount .chat__52833,
+#app-mount [class*="chat_f75fb0"],
+#app-mount [class*="chat__52833"],
+#app-mount .chatContent_f75fb0,
+#app-mount .chatContent__52833,
+#app-mount [class*="chatContent"],
+#app-mount .content_f75fb0,
+#app-mount .content__52833,
+#app-mount .channelChatWrapper_cb9592,
+#app-mount .chatContent_f75fb0 .wrapper_d852db,
+#app-mount .chatContent_f75fb0 .wrapper_fc8177 {
     background: transparent !important;
     background-color: transparent !important;
 }
@@ -1377,3 +1418,4 @@ body,
 [class*="nowPlayingColumn"] [class*="itemCard"] [class*="body_"] {
     background-color: transparent !important;
 }
+

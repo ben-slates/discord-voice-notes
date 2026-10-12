@@ -60,6 +60,11 @@ if [ -d "${ROOT_DIR}/vencord" ]; then
     cp -rf "${ROOT_DIR}/vencord" "${STAGE_DIR}/usr/share/discord-voice-notes/"
 fi
 
+# Copy hybrid plugins (YABDP4Nitro)
+if [ -d "${ROOT_DIR}/plugins" ]; then
+    cp -rf "${ROOT_DIR}/plugins" "${STAGE_DIR}/usr/share/discord-voice-notes/"
+fi
+
 if [ -d "${ROOT_DIR}/dist/plugin" ]; then
     mkdir -p "${STAGE_DIR}/usr/share/discord-voice-notes/plugin"
     cp -rf "${ROOT_DIR}/dist/plugin/"* "${STAGE_DIR}/usr/share/discord-voice-notes/plugin/"
