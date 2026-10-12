@@ -224,11 +224,28 @@ export const SoundboardEverywhere = {
                 }
             }
 
-            // 2. Direct local monitoring (Hear what you triggered)
+            // 2. Direct local monitoring & Virtual Bridge sink injection
             try {
-                const audio = new Audio(soundUrl);
-                audio.volume = Math.max(0, Math.min(1, sound.volume ?? 1));
-                audio.play().catch(() => {});
+                const monitorAudio = new Audio(soundUrl);
+                monitorAudio.volume = Math.max(0, Math.min(1, sound.volume ?? 1));
+                monitorAudio.play().catch(() => {});
+
+                if (navigator?.mediaDevices?.enumerateDevices) {
+                    navigator.mediaDevices.enumerateDevices().then(devices => {
+                        const bridgeSink = devices.find(d => d.kind === "audiooutput" && (
+                            d.label.includes("DiscordSoundboardBridge") ||
+                            d.label.includes("Combined") ||
+                            d.label.includes("CABLE Input")
+                        ));
+                        if (bridgeSink) {
+                            const bridgeAudio = new Audio(soundUrl);
+                            bridgeAudio.volume = Math.max(0, Math.min(1, sound.volume ?? 1));
+                            if (typeof (bridgeAudio as any).setSinkId === "function") {
+                                (bridgeAudio as any).setSinkId(bridgeSink.deviceId).then(() => bridgeAudio.play()).catch(() => {});
+                            }
+                        }
+                    }).catch(() => {});
+                }
             } catch (_) {}
 
             // 3. Audio Bridge notification / trigger

@@ -10,6 +10,17 @@ BRIDGE_NAME="DiscordSoundboardBridge"
 BRIDGE_SINK="${BRIDGE_NAME}_Sink"
 BRIDGE_SOURCE="${BRIDGE_NAME}_Mic"
 
+# Ensure user runtime dir is set if running in non-login subshell
+if [ -z "${XDG_RUNTIME_DIR:-}" ]; then
+    CURRENT_UID="$(id -u)"
+    if [ -d "/run/user/${CURRENT_UID}" ]; then
+        export XDG_RUNTIME_DIR="/run/user/${CURRENT_UID}"
+    fi
+fi
+if [ -z "${PULSE_SERVER:-}" ] && [ -n "${XDG_RUNTIME_DIR:-}" ] && [ -S "${XDG_RUNTIME_DIR}/pulse/native" ]; then
+    export PULSE_SERVER="unix:${XDG_RUNTIME_DIR}/pulse/native"
+fi
+
 # Check available audio server
 has_cmd() {
     command -v "$1" >/dev/null 2>&1

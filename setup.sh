@@ -124,15 +124,15 @@ install_audio_deps() {
             fi
         elif command -v apt-get >/dev/null 2>&1; then
             local need_install=0
-            for pkg in sox libsox-fmt-all; do
+            for pkg in sox libsox-fmt-all pulseaudio-utils; do
                 if ! dpkg -s "$pkg" >/dev/null 2>&1; then
                     need_install=1
                     break
                 fi
             done
             if [ $need_install -eq 1 ]; then
-                echo -e "${BLUE}--> Installing recommended audio packages via apt (sox, libsox-fmt-all)...${NC}"
-                apt-get update -qq && apt-get install -y -qq sox libsox-fmt-all libasound2 >/dev/null 2>&1 || true
+                echo -e "${BLUE}--> Installing recommended audio packages via apt (pulseaudio-utils, sox, libsox-fmt-all)...${NC}"
+                apt-get update -qq && apt-get install -y -qq pulseaudio-utils sox libsox-fmt-all libasound2 >/dev/null 2>&1 || true
             fi
         fi
     fi
@@ -175,12 +175,15 @@ do_install() {
         if [ ! -f "${bridge_script}" ]; then
             bridge_script="/usr/share/discord-voice-notes/scripts/audio-bridge/linux-bridge.sh"
         fi
-        if [ -f "${bridge_script}" ] && command -v pactl >/dev/null 2>&1; then
+        if [ -f "${bridge_script}" ]; then
             echo -e "\n${BLUE}--> [Audio Bridge] Setting up Discord Soundboard loopback device...${NC}"
-            if [ -n "${REAL_USER}" ] && [ "${REAL_USER}" != "root" ]; then
-                su - "${REAL_USER}" -c "bash \"${bridge_script}\" start" 2>/dev/null || bash "${bridge_script}" start 2>/dev/null || true
+            local target_uid
+            target_uid=$(id -u "${TARGET_USER}" 2>/dev/null || echo "1000")
+            local runtime_dir="/run/user/${target_uid}"
+            if [ -d "${runtime_dir}" ] && [ "${TARGET_USER}" != "root" ]; then
+                sudo -u "${TARGET_USER}" env XDG_RUNTIME_DIR="${runtime_dir}" PULSE_SERVER="unix:${runtime_dir}/pulse/native" bash "${bridge_script}" start || bash "${bridge_script}" start || true
             else
-                bash "${bridge_script}" start 2>/dev/null || true
+                bash "${bridge_script}" start || true
             fi
         fi
     fi

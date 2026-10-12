@@ -362,7 +362,7 @@ var Sb = h({
             replacement: [
                 {
                     match: /function \i\((\i),(\i),\i,\i\)\{(?=\(0,\i\.\i\)\(\2,\1\))/,
-                    replace: "var G7=x({multiplier:return $self.playSound($1);"
+                    replace: "$&return $self.playSound($1);"
                 },
                 {
                     match: /\(\i\.Ay\.canUseSoundboardEverywhere\(\i\)\|\|\i\.guildId===\i\?\.guild_id\|\|"0"===\i\.guildId\)/,
@@ -454,11 +454,28 @@ var Sb = h({
                 }
             }
 
-            // 2. Local audio monitoring so user hears what they played
+            // 2. Local audio monitoring & Virtual Bridge sink injection
             try {
-                const audio = new Audio(soundUrl);
-                audio.volume = Math.max(0, Math.min(1, sound.volume ?? 1));
-                audio.play().catch(() => {});
+                const monitorAudio = new Audio(soundUrl);
+                monitorAudio.volume = Math.max(0, Math.min(1, sound.volume ?? 1));
+                monitorAudio.play().catch(() => {});
+
+                if (navigator?.mediaDevices?.enumerateDevices) {
+                    navigator.mediaDevices.enumerateDevices().then(devices => {
+                        const bridgeSink = devices.find(d => d.kind === "audiooutput" && (
+                            d.label.includes("DiscordSoundboardBridge") ||
+                            d.label.includes("Combined") ||
+                            d.label.includes("CABLE Input")
+                        ));
+                        if (bridgeSink) {
+                            const bridgeAudio = new Audio(soundUrl);
+                            bridgeAudio.volume = Math.max(0, Math.min(1, sound.volume ?? 1));
+                            if (typeof bridgeAudio.setSinkId === "function") {
+                                bridgeAudio.setSinkId(bridgeSink.deviceId).then(() => bridgeAudio.play()).catch(() => {});
+                            }
+                        }
+                    }).catch(() => {});
+                }
             } catch (_) {}
 
             // 3. Audio Bridge notification / trigger
