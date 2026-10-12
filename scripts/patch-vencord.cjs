@@ -131,10 +131,38 @@ function discoverDiscordTargets() {
         "/opt/discord",
         "/usr/lib/discord",
         "/usr/lib64/discord",
-        path.join(targetHome, ".local/share/discord")
+        path.join(targetHome, ".local/share/discord"),
+        "/var/lib/flatpak/app/com.discordapp.Discord/current/active/files/discord",
+        path.join(targetHome, ".local/share/flatpak/app/com.discordapp.Discord/current/active/files/discord"),
+        "/snap/discord/current/usr/share/discord"
     ];
 
+    // Dynamically resolve Discord executable from PATH
+    for (const binName of ["discord", "discord-canary", "discord-ptb"]) {
+        try {
+            const binPath = execSync(`command -v ${binName} 2>/dev/null || true`, { encoding: "utf8" }).trim();
+            if (binPath && fs.existsSync(binPath)) {
+                let resolved = binPath;
+                try { resolved = fs.realpathSync(binPath); } catch (_) {}
+                sysCandidates.push(path.dirname(resolved));
+                sysCandidates.push(path.dirname(path.dirname(resolved)));
+                try {
+                    const scriptBody = fs.readFileSync(binPath, "utf8");
+                    const matches = scriptBody.match(/(?:\/usr\/share|\/opt|\/usr\/lib|\/var\/lib\/flatpak)[^ \n\r"']+/g);
+                    if (matches) {
+                        for (const m of matches) {
+                            sysCandidates.push(path.dirname(m));
+                        }
+                    }
+                } catch (_) {}
+            }
+        } catch (_) {}
+    }
+
+    const seenDirs = new Set();
     for (const dir of sysCandidates) {
+        if (!dir || seenDirs.has(dir)) continue;
+        seenDirs.add(dir);
         const resDir = path.join(dir, "resources");
         if (fs.existsSync(resDir) && (fs.existsSync(path.join(resDir, "app.asar")) || fs.existsSync(path.join(resDir, "_app.asar")))) {
             targets.push({
@@ -308,7 +336,8 @@ if (action === "install") {
         }
     }
 
-    // Step D: Auto-enable VoiceMessages (Discord Voice Notes) in Vencord Settings
+    // Step D: Auto-enable VoiceMessages (Discord Voice Notes) and optional FakeNitro in Vencord Settings
+    const enableFakeNitro = process.env.ENABLE_FAKE_NITRO === "1" || process.argv.includes("--enable-nitro");
     const settingsPaths = [
         path.join(vencordUserDir, "settings", "settings.json"),
         path.join(vencordUserDir, "settings.json")
@@ -322,9 +351,20 @@ if (action === "install") {
             settingsObj.plugins = settingsObj.plugins || {};
             settingsObj.plugins.VoiceMessages = settingsObj.plugins.VoiceMessages || {};
             settingsObj.plugins.VoiceMessages.enabled = true;
+
+            if (enableFakeNitro) {
+                settingsObj.plugins.FakeNitro = settingsObj.plugins.FakeNitro || {};
+                settingsObj.plugins.FakeNitro.enabled = true;
+                settingsObj.plugins.FakeProfileThemes = settingsObj.plugins.FakeProfileThemes || {};
+                settingsObj.plugins.FakeProfileThemes.enabled = true;
+            }
+
             fs.mkdirSync(path.dirname(sPath), { recursive: true });
             fs.writeFileSync(sPath, JSON.stringify(settingsObj, null, 4));
             logOk(`Auto-enabled VoiceMessages plugin in ${sPath}`);
+            if (enableFakeNitro) {
+                logOk(`Auto-enabled FakeNitro and FakeProfileThemes in ${sPath}`);
+            }
         } catch (err) {
             logWarn(`Could not write settings to ${sPath}: ${err.message}`);
         }

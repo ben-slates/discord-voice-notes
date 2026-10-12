@@ -30,21 +30,25 @@ A Debian-compatible add-on that enables users of the official Discord Linux desk
    discord-voice-notes --doctor
    ```
 
-3. **Install the Plugin & Vencord (100% Offline Compatible)**:
+3. **Interactive Setup Script (Same Experience as Windows EXE)**:
+   You can run the interactive setup tool anytime:
    ```bash
-   # If you need Vencord and the plugin configured automatically (Offline safe):
-   sudo discord-voice-notes --setup-vencord
-
-   # If you already have Vencord patched and only need the userplugin registered:
-   discord-voice-notes --userplugin
+   sudo ./setup.sh
+   # OR after installing the .deb package:
+   sudo discord-voice-notes
    ```
+   This opens the interactive CLI menu:
+   - `[1]` Install Voice Notes & Vencord (Standard)
+   - `[2]` Install Voice Notes + Enable Free Nitro (FakeNitro & Profile Themes)
+   - `[3]` Install Custom Themes (New Kemono Friends & GGO Kirito)
+   - `[4]` Run System Diagnostics (Doctor)
+   - `[5]` Restore Vanilla Discord (Unpatch / Revert)
+   - `[6]` Exit
 
 4. **Activate in Discord**:
    - Open Discord.
-   - Go to **User Settings** > **Vencord** > **Plugins**.
-   - Search for **DiscordVoiceNotes** and turn it **ON**.
-   - Reload Discord (`Ctrl + R`).
-   - The microphone icon is now available next to the message composer!
+   - In any chat, right-click the '+' attachment button and click 'Send Voice Message', or use the dedicated microphone button in the toolbar.
+   - If FakeNitro was selected, custom emojis, stickers, and 1080p 60FPS streaming are immediately unlocked!
 
 ---
 

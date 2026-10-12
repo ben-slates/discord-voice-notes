@@ -39,10 +39,14 @@ cat << 'EOF' > "${STAGE_DIR}/usr/bin/discord-voice-notes"
 # Discord Voice Notes CLI Wrapper
 set -e
 SHARE_DIR="/usr/share/discord-voice-notes"
-if [ -f "${SHARE_DIR}/scripts/install.sh" ]; then
+if [ -f "${SHARE_DIR}/setup.sh" ]; then
+    exec bash "${SHARE_DIR}/setup.sh" "$@"
+elif [ -f "${SHARE_DIR}/scripts/setup.sh" ]; then
+    exec bash "${SHARE_DIR}/scripts/setup.sh" "$@"
+elif [ -f "${SHARE_DIR}/scripts/install.sh" ]; then
     exec bash "${SHARE_DIR}/scripts/install.sh" "$@"
 else
-    echo "Error: ${SHARE_DIR}/scripts/install.sh not found." >&2
+    echo "Error: ${SHARE_DIR}/setup.sh not found." >&2
     exit 1
 fi
 EOF
@@ -54,7 +58,10 @@ cp -rf "${ROOT_DIR}/dist/plugin/"* "${STAGE_DIR}/usr/share/discord-voice-notes/p
 # Copy full TypeScript source tree
 cp -rf "${ROOT_DIR}/src" "${STAGE_DIR}/usr/share/discord-voice-notes/"
 
-# Copy runtime scripts
+# Copy setup and runtime scripts
+cp -f "${ROOT_DIR}/setup.sh" "${STAGE_DIR}/usr/share/discord-voice-notes/"
+chmod 755 "${STAGE_DIR}/usr/share/discord-voice-notes/setup.sh"
+cp -f "${ROOT_DIR}/setup.sh" "${STAGE_DIR}/usr/share/discord-voice-notes/scripts/"
 cp -f "${ROOT_DIR}/scripts/install.sh" "${STAGE_DIR}/usr/share/discord-voice-notes/scripts/"
 cp -f "${ROOT_DIR}/scripts/doctor.sh" "${STAGE_DIR}/usr/share/discord-voice-notes/scripts/"
 cp -f "${ROOT_DIR}/scripts/restore-discord.sh" "${STAGE_DIR}/usr/share/discord-voice-notes/scripts/"
@@ -64,6 +71,11 @@ if [ -f "${ROOT_DIR}/scripts/patch-vencord.cjs" ]; then
     chmod 755 "${STAGE_DIR}/usr/share/discord-voice-notes/scripts/patch-vencord.cjs"
 fi
 chmod 755 "${STAGE_DIR}/usr/share/discord-voice-notes/scripts/"*.sh
+
+# Copy themes
+if [ -d "${ROOT_DIR}/themes" ]; then
+    cp -rf "${ROOT_DIR}/themes" "${STAGE_DIR}/usr/share/discord-voice-notes/"
+fi
 
 # Copy offline Vencord runtime dist
 if [ -d "${ROOT_DIR}/vencord" ]; then

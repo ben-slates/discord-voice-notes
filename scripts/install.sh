@@ -111,11 +111,21 @@ fi
 
 if [ "${MODE}" = "--setup-vencord" ]; then
     PATCHER_SCRIPT="${SCRIPT_DIR}/patch-vencord.cjs"
+    if [ ! -f "${PATCHER_SCRIPT}" ]; then PATCHER_SCRIPT="${ROOT_DIR}/scripts/patch-vencord.cjs"; fi
     if [ -f "${PATCHER_SCRIPT}" ]; then
         node "${PATCHER_SCRIPT}" install
         exit 0
-    elif [ -f "${ROOT_DIR}/scripts/patch-vencord.cjs" ]; then
-        node "${ROOT_DIR}/scripts/patch-vencord.cjs" install
+    else
+        echo -e "${RED}Error: patch-vencord.cjs not found.${NC}"
+        exit 1
+    fi
+fi
+
+if [ "${MODE}" = "--setup-vencord-nitro" ]; then
+    PATCHER_SCRIPT="${SCRIPT_DIR}/patch-vencord.cjs"
+    if [ ! -f "${PATCHER_SCRIPT}" ]; then PATCHER_SCRIPT="${ROOT_DIR}/scripts/patch-vencord.cjs"; fi
+    if [ -f "${PATCHER_SCRIPT}" ]; then
+        ENABLE_FAKE_NITRO=1 node "${PATCHER_SCRIPT}" install --enable-nitro
         exit 0
     else
         echo -e "${RED}Error: patch-vencord.cjs not found.${NC}"
