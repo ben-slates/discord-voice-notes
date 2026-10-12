@@ -52,6 +52,52 @@ body,
     background-color: transparent !important;
 }
 
+/* =======================================================================
+   Text Visibility & Readability Optimization (Universal Fix)
+   ======================================================================= */
+:root {
+    --text-normal: #ffffff !important;
+    --text-default: #ffffff !important;
+    --text-muted: #d0d4dc !important;
+    --header-primary: #ffffff !important;
+    --header-secondary: #e0e4ec !important;
+    --interactive-normal: #dcdfe4 !important;
+    --interactive-hover: #ffffff !important;
+    --interactive-active: #ffffff !important;
+}
+
+/* Force message content text to be bright and clear */
+[class*="messageContent"],
+[id^="message-content-"],
+.messageContent_ec86aa,
+.messageContent__5126c,
+.markup__75297,
+.markup_f8f345,
+.markup__75297 > span,
+.cozy_c19a55 .messageContent_ec86aa {
+    color: #ffffff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7) !important;
+}
+
+/* Ensure user chat input text is crisp and clear */
+.slateTextArea_ec4baf,
+.textArea__74017,
+[class*="slateTextArea"],
+[class*="placeholder_"] {
+    color: #ffffff !important;
+}
+
+/* Usernames and timestamps */
+[class*="username_"],
+[class*="header_c19a55"] {
+    color: #ffffff !important;
+}
+[class*="timestamp_"] {
+    color: #d0d4dc !important;
+}
+
+
+
 .container_fb64c9 /* Missing Create Thread Layer */{
   background: none;
 }
