@@ -355,6 +355,12 @@ if (action === "install") {
             if (enableFakeNitro) {
                 settingsObj.plugins.FakeNitro = settingsObj.plugins.FakeNitro || {};
                 settingsObj.plugins.FakeNitro.enabled = true;
+                settingsObj.plugins.FakeNitro.enableEmojiBypass = true;
+                settingsObj.plugins.FakeNitro.transformEmojis = true;
+                settingsObj.plugins.FakeNitro.enableStickerBypass = true;
+                settingsObj.plugins.FakeNitro.transformStickers = true;
+                settingsObj.plugins.FakeNitro.enableStreamQualityBypass = true;
+                settingsObj.plugins.FakeNitro.useHyperLinks = true;
                 settingsObj.plugins.FakeProfileThemes = settingsObj.plugins.FakeProfileThemes || {};
                 settingsObj.plugins.FakeProfileThemes.enabled = true;
             }

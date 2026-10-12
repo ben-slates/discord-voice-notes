@@ -47,16 +47,15 @@ This opens the interactive CLI menu:
 - `[1]` Install Voice Notes & Vencord (Standard)
 - `[2]` Install Voice Notes + Enable Free Nitro (FakeNitro & Profile Themes)
 - `[3]` Install Custom Themes (Kemono Friends, GGO Kirito, Akame Ga Kill)
-- `[4]` Install YABDP4Nitro (Hybrid Nitro Plugin - BetterDiscord / Vencord)
-- `[5]` Run System Diagnostics (Doctor)
-- `[6]` Restore Vanilla Discord (Unpatch / Revert)
-- `[7]` Complete Clean Wipe (Remove All & Revert to Vanilla)
-- `[8]` Exit
+- `[4]` Run System Diagnostics (Doctor)
+- `[5]` Restore Vanilla Discord (Unpatch / Revert)
+- `[6]` Complete Clean Wipe (Remove All & Revert to Stock Vanilla)
+- `[7]` Exit
 
 #### Activation in Discord:
 - Open Discord.
 - In any chat, right-click the '+' attachment button and click 'Send Voice Message', or use the microphone button in the toolbar.
-- If FakeNitro was selected, custom emojis, stickers, and 1080p 60FPS streaming are immediately unlocked!
+- If FakeNitro was selected (Option `[2]`), cross-server emojis, stickers, and 1080p 60FPS streaming are pre-configured and active!
 
 ---
 
@@ -64,28 +63,33 @@ This opens the interactive CLI menu:
 
 For Windows 10/11 users, a standalone native Windows executable is included:
 
-1. Download `DiscordVoiceNotesInstaller.exe`.
-2. Double-click to launch (or run from Command Prompt / PowerShell).
-3. Select from the interactive menu:
+1. Run `DiscordVoiceNotesInstaller.exe`.
+2. Select from the interactive menu:
    - `[1]` Install Voice Notes & Vencord Runtime
    - `[2]` Install Voice Notes + Enable Free Nitro (FakeNitro)
-   - `[3]` Install YABDP4Nitro (Hybrid Nitro Plugin for BetterDiscord / Vencord)
+   - `[3]` Install Custom Themes (Kemono Friends, GGO Kirito, Akame Ga Kill)
    - `[4]` Run Diagnostics & Doctor check
    - `[5]` Restore Vanilla Discord (Unpatch)
-4. The tool automatically locates Discord in `%LOCALAPPDATA%\Discord\app-*`, patches it offline, enables `VoiceMessages` in Vencord settings, deploys embedded plugins, and configures the environment.
+   - `[6]` Exit
+3. The tool automatically locates Discord in `%LOCALAPPDATA%\Discord\app-*`, patches it offline, enables `VoiceMessages` and `FakeNitro` in Vencord settings, deploys custom themes, and configures the environment.
 
 ---
 
-### YABDP4Nitro (Hybrid Nitro Power Tools)
+### Vencord Free Nitro & Soundboard Mechanics
 
-This repository includes a fully merged, offline-capable build of [YABDP4Nitro](https://github.com/riolubruh/YABDP4Nitro) (`plugins/YABDP4Nitro.plugin.js`) for both Linux and Windows:
+When Option `[2]` (or `--nitro`) is selected, Vencord's built-in **`FakeNitro`** and **`FakeProfileThemes`** are pre-configured:
 
-- **Cross-Server Nitro Emojis**: Send custom animated and static emojis from any server without a Nitro subscription (transmits high-quality lossless PNG/GIF links automatically).
-- **Custom Stickers**: Access full-resolution custom stickers across all text channels.
+- **Cross-Server Emojis**: Send custom animated and static emojis from any server without a Nitro subscription. Vencord intercepts and transforms them into high-quality Discord CDN links or hyperlinks.
+- **Custom Stickers**: Access and send custom stickers in chat.
 - **1080p 60FPS / Source Streaming**: Unlocks high-definition, high-framerate screensharing in voice channels and direct calls.
-- **Cross-Server Soundboard & Soundmojis**: Send soundboard sounds and soundmojis across any channel or voice call.
-- **Profile Banner & Avatar Customization**: Client-side custom avatar styling and banner rendering.
-- **Dual-Client Compatibility**: Automatically deploys to **BetterDiscord** (`~/.config/BetterDiscord/plugins/` / `%APPDATA%\BetterDiscord\plugins\`) and **Vencord** (`~/.config/Vencord/userplugins/` / `%APPDATA%\Vencord\userplugins\`).
+- **Fake Profile Themes**: Customize gradient accents on your profile visible to other users.
+
+#### How Discord Handles Soundboard:
+- **Client Picker Unlocked**: In Vencord, the soundboard picker marks sounds as available.
+- **Backend Voice Gateway Verification**: Unlike emojis and stickers (which are sent as standard chat message text that Discord accepts), playing a soundboard sound in a live voice channel triggers Discord's WebRTC voice gateway (`GUILD_SOUNDBOARD_SOUND_PLAY`). Discord's **backend voice servers** reject cross-server sound triggers if your account lacks an active paid Nitro subscription.
+- **Workaround & Solutions**:
+  1. **Server Soundboard Slots**: Upload up to 8 of your favorite soundboard sounds directly to your own server or friend's server. Sounds native to the server can be played by *anyone* in the voice call for free without Nitro!
+  2. **Native Voice Notes**: With this plugin installed, you can record or upload any sound clip and send it instantly as an authentic Discord Voice Note in chat!
 
 ---
 
@@ -153,7 +157,7 @@ discord-voice-notes/
 │   ├── waveform.test.ts    # Waveform and Base64 algorithm tests
 │   ├── recording.test.ts   # Audio controller state machine tests
 │   └── protocol.test.ts    # Discord protocol & upload tests
-├── themes/                 # Vencord & BetterDiscord custom themes
+├── themes/                 # Modernized Vencord custom themes
 │   ├── NewKemonoFriends.theme.css  # Fixed & modernized Kemono Friends theme
 │   ├── GGOKirito.theme.css         # Fixed & modernized GGO Kirito theme
 │   ├── OldAkameGaKill.theme.css    # Fixed & modernized Old Akame Ga Kill theme
@@ -187,11 +191,10 @@ Both `setup.sh` and the installed `discord-voice-notes` command support full CLI
 |------|-------|--------|
 | `--install` | `-1`, `-i`, `--standard` | Standard Voice Notes & Vencord offline install |
 | `--nitro` | `-2`, `-n`, `--fake-nitro` | Voice Notes + auto-enable Free Nitro (FakeNitro & Profile Themes) |
-| `--themes` | `-3`, `-t` | Deploy all 4 bundled custom themes to Vencord & BetterDiscord |
-| `--yabdp`, `--yabdp4nitro` | `-4` | Deploy YABDP4Nitro hybrid plugin (Linux & Windows cross-client) |
-| `--doctor` | `-5`, `-d`, `--diagnostics` | Run comprehensive system diagnostics and audio checks |
-| `--restore` | `-6`, `-r`, `--revert` | Restore Discord to stock vanilla state (unpatch) |
-| `--clean` | `-7`, `-c`, `--wipe` | Complete clean wipe (restores Discord, removes Vencord, clears caches) |
+| `--themes` | `-3`, `-t` | Deploy all 4 bundled custom themes to Vencord (`~/.config/Vencord/themes/`) |
+| `--doctor` | `-4`, `-d`, `--diagnostics` | Run comprehensive system diagnostics and audio checks |
+| `--restore` | `-5`, `-r`, `--revert` | Restore Discord to stock vanilla state (unpatch) |
+| `--clean` | `-6`, `-c`, `--wipe` | Complete clean wipe (restores Discord, removes Vencord, clears caches) |
 | `--non-interactive` | `-y`, `--yes` | Run unattended in batch mode without interactive confirmation prompts |
 | `--help` | `-h` | Display complete help and usage documentation |
 
@@ -217,13 +220,13 @@ All four themes in `themes/` are built on the proven **GGO Kirito glass engine**
   - Assassin crimson & shadow noir palette (`#e63946` / `rgba(150, 20, 30, 0.6)`).
   - High-res 1920×1080 Akame wallpaper with modernized visual refresh support.
 - **New Akame Ga Kill! Theme (`themes/NewAkameGaKill.theme.css`)**:
-  - Night Raid Murasame ruby & dark blood palette (`#ff0055` / `rgba(160, 0, 50, 0.6)`).
+  - Night Raid Murasame ruby & dark blood palette (`#c0122e` / `rgba(160, 0, 50, 0.6)`).
   - High-res 2000×1200 background asset with custom glass transparency.
 
 ### How to Install Themes:
-- **Automatic**: Run `sudo ./setup.sh --themes` (or select Option `[3]` in the interactive menu). Deploys automatically to both Vencord (`~/.config/Vencord/themes/`) and BetterDiscord (`~/.config/BetterDiscord/themes/`).
+- **Automatic**: Run `sudo ./setup.sh --themes` (or select Option `[3]` in the interactive menu). Deploys directly to Vencord (`~/.config/Vencord/themes/`).
 - **Manual**: Copy any `.theme.css` file into your themes folder.
-- In Discord, go to **User Settings** -> **Vencord** (or **BetterDiscord**) -> **Themes** and toggle on your desired theme. Press `Ctrl+R` to reload.
+- In Discord, go to **User Settings** -> **Vencord** -> **Themes** and toggle on your desired theme. Press `Ctrl+R` to reload.
 
 ---
 

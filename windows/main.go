@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-//go:embed embed/dist/* embed/plugin/* embed/plugins/*
+//go:embed embed/dist/* embed/plugin/* embed/themes/* embed/themes/assets/*
 var embeddedAssets embed.FS
 
 const (
@@ -44,7 +44,7 @@ func main() {
 		fmt.Println("Select an option:")
 		fmt.Println("  [1] Install Discord Voice Notes & Vencord (Standard)")
 		fmt.Println("  [2] Install Voice Notes + Enable Free Nitro (FakeNitro)")
-		fmt.Println("  [3] Deploy YABDP4Nitro Hybrid Plugin (BetterDiscord & Vencord)")
+		fmt.Println("  [3] Install Custom Themes (Kemono Friends, GGO Kirito, Akame Ga Kill)")
 		fmt.Println("  [4] Run System Diagnostics (Doctor)")
 		fmt.Println("  [5] Restore Vanilla Discord (Unpatch / Revert)")
 		fmt.Println("  [6] Exit")
@@ -60,7 +60,7 @@ func main() {
 		case "2":
 			doInstall(true, reader)
 		case "3":
-			doInstallYABDP4Nitro(reader)
+			doInstallThemes(reader)
 		case "4":
 			doDoctor(reader)
 		case "5":
@@ -309,6 +309,12 @@ func updateSettings(enableFakeNitro bool) error {
 				fn = make(map[string]interface{})
 			}
 			fn["enabled"] = true
+			fn["enableEmojiBypass"] = true
+			fn["transformEmojis"] = true
+			fn["enableStickerBypass"] = true
+			fn["transformStickers"] = true
+			fn["enableStreamQualityBypass"] = true
+			fn["useHyperLinks"] = true
 			plugins["FakeNitro"] = fn
 
 			fpt, _ := plugins["FakeProfileThemes"].(map[string]interface{})
@@ -329,47 +335,63 @@ func updateSettings(enableFakeNitro bool) error {
 	return nil
 }
 
-func doInstallYABDP4Nitro(reader *bufio.Reader) {
+func doInstallThemes(reader *bufio.Reader) {
 	fmt.Println()
 	fmt.Println("=======================================================")
-	fmt.Println(" Installing YABDP4Nitro Hybrid Plugin on Windows")
+	fmt.Println(" Installing Modernized Vencord Custom Themes on Windows")
 	fmt.Println("=======================================================")
 	fmt.Println()
 
 	appData := getAppData()
-	bdPluginsDir := filepath.Join(appData, "BetterDiscord", "plugins")
-	vencordPluginsDir := filepath.Join(appData, "Vencord", "userplugins")
+	vencordThemesDir := filepath.Join(appData, "Vencord", "themes")
+	vencordAssetsDir := filepath.Join(vencordThemesDir, "assets")
 
-	_ = os.MkdirAll(bdPluginsDir, 0755)
-	_ = os.MkdirAll(vencordPluginsDir, 0755)
+	_ = os.MkdirAll(vencordThemesDir, 0755)
+	_ = os.MkdirAll(vencordAssetsDir, 0755)
 
-	pluginData, err := embeddedAssets.ReadFile("embed/plugins/YABDP4Nitro.plugin.js")
-	if err != nil {
-		fmt.Println("[ERROR] Failed to load embedded YABDP4Nitro plugin:", err)
-		pause(reader)
-		return
+	themeFiles := []string{
+		"NewKemonoFriends.theme.css",
+		"GGOKirito.theme.css",
+		"OldAkameGaKill.theme.css",
+		"NewAkameGaKill.theme.css",
 	}
 
-	bdDest := filepath.Join(bdPluginsDir, "YABDP4Nitro.plugin.js")
-	if err := os.WriteFile(bdDest, pluginData, 0644); err != nil {
-		fmt.Println("[WARN] Could not write to BetterDiscord plugins:", err)
-	} else {
-		fmt.Println("[OK] Deployed YABDP4Nitro to BetterDiscord:", bdDest)
+	installedCount := 0
+	for _, tf := range themeFiles {
+		data, err := embeddedAssets.ReadFile("embed/themes/" + tf)
+		if err == nil {
+			dest := filepath.Join(vencordThemesDir, tf)
+			if err := os.WriteFile(dest, data, 0644); err == nil {
+				fmt.Println("    [OK] Installed " + tf)
+				installedCount++
+			}
+		}
 	}
 
-	vcDest := filepath.Join(vencordPluginsDir, "YABDP4Nitro.plugin.js")
-	if err := os.WriteFile(vcDest, pluginData, 0644); err != nil {
-		fmt.Println("[WARN] Could not write to Vencord plugins:", err)
-	} else {
-		fmt.Println("[OK] Deployed YABDP4Nitro to Vencord:", vcDest)
+	assetFiles := []string{
+		"kemono_background.png",
+		"ggo_background.png",
+		"akame_background.png",
+		"akame_new_background.png",
+	}
+	for _, af := range assetFiles {
+		data, err := embeddedAssets.ReadFile("embed/themes/assets/" + af)
+		if err == nil {
+			dest := filepath.Join(vencordAssetsDir, af)
+			_ = os.WriteFile(dest, data, 0644)
+		}
 	}
 
 	fmt.Println()
 	fmt.Println("=======================================================")
-	fmt.Println(" YABDP4Nitro Installation Complete on Windows!")
-	fmt.Println(" Unlocks custom emojis, stickers, 1080p 60fps streaming,")
-	fmt.Println(" and soundmoji soundboard audio links.")
+	fmt.Printf(" Successfully installed %d custom themes!\n", installedCount)
+	fmt.Println(" Destination: " + vencordThemesDir)
 	fmt.Println("=======================================================")
+	fmt.Println()
+	fmt.Println("To activate:")
+	fmt.Println(" 1. Open Discord.")
+	fmt.Println(" 2. Go to User Settings > Vencord > Themes.")
+	fmt.Println(" 3. Toggle on your chosen theme and press Ctrl+R to reload.")
 	pause(reader)
 }
 

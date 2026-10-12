@@ -1,1 +1,0 @@
-This folder contains a build of [FFmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm) which is licensed under the MIT license. See LICENSE.txt for details.

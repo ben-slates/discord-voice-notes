@@ -42,9 +42,6 @@ fi
 VENCORD_DIR="${TARGET_HOME}/.config/Vencord"
 VENCORD_THEMES_DIR="${VENCORD_DIR}/themes"
 VENCORD_SETTINGS_DIR="${VENCORD_DIR}/settings"
-BETTERDISCORD_DIR="${TARGET_HOME}/.config/BetterDiscord"
-BETTERDISCORD_PLUGINS_DIR="${BETTERDISCORD_DIR}/plugins"
-BETTERDISCORD_THEMES_DIR="${BETTERDISCORD_DIR}/themes"
 
 banner() {
     clear 2>/dev/null || true
@@ -191,11 +188,10 @@ do_install() {
 
 do_install_themes() {
     echo -e "\n======================================================="
-    echo -e " ${BOLD}${CYAN}Installing Modernized Vencord & BetterDiscord Custom Themes${NC}"
+    echo -e " ${BOLD}${CYAN}Installing Modernized Vencord Custom Themes${NC}"
     echo -e "=======================================================\n"
 
     mkdir -p "${VENCORD_THEMES_DIR}"
-    mkdir -p "${BETTERDISCORD_THEMES_DIR}"
 
     local themes_source="${ROOT_DIR}/themes"
     if [ ! -d "${themes_source}" ]; then
@@ -212,14 +208,6 @@ do_install_themes() {
         if [ -d "${themes_source}/assets" ]; then
             mkdir -p "${VENCORD_THEMES_DIR}/assets"
             cp -rf "${themes_source}/assets/"* "${VENCORD_THEMES_DIR}/assets/" 2>/dev/null || true
-        fi
-
-        # Also synchronize with BetterDiscord if directory exists
-        echo -e "${BLUE}--> Deploying themes to BetterDiscord:${NC} ${BETTERDISCORD_THEMES_DIR}"
-        cp -f "${themes_source}"/*.theme.css "${BETTERDISCORD_THEMES_DIR}/" 2>/dev/null || true
-        if [ -d "${themes_source}/assets" ]; then
-            mkdir -p "${BETTERDISCORD_THEMES_DIR}/assets"
-            cp -rf "${themes_source}/assets/"* "${BETTERDISCORD_THEMES_DIR}/assets/" 2>/dev/null || true
         fi
         
         if [ -f "${VENCORD_THEMES_DIR}/NewKemonoFriends.theme.css" ]; then
@@ -243,7 +231,6 @@ do_install_themes() {
         local theme_files=("NewKemonoFriends.theme.css" "GGOKirito.theme.css" "OldAkameGaKill.theme.css" "NewAkameGaKill.theme.css")
         for tf in "${theme_files[@]}"; do
             if curl -sSL -o "${VENCORD_THEMES_DIR}/${tf}" "https://raw.githubusercontent.com/ben-slates/discord-voice-notes/main/themes/${tf}"; then
-                cp -f "${VENCORD_THEMES_DIR}/${tf}" "${BETTERDISCORD_THEMES_DIR}/${tf}" 2>/dev/null || true
                 echo -e "${GREEN}    [OK] Downloaded and installed ${tf}${NC}"
                 installed_count=$((installed_count + 1))
             fi
@@ -254,13 +241,12 @@ do_install_themes() {
 
     echo -e "\n${GREEN}=======================================================${NC}"
     echo -e "${BOLD}${GREEN} Successfully installed ${installed_count} custom themes!${NC}"
-    echo -e "${GREEN} Destination 1: ${VENCORD_THEMES_DIR}${NC}"
-    echo -e "${GREEN} Destination 2: ${BETTERDISCORD_THEMES_DIR}${NC}"
+    echo -e "${GREEN} Destination: ${VENCORD_THEMES_DIR}${NC}"
     echo -e "${GREEN}=======================================================${NC}"
     echo ""
     echo "To activate:"
     echo " 1. Open Discord."
-    echo " 2. Go to User Settings > Vencord (or BetterDiscord) > Themes."
+    echo " 2. Go to User Settings > Vencord > Themes."
     echo " 3. Toggle on your chosen theme and press Ctrl+R to reload."
     pause
 }
@@ -387,72 +373,6 @@ do_clean_wipe() {
     pause
 }
 
-do_install_yabdp4nitro() {
-    echo -e "\n======================================================="
-    echo -e " ${BOLD}${MAGENTA}Installing YABDP4Nitro & Discord Nitro Power Tools${NC}"
-    echo -e "=======================================================\n"
-
-    local plugin_source="${ROOT_DIR}/plugins/YABDP4Nitro.plugin.js"
-    if [ ! -f "${plugin_source}" ]; then
-        plugin_source="/usr/share/discord-voice-notes/plugins/YABDP4Nitro.plugin.js"
-    fi
-
-    # Destination 1: BetterDiscord plugins directory
-    mkdir -p "${BETTERDISCORD_PLUGINS_DIR}"
-    if [ -f "${plugin_source}" ]; then
-        echo -e "${BLUE}--> Deploying YABDP4Nitro to BetterDiscord:${NC} ${BETTERDISCORD_PLUGINS_DIR}"
-        cp -f "${plugin_source}" "${BETTERDISCORD_PLUGINS_DIR}/"
-        echo -e "${GREEN}    [OK] Installed YABDP4Nitro into BetterDiscord plugins directory.${NC}"
-    else
-        echo -e "${YELLOW}--> YABDP4Nitro local plugin not found. Downloading latest build from GitHub...${NC}"
-        if curl -sSL -o "${BETTERDISCORD_PLUGINS_DIR}/YABDP4Nitro.plugin.js" "https://raw.githubusercontent.com/riolubruh/YABDP4Nitro/main/YABDP4Nitro.plugin.js"; then
-            echo -e "${GREEN}    [OK] Downloaded and installed YABDP4Nitro into BetterDiscord.${NC}"
-        fi
-    fi
-
-    # Destination 2: Vencord userplugins directory (for cross-client compatibility)
-    mkdir -p "${VENCORD_DIR}/userplugins"
-    if [ -f "${plugin_source}" ]; then
-        cp -f "${plugin_source}" "${VENCORD_DIR}/userplugins/" 2>/dev/null || true
-    fi
-
-    # Also deploy all custom themes to BetterDiscord themes folder
-    mkdir -p "${BETTERDISCORD_THEMES_DIR}"
-    local themes_src="${ROOT_DIR}/themes"
-    if [ ! -d "${themes_src}" ]; then
-        themes_src="/usr/share/discord-voice-notes/themes"
-    fi
-    if [ -d "${themes_src}" ]; then
-        echo -e "${BLUE}--> Synchronizing custom themes with BetterDiscord:${NC} ${BETTERDISCORD_THEMES_DIR}"
-        cp -f "${themes_src}"/*.theme.css "${BETTERDISCORD_THEMES_DIR}/" 2>/dev/null || true
-        if [ -d "${themes_src}/assets" ]; then
-            mkdir -p "${BETTERDISCORD_THEMES_DIR}/assets"
-            cp -rf "${themes_src}/assets/"* "${BETTERDISCORD_THEMES_DIR}/assets/" 2>/dev/null || true
-        fi
-        echo -e "${GREEN}    [OK] Deployed custom themes to BetterDiscord themes directory.${NC}"
-    fi
-
-    fix_permissions
-
-    echo -e "\n${GREEN}=======================================================${NC}"
-    echo -e "${BOLD}${GREEN} YABDP4Nitro Deployment Completed Successfully!${NC}"
-    echo -e "${GREEN} Cross-platform support for BetterDiscord & Vencord clients.${NC}"
-    echo -e "${GREEN}=======================================================${NC}"
-    echo ""
-    echo "Features unlocked with YABDP4Nitro:"
-    echo " * Cross-server & animated Nitro emojis in chat (lossless quality)"
-    echo " * Nitro stickers without subscription restrictions"
-    echo " * Full HD 1080p / 60FPS / Source screen sharing"
-    echo " * Soundmoji / Cross-server soundboard links in voice chats"
-    echo " * Custom user avatar & profile banner styling"
-    echo ""
-    echo "To activate in BetterDiscord:"
-    echo " 1. Open Discord > User Settings > BetterDiscord > Plugins."
-    echo " 2. Toggle 'YABDP4Nitro' ON."
-    echo " 3. Press Ctrl+R to reload Discord."
-    pause
-}
-
 show_help() {
     cat << EOF
 Discord Voice Notes & Vencord All-in-One CLI Assistant (Linux - Arch / Debian / Kali / Ubuntu)
@@ -480,21 +400,16 @@ OPTIONS:
               * GGO Kirito Theme
               * Old Akame Ga Kill Theme
               * New Akame Ga Kill Theme
-            Directly deploys CSP-safe assets to Vencord & BetterDiscord themes.
+            Directly deploys CSP-safe assets to Vencord themes.
 
-    -4, --yabdp, --yabdp4nitro
-            Deploy YABDP4Nitro hybrid plugin (Linux & Windows compatible).
-            Unlocks cross-server emojis, animated stickers, 1080p 60fps streaming,
-            and soundmoji soundboard features for BetterDiscord / Vencord.
-
-    -5, -d, --doctor, --diagnostics
+    -4, -d, --doctor, --diagnostics
             Run comprehensive system health checks (audio engine, Discord binary,
             app.asar integrity, Node.js version, and permission state).
 
-    -6, -r, --restore, --revert
+    -5, -r, --restore, --revert
             Restore Discord to original vanilla stock state (undoes all patches).
 
-    -7, -c, --clean, --wipe, --uninstall
+    -6, -c, --clean, --wipe, --uninstall
             Completely wipe all modifications: restores vanilla Discord, removes
             ~/.config/Vencord, clears Discord caches, and removes system packages.
 
@@ -508,7 +423,6 @@ EXAMPLES:
     sudo ./setup.sh                       # Open interactive colored CLI menu
     sudo ./setup.sh --nitro               # Direct unattended install with Free Nitro
     sudo ./setup.sh --themes              # Deploy all custom themes
-    sudo ./setup.sh --yabdp4nitro         # Deploy YABDP4Nitro hybrid plugin
     sudo ./setup.sh --doctor              # Run environment diagnostics
     sudo ./setup.sh --restore             # Revert Discord back to vanilla
     sudo ./setup.sh --clean               # Complete fresh wipe and cleanup
@@ -540,19 +454,15 @@ while [ $# -gt 0 ]; do
             ACTION="themes"
             shift
             ;;
-        --yabdp|--yabdp4nitro|-4)
-            ACTION="yabdp"
-            shift
-            ;;
-        --doctor|-5|-d|--diagnostics)
+        --doctor|-4|-d|--diagnostics)
             ACTION="doctor"
             shift
             ;;
-        --restore|-6|-r|--revert)
+        --restore|-5|-r|--revert)
             ACTION="restore"
             shift
             ;;
-        --clean|-7|-c|--wipe|--uninstall)
+        --clean|-6|-c|--wipe|--uninstall)
             ACTION="clean"
             shift
             ;;
@@ -582,10 +492,6 @@ if [ -n "${ACTION}" ]; then
             do_install_themes
             exit 0
             ;;
-        yabdp)
-            do_install_yabdp4nitro
-            exit 0
-            ;;
         doctor)
             do_doctor
             exit 0
@@ -610,13 +516,12 @@ while true; do
     echo -e "  ${GREEN}[1]${NC} Install Discord Voice Notes & Vencord (Standard)"
     echo -e "  ${MAGENTA}[2]${NC} Install Voice Notes + Enable Free Nitro (FakeNitro)"
     echo -e "  ${CYAN}[3]${NC} Install Custom Themes (Kemono Friends, GGO Kirito, Akame Ga Kill)"
-    echo -e "  ${MAGENTA}[4]${NC} Install YABDP4Nitro (Hybrid Nitro Plugin - BetterDiscord / Vencord)"
-    echo -e "  ${BLUE}[5]${NC} Run System Diagnostics (Doctor)"
-    echo -e "  ${YELLOW}[6]${NC} Restore Vanilla Discord (Unpatch / Revert)"
-    echo -e "  ${RED}[7]${NC} Complete Clean Wipe (Remove All & Revert to Stock Vanilla)"
-    echo -e "  ${NC}[8]${NC} Exit"
+    echo -e "  ${BLUE}[4]${NC} Run System Diagnostics (Doctor)"
+    echo -e "  ${YELLOW}[5]${NC} Restore Vanilla Discord (Unpatch / Revert)"
+    echo -e "  ${RED}[6]${NC} Complete Clean Wipe (Remove All & Revert to Stock Vanilla)"
+    echo -e "  ${NC}[7]${NC} Exit"
     echo ""
-    read -r -p "Enter your choice (1-8): " choice
+    read -r -p "Enter your choice (1-7): " choice
 
     case "${choice}" in
         1)
@@ -629,23 +534,20 @@ while true; do
             do_install_themes
             ;;
         4)
-            do_install_yabdp4nitro
-            ;;
-        5)
             do_doctor
             ;;
-        6)
+        5)
             do_restore
             ;;
-        7)
+        6)
             do_clean_wipe
             ;;
-        8|q|Q)
+        7|q|Q)
             echo -e "\nExiting. Have a great day!"
             exit 0
             ;;
         *)
-            echo -e "\n${RED}Invalid choice. Please select 1 through 8.${NC}"
+            echo -e "\n${RED}Invalid choice. Please select 1 through 7.${NC}"
             sleep 1
             ;;
     esac
