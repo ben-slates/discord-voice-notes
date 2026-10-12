@@ -134,6 +134,8 @@ discord-voice-notes/
 ├── themes/                 # Vencord & BetterDiscord custom themes
 │   ├── NewKemonoFriends.theme.css  # Fixed & modernized Kemono Friends theme
 │   ├── GGOKirito.theme.css         # Fixed & modernized GGO Kirito theme
+│   ├── OldAkameGaKill.theme.css    # Fixed & modernized Old Akame Ga Kill theme
+│   ├── NewAkameGaKill.theme.css    # Fixed & modernized New Akame Ga Kill theme
 │   └── assets/             # Bundled CSP-friendly assets & background images
 ├── scripts/                # Utility and administration scripts
 │   ├── build.sh            # Bundles TypeScript to ESM & CJS via esbuild
@@ -152,39 +154,66 @@ discord-voice-notes/
 
 ---
 
+## Command Line Flags & Options (`setup.sh`)
+
+Both `setup.sh` and the installed `discord-voice-notes` command support full CLI flags:
+
+| Flag | Short | Action |
+|------|-------|--------|
+| `--install` | `-1`, `-i` | Standard Voice Notes & Vencord offline install |
+| `--nitro` | `-2`, `-n` | Voice Notes + auto-enable Free Nitro (FakeNitro & Profile Themes) |
+| `--themes` | `-3`, `-t` | Deploy all 4 bundled custom themes to `~/.config/Vencord/themes/` |
+| `--doctor` | `-4`, `-d` | Run system diagnostics and audio checks |
+| `--restore` | `-5`, `-r` | Restore Discord to stock vanilla state (unpatch) |
+| `--clean` | `-6`, `-c` | Complete clean wipe (restores Discord, removes Vencord, clears caches) |
+| `--non-interactive` | `-y` | Run unattended in batch mode without interactive confirmation prompts |
+| `--help` | `-h` | Display complete help and usage documentation |
+
+---
+
 ## Custom Themes
 
 The repository includes pre-configured, modernized themes in `themes/`:
 
 - **New Kemono Friends Theme (`themes/NewKemonoFriends.theme.css`)**:
   - Fully compatible with modern Discord builds and Visual Refresh.
-  - Fixes CSP ("unknown source") image loading issues by serving high-res assets via direct reliable hosting and universal CSS background hooks.
-  - To install in Vencord:
-    - **Linux**: Copy `themes/NewKemonoFriends.theme.css` into `~/.config/Vencord/themes/`
-    - **Windows**: Copy `themes\NewKemonoFriends.theme.css` into `%APPDATA%\Vencord\themes\`
-    - In Discord, go to **User Settings** -> **Vencord** -> **Themes** and toggle it on.
+  - Fixes CSP ("unknown source") image loading issues with direct reliable hosting and universal CSS background hooks.
 
 - **GGO Kirito Theme (`themes/GGOKirito.theme.css`)**:
   - Fully inlined and offline-ready (removes brittle `raw.githack.com` external `@import`).
   - Bundles the 2834×1464 high-resolution GGO Kirito background locally to bypass Discord CSP errors.
-  - Injected universal background hooks for modern Discord & Visual Refresh compatibility.
-  - To install in Vencord:
-    - **Linux**: Copy `themes/GGOKirito.theme.css` into `~/.config/Vencord/themes/`
-    - **Windows**: Copy `themes\GGOKirito.theme.css` into `%APPDATA%\Vencord\themes\`
-    - In Discord, go to **User Settings** -> **Vencord** -> **Themes** and toggle it on.
+
+- **Old Akame Ga Kill Theme (`themes/OldAkameGaKill.theme.css`)**:
+  - Classic Akame Ga Kill dark aesthetic updated for modern Discord & Visual Refresh.
+  - Bundles the 1920×1080 background locally without external CDN dependencies.
+
+- **New Akame Ga Kill! Theme (`themes/NewAkameGaKill.theme.css`)**:
+  - Modernized Akame Ga Kill theme with enhanced transparency and custom accent colors.
+  - Bundles the 2000×1200 background asset locally.
+
+### How to Install Themes:
+- **Automatic**: Run `sudo ./setup.sh --themes` (or select Option 3 in the interactive menu).
+- **Manual**: Copy any `.theme.css` file into `~/.config/Vencord/themes/` (Linux) or `%APPDATA%\Vencord\themes\` (Windows).
+- In Discord, go to **User Settings** -> **Vencord** -> **Themes** and toggle on your desired theme.
 
 ---
 
-## Restoration & Uninstallation
+## Restoration & Complete Wipe
 
-To undo all modifications and return Discord to its vanilla state:
+To return Discord to its vanilla state:
 ```bash
-discord-voice-notes --restore
+sudo ./setup.sh --restore
+# OR: discord-voice-notes --restore
 ```
 
-To remove the Debian package completely:
+To **completely wipe** all Vencord runtime, plugins, themes, and caches for a fresh start:
 ```bash
-sudo apt remove discord-voice-notes
+sudo ./setup.sh --clean
+```
+
+To remove the Debian package:
+```bash
+sudo apt purge discord-voice-notes
 ```
 
 ---

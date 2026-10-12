@@ -72,6 +72,9 @@ banner() {
 }
 
 pause() {
+    if [ "${NON_INTERACTIVE:-0}" = "1" ]; then
+        return 0
+    fi
     echo ""
     read -r -p "Press [Enter] to continue..." _
 }
@@ -179,6 +182,8 @@ do_install_themes() {
         themes_source="/usr/share/discord-voice-notes/themes"
     fi
 
+    local installed_count=0
+
     if [ -d "${themes_source}" ]; then
         echo -e "${BLUE}--> Deploying themes to:${NC} ${VENCORD_THEMES_DIR}"
         cp -f "${themes_source}"/*.theme.css "${VENCORD_THEMES_DIR}/" 2>/dev/null || true
@@ -189,20 +194,28 @@ do_install_themes() {
             cp -rf "${themes_source}/assets/"* "${VENCORD_THEMES_DIR}/assets/" 2>/dev/null || true
         fi
         
-        echo -e "${GREEN}    [OK] Installed New Kemono Friends Theme (${VENCORD_THEMES_DIR}/NewKemonoFriends.theme.css)${NC}"
-        echo -e "${GREEN}    [OK] Installed GGO Kirito Theme (${VENCORD_THEMES_DIR}/GGOKirito.theme.css)${NC}"
+        [ -f "${VENCORD_THEMES_DIR}/NewKemonoFriends.theme.css" ] && echo -e "${GREEN}    [OK] Installed New Kemono Friends Theme${NC}" && ((installed_count++))
+        [ -f "${VENCORD_THEMES_DIR}/GGOKirito.theme.css" ] && echo -e "${GREEN}    [OK] Installed GGO Kirito Theme${NC}" && ((installed_count++))
+        [ -f "${VENCORD_THEMES_DIR}/OldAkameGaKill.theme.css" ] && echo -e "${GREEN}    [OK] Installed Old Akame Ga Kill Theme${NC}" && ((installed_count++))
+        [ -f "${VENCORD_THEMES_DIR}/NewAkameGaKill.theme.css" ] && echo -e "${GREEN}    [OK] Installed New Akame Ga Kill Theme${NC}" && ((installed_count++))
     else
         echo -e "${YELLOW}--> Themes folder not found locally. Downloading latest themes from GitHub repository...${NC}"
-        curl -sSL -o "${VENCORD_THEMES_DIR}/NewKemonoFriends.theme.css" \
-            "https://raw.githubusercontent.com/ben-slates/discord-voice-notes/main/themes/NewKemonoFriends.theme.css" || true
-        curl -sSL -o "${VENCORD_THEMES_DIR}/GGOKirito.theme.css" \
-            "https://raw.githubusercontent.com/ben-slates/discord-voice-notes/main/themes/GGOKirito.theme.css" || true
-        echo -e "${GREEN}    [OK] Downloaded and installed latest themes.${NC}"
+        local theme_files=("NewKemonoFriends.theme.css" "GGOKirito.theme.css" "OldAkameGaKill.theme.css" "NewAkameGaKill.theme.css")
+        for tf in "${theme_files[@]}"; do
+            if curl -sSL -o "${VENCORD_THEMES_DIR}/${tf}" "https://raw.githubusercontent.com/ben-slates/discord-voice-notes/main/themes/${tf}"; then
+                echo -e "${GREEN}    [OK] Downloaded and installed ${tf}${NC}"
+                ((installed_count++))
+            fi
+        done
     fi
 
     fix_permissions
 
-    echo -e "\n${GREEN}Themes installed successfully!${NC}"
+    echo -e "\n${GREEN}=======================================================${NC}"
+    echo -e "${BOLD}${GREEN} Successfully installed ${installed_count} custom themes!${NC}"
+    echo -e "${GREEN} Destination: ${VENCORD_THEMES_DIR}${NC}"
+    echo -e "${GREEN}=======================================================${NC}"
+    echo ""
     echo "To activate:"
     echo " 1. Open Discord."
     echo " 2. Go to User Settings > Vencord > Themes."
@@ -258,47 +271,169 @@ do_restore() {
     pause
 }
 
+do_clean_wipe() {
+    require_root "$@"
+
+    echo -e "\n======================================================="
+    echo -e " ${BOLD}${RED}Complete Removal & Clean Wipe (Revert to Stock Vanilla)${NC}"
+    echo -e "=======================================================\n"
+
+    close_discord
+
+    echo -e "${BLUE}--> [1/4] Reverting Discord app.asar to stock vanilla...${NC}"
+    local patcher_script="${ROOT_DIR}/scripts/patch-vencord.cjs"
+    if [ ! -f "${patcher_script}" ]; then
+        patcher_script="/usr/share/discord-voice-notes/scripts/patch-vencord.cjs"
+    fi
+    if [ -f "${patcher_script}" ]; then
+        node "${patcher_script}" restore 2>/dev/null || true
+    fi
+
+    local restore_script="${ROOT_DIR}/scripts/restore-discord.sh"
+    if [ ! -f "${restore_script}" ]; then
+        restore_script="/usr/share/discord-voice-notes/scripts/restore-discord.sh"
+    fi
+    if [ -f "${restore_script}" ]; then
+        bash "${restore_script}" 2>/dev/null || true
+    fi
+    echo -e "${GREEN}    [OK] Discord core files restored to vanilla.${NC}"
+
+    echo -e "${BLUE}--> [2/4] Removing Vencord directory (${VENCORD_DIR})...${NC}"
+    rm -rf "${VENCORD_DIR}"
+    echo -e "${GREEN}    [OK] Removed ~/.config/Vencord.${NC}"
+
+    echo -e "${BLUE}--> [3/4] Purging Discord cache and modular core modules...${NC}"
+    rm -rf "${TARGET_HOME}/.config/discord/Cache" "${TARGET_HOME}/.config/discord/Code Cache" 2>/dev/null || true
+    rm -rf "${TARGET_HOME}/.config/discord/"[0-9]*/modules/discord_desktop_core 2>/dev/null || true
+    echo -e "${GREEN}    [OK] Discord caches purged.${NC}"
+
+    echo -e "${BLUE}--> [4/4] Checking Debian package status...${NC}"
+    if dpkg -s discord-voice-notes >/dev/null 2>&1; then
+        echo -e "${YELLOW}    Package discord-voice-notes is currently installed.${NC}"
+        if [ "${NON_INTERACTIVE:-0}" = "1" ]; then
+            apt-get purge -y discord-voice-notes >/dev/null 2>&1 || apt-get remove -y discord-voice-notes >/dev/null 2>&1 || true
+            echo -e "${GREEN}    [OK] Debian package discord-voice-notes purged.${NC}"
+        else
+            read -r -p "    Do you also want to remove the debian package? (y/N): " rm_pkg
+            if [[ "${rm_pkg}" =~ ^[yY]$ ]]; then
+                apt-get purge -y discord-voice-notes || apt-get remove -y discord-voice-notes
+                echo -e "${GREEN}    [OK] Debian package discord-voice-notes removed.${NC}"
+            fi
+        fi
+    else
+        echo -e "${GREEN}    [OK] Debian package not installed or already removed.${NC}"
+    fi
+
+    fix_permissions
+
+    echo -e "\n${GREEN}=======================================================${NC}"
+    echo -e "${BOLD}${GREEN} Complete Clean Wipe Finished!${NC}"
+    echo -e "${GREEN} Discord is now 100% stock vanilla with zero modifications.${NC}"
+    echo -e "${GREEN}=======================================================${NC}"
+    pause
+}
+
+show_help() {
+    cat << EOF
+Discord Voice Notes & Vencord All-in-One CLI Assistant (Linux / Debian)
+
+USAGE:
+    ./setup.sh [OPTIONS]
+    sudo discord-voice-notes [OPTIONS]
+
+DESCRIPTION:
+    Automated setup, configuration, theme manager, diagnostic assistant,
+    and uninstallation utility for Discord Voice Notes and Vencord on Linux.
+
+OPTIONS:
+    -1, -i, --install, --standard
+            Install Voice Notes & offline Vencord runtime (Standard mode).
+            Patches official Discord app.asar and modular desktop core.
+
+    -2, -n, --nitro, --fake-nitro
+            Install Voice Notes + auto-enable Free Nitro (FakeNitro & Profile Themes).
+            Unlocks custom emojis, custom stickers, and 1080p 60FPS streaming.
+
+    -3, -t, --themes
+            Install all bundled custom themes:
+              * New Kemono Friends Theme
+              * GGO Kirito Theme
+              * Old Akame Ga Kill Theme
+              * New Akame Ga Kill Theme
+            Directly deploys CSP-safe assets to ~/.config/Vencord/themes/.
+
+    -4, -d, --doctor, --diagnostics
+            Run comprehensive system health checks (audio engine, Discord binary,
+            app.asar integrity, Node.js version, and permission state).
+
+    -5, -r, --restore, --revert
+            Restore Discord to original vanilla stock state (undoes all patches).
+
+    -6, -c, --clean, --wipe, --uninstall
+            Completely wipe all modifications: restores vanilla Discord, removes
+            ~/.config/Vencord, clears Discord caches, and removes Debian package.
+
+    -y, --non-interactive, --yes
+            Run in non-interactive batch mode (auto-accepts prompts; ideal for scripts).
+
+    -h, --help
+            Display this comprehensive help screen and exit.
+
+EXAMPLES:
+    sudo ./setup.sh                       # Open interactive colored CLI menu
+    sudo ./setup.sh --nitro               # Direct unattended install with Free Nitro
+    sudo ./setup.sh --themes              # Deploy all custom themes
+    sudo ./setup.sh --doctor              # Run environment diagnostics
+    sudo ./setup.sh --restore             # Revert Discord back to vanilla
+    sudo ./setup.sh --clean               # Complete fresh wipe and cleanup
+
+EOF
+}
+
 # ------------------------------------------------------------------------------
 # Direct Argument Handlers (CLI execution without interactive prompts)
 # ------------------------------------------------------------------------------
+NON_INTERACTIVE=0
+
+for arg in "$@"; do
+    if [ "$arg" = "-y" ] || [ "$arg" = "--yes" ] || [ "$arg" = "--non-interactive" ]; then
+        NON_INTERACTIVE=1
+    fi
+done
+
 if [ $# -gt 0 ]; then
     case "$1" in
-        --install|-1|--standard)
+        --install|-1|-i|--standard)
             do_install 0
             exit 0
             ;;
-        --nitro|-2|--fake-nitro)
+        --nitro|-2|-n|--fake-nitro)
             do_install 1
             exit 0
             ;;
-        --themes|-3)
+        --themes|-3|-t)
             do_install_themes
             exit 0
             ;;
-        --doctor|-4|-d)
+        --doctor|-4|-d|--diagnostics)
             do_doctor
             exit 0
             ;;
-        --restore|-5|-r)
+        --restore|-5|-r|--revert)
             do_restore
             exit 0
             ;;
+        --clean|-6|-c|--wipe|--uninstall)
+            do_clean_wipe
+            exit 0
+            ;;
         --help|-h)
-            echo "Discord Voice Notes All-in-One Setup Tool"
-            echo "Usage: ./setup.sh [OPTION]"
-            echo ""
-            echo "Options:"
-            echo "  --install, -1        Install Voice Notes & Vencord (Standard)"
-            echo "  --nitro, -2          Install Voice Notes + Enable Free Nitro (FakeNitro)"
-            echo "  --themes, -3         Install Custom Themes (New Kemono Friends & GGO Kirito)"
-            echo "  --doctor, -4         Run System Diagnostics"
-            echo "  --restore, -5        Restore Discord to Vanilla state"
-            echo "  --help, -h           Show this help"
+            show_help
             exit 0
             ;;
         *)
-            echo "Unknown option: $1"
-            echo "Run './setup.sh --help' for usage."
+            echo -e "${RED}Unknown option: $1${NC}"
+            echo "Run './setup.sh --help' for complete usage details."
             exit 1
             ;;
     esac
@@ -312,12 +447,13 @@ while true; do
     echo -e "${BOLD}Select an option:${NC}"
     echo -e "  ${GREEN}[1]${NC} Install Discord Voice Notes & Vencord (Standard)"
     echo -e "  ${MAGENTA}[2]${NC} Install Voice Notes + Enable Free Nitro (FakeNitro)"
-    echo -e "  ${CYAN}[3]${NC} Install Custom Themes (New Kemono Friends & GGO Kirito)"
+    echo -e "  ${CYAN}[3]${NC} Install Custom Themes (Kemono Friends, GGO Kirito, Akame Ga Kill)"
     echo -e "  ${BLUE}[4]${NC} Run System Diagnostics (Doctor)"
     echo -e "  ${YELLOW}[5]${NC} Restore Vanilla Discord (Unpatch / Revert)"
-    echo -e "  ${RED}[6]${NC} Exit"
+    echo -e "  ${RED}[6]${NC} Complete Clean Wipe (Remove All & Revert to Stock Vanilla)"
+    echo -e "  ${NC}[7]${NC} Exit"
     echo ""
-    read -r -p "Enter your choice (1-6): " choice
+    read -r -p "Enter your choice (1-7): " choice
 
     case "${choice}" in
         1)
@@ -335,12 +471,15 @@ while true; do
         5)
             do_restore
             ;;
-        6|q|Q)
+        6)
+            do_clean_wipe
+            ;;
+        7|q|Q)
             echo -e "\nExiting. Have a great day!"
             exit 0
             ;;
         *)
-            echo -e "\n${RED}Invalid choice. Please select 1 through 6.${NC}"
+            echo -e "\n${RED}Invalid choice. Please select 1 through 7.${NC}"
             sleep 1
             ;;
     esac
