@@ -5872,3 +5872,148 @@ body,
 .viewFullBioColor_f5f93a {
   color: white;
 }
+
+/* =======================================================================
+   Forced Theme Consistency Layer: Member List, Direct Messages & User Popouts
+   (Matches GGO Kirito Behavior & Interaction Architecture Everywhere)
+   ======================================================================= */
+
+/* Direct Messages & Category Items (GGO Layout) */
+#app-mount .channel__972a0,
+#app-mount [class*=channel__972a0],
+#app-mount .sidebar__5e434 .categoryItem_c72b37 { 
+    margin-bottom: 2px; 
+    transition: background-color 0.2s; 
+    transition-timing-function: ease-in-out;
+}
+#app-mount .channel__972a0:hover, 
+#app-mount [class*=channel__972a0]:hover,
+#app-mount .interactive-1vLZ_I.interactiveSelected__972a0,
+#app-mount .sidebar__5e434 .categoryItem_c72b37:hover,
+#app-mount .sidebar__5e434 .categoryItem_c72b37.selected__91a9d {
+    background-color: rgba(100, 100, 100, 0.5) !important;
+}
+
+#app-mount .privateChannelsHeaderContainer__99e7c {
+    background-color: rgba(120, 20, 40, 0.6) !important;
+    padding: 12px;
+    border-radius: 10px;
+}
+
+/* Voice Call Users (GGO Layout & Speaking Animations) */
+#app-mount .voiceUser__07f91 .content__07f91:hover { background-color: transparent; }
+#app-mount .voiceUser__07f91 {
+    transition: margin 0.2s; 
+    transition-timing-function: ease-in-out; 
+    margin-left: 0; 
+    padding-right: 5px;
+}
+#app-mount .voiceUser__07f91:hover {
+    background-color: rgba(50, 50, 50, 0.3) !important; 
+    border-radius: 2px; 
+    margin-left: 20px;
+}
+#app-mount .voiceUser__07f91[data-speaking=true] .userAvatar__55bab {
+    box-shadow: 0 0 0 2px #9b2742 !important;
+}
+#app-mount .voiceUser__07f91[data-speaking=true]::after {
+    content: :;
+    color: transparent; 
+    background-image: linear-gradient(to right, rgba(155, 39, 66, 0.5), rgba(0,0,0,0));
+    padding: 0 120px 11px 0;
+    border-left: 5px solid #9b2742;
+    position: relative;
+    top: -29px;
+    z-index: -1;
+}
+
+/* Server Members List - Full GGO Kirito Slider & Floating Box Experience */
+#app-mount .container_c8ffbb,
+#app-mount .members_c8ffbb,
+#app-mount [class*=membersWrap_],
+#app-mount [class*=members_c8ffbb] { 
+    background-color: transparent !important; 
+}
+
+#app-mount .member__5d473,
+#app-mount [class*=member__5d473],
+#app-mount .member_c8ffbb {
+    margin-left: 30px;
+    transition: margin-left 0.2s;
+    transition-timing-function: ease-in-out;
+    border-radius: 10px;
+    background-color: rgba(50, 50, 50, 0.3) !important;
+}
+#app-mount .member__5d473:hover,
+#app-mount [class*=member__5d473]:hover,
+#app-mount .member_c8ffbb:hover { 
+    margin-left: 8px; 
+    background-color: rgba(100, 100, 100, 0.5) !important;
+}
+#app-mount .selected__91a9d,
+#app-mount [class*=selected__91a9d] { 
+    margin-left: 8px; 
+    background-color: rgba(100, 100, 100, 0.5) !important;
+}
+
+#app-mount .members_c8ffbb .container__0f2e8,
+#app-mount [class*=members_c8ffbb] .container__0f2e8 { 
+    background-color: rgba(50, 50, 50, 0.3) !important; 
+}
+#app-mount .members_c8ffbb .container__0f2e8:hover,
+#app-mount [class*=members_c8ffbb] .container__0f2e8:hover { 
+    background-color: rgba(100, 100, 100, 0.5) !important; 
+}
+
+#app-mount .membersGroup_c8ffbb span,
+#app-mount [class*=membersGroup_] span {
+    color: #ffffff !important;
+}
+#app-mount .membersGroup_c8ffbb,
+#app-mount [class*=membersGroup_] {
+    background-color: rgba(120, 20, 40, 0.6) !important;
+    border: 2px solid rgba(120, 20, 40, 0.6) !important;
+    border-radius: 8px;
+    height: 20px;
+    padding: 0 0 0 10px;
+    margin: 15px 8px 0 16px;
+}
+
+/* User Profile & User Popout Overrides (Force Theme Everywhere Like GGO) */
+#app-mount .outer_c0bea0:not(.custom-theme-background) .inner_c0bea0,
+#app-mount .outer_c0bea0:not(.custom-theme-background),
+#app-mount [class*=userProfileOuter_] {
+    background: transparent;
+}
+
+#app-mount .outer_c0bea0:not(.custom-theme-background),
+#app-mount [class*=userProfileOuter_]:not(.custom-theme-background),
+#app-mount [class*=userProfileModalInner],
+#app-mount [class*=userPopoutInner] { 
+    background-color: rgba(0, 0, 0, 0.6) !important; 
+    --profile-gradient-primary-color: rgba(0, 0, 0, 0.6) !important;
+    --profile-gradient-secondary-color: rgba(0, 0, 0, 0.6) !important;
+    --profile-gradient-overlay-color: transparent !important;
+    --profile-body-background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+#app-mount .outer_c0bea0:not(.custom-theme-background) .role_dfa8b6,
+#app-mount .outer_c0bea0:not(.custom-theme-background) .channelTextArea__74017 .inner_a99829,
+#app-mount [class*=userProfileOuter_] [class*=role_] {
+    background-color: rgba(50, 50, 50, 0.3) !important;
+}
+
+/* Server Channel Tabs - Browse Channels & Members Tab */
+#app-mount .chat_f75fb0 .header__0b563,
+#app-mount .chat_f75fb0 .content_f75fb0,
+#app-mount .chat_f75fb0 .pageBody__41ed7 {
+    background: transparent !important;
+}
+#app-mount .chat_f75fb0 .roundButton_c15210.activeButton_c15210 { 
+    background-color: #9b2742 !important; 
+    color: #ffffff !important;
+}
+#app-mount .chat_f75fb0 .pageButton_c15210:not(.activeButton_c15210):hover,
+#app-mount .chat_f75fb0 .channelRow_e4503a:hover { 
+    background-color: rgba(100, 100, 100, 0.5) !important; 
+}

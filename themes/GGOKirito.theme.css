@@ -1271,3 +1271,14 @@ body,
         background-color: var(--secondary3-colour);
         border-bottom: 3px solid var(--primary3-colour)
     }
+
+
+/* User Profile Modal Inner & Popout Gradient Override */
+#app-mount [class*="userProfileModalInner"],
+#app-mount [class*="userPopoutInner"] { 
+    background-color: var(--secondary3-colour) !important; 
+    --profile-gradient-primary-color: var(--secondary3-colour) !important;
+    --profile-gradient-secondary-color: var(--secondary3-colour) !important;
+    --profile-gradient-overlay-color: transparent !important;
+    --profile-body-background-color: var(--secondary3-colour) !important;
+}
