@@ -127,6 +127,9 @@ discord-voice-notes/
 │   ├── waveform.test.ts    # Waveform and Base64 algorithm tests
 │   ├── recording.test.ts   # Audio controller state machine tests
 │   └── protocol.test.ts    # Discord protocol & upload tests
+├── themes/                 # Vencord & BetterDiscord custom themes
+│   ├── NewKemonoFriends.theme.css  # Fixed & modernized Kemono Friends theme
+│   └── assets/             # Bundled CSP-friendly assets & background images
 ├── scripts/                # Utility and administration scripts
 │   ├── build.sh            # Bundles TypeScript to ESM & CJS via esbuild
 │   ├── package.sh          # Builds Debian .deb package
@@ -141,6 +144,20 @@ discord-voice-notes/
     ├── prerm               # Pre-removal hook
     └── copyright           # Debian copyright declaration
 ```
+
+---
+
+## Custom Themes
+
+The repository includes pre-configured, modernized themes in `themes/`:
+
+- **New Kemono Friends Theme (`themes/NewKemonoFriends.theme.css`)**:
+  - Fully compatible with modern Discord builds and Visual Refresh.
+  - Fixes CSP ("unknown source") image loading issues by serving high-res assets via direct reliable hosting and universal CSS background hooks.
+  - To install in Vencord:
+    - **Linux**: Copy `themes/NewKemonoFriends.theme.css` into `~/.config/Vencord/themes/`
+    - **Windows**: Copy `themes\NewKemonoFriends.theme.css` into `%APPDATA%\Vencord\themes\`
+    - In Discord, go to **User Settings** -> **Vencord** -> **Themes** and toggle it on.
 
 ---
 
