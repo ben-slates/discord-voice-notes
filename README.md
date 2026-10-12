@@ -129,6 +129,7 @@ discord-voice-notes/
 │   └── protocol.test.ts    # Discord protocol & upload tests
 ├── themes/                 # Vencord & BetterDiscord custom themes
 │   ├── NewKemonoFriends.theme.css  # Fixed & modernized Kemono Friends theme
+│   ├── GGOKirito.theme.css         # Fixed & modernized GGO Kirito theme
 │   └── assets/             # Bundled CSP-friendly assets & background images
 ├── scripts/                # Utility and administration scripts
 │   ├── build.sh            # Bundles TypeScript to ESM & CJS via esbuild
@@ -157,6 +158,15 @@ The repository includes pre-configured, modernized themes in `themes/`:
   - To install in Vencord:
     - **Linux**: Copy `themes/NewKemonoFriends.theme.css` into `~/.config/Vencord/themes/`
     - **Windows**: Copy `themes\NewKemonoFriends.theme.css` into `%APPDATA%\Vencord\themes\`
+    - In Discord, go to **User Settings** -> **Vencord** -> **Themes** and toggle it on.
+
+- **GGO Kirito Theme (`themes/GGOKirito.theme.css`)**:
+  - Fully inlined and offline-ready (removes brittle `raw.githack.com` external `@import`).
+  - Bundles the 2834×1464 high-resolution GGO Kirito background locally to bypass Discord CSP errors.
+  - Injected universal background hooks for modern Discord & Visual Refresh compatibility.
+  - To install in Vencord:
+    - **Linux**: Copy `themes/GGOKirito.theme.css` into `~/.config/Vencord/themes/`
+    - **Windows**: Copy `themes\GGOKirito.theme.css` into `%APPDATA%\Vencord\themes\`
     - In Discord, go to **User Settings** -> **Vencord** -> **Themes** and toggle it on.
 
 ---
