@@ -9,6 +9,7 @@
 
 :root {
     --background: url('https://raw.githubusercontent.com/ben-slates/discord-voice-notes/main/themes/assets/ggo_kirito_background.png');
+    --theme-background-image: var(--background);
     --activetext-colour: white;
 
     --primary1-colour: red;

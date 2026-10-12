@@ -8,13 +8,14 @@
  */
 
 :root {
-    --background: url('https://raw.githubusercontent.com/ben-slates/discord-voice-notes/main/themes/assets/akame_new_background.png');
+    --background: url('https://raw.githubusercontent.com/ben-slates/discord-voice-notes/main/themes/assets/akame_new_background.jpg');
+    --theme-background-image: var(--background);
     --activetext-colour: white;
 
-    --primary1-colour: #ff0055;
-    --primary2-colour: rgba(255, 0, 85, 0.5);
-    --primary3-colour: rgba(160, 0, 50, 0.6);
-    --primary4-colour: rgba(160, 0, 50, 0.4);
+    --primary1-colour: #c0122e;
+    --primary2-colour: rgba(192, 18, 46, 0.5);
+    --primary3-colour: rgba(153, 17, 34, 0.6);
+    --primary4-colour: rgba(153, 17, 34, 0.4);
 
     --secondary1-colour: rgba(50, 50, 50, 0.3);
     --secondary2-colour: rgba(100, 100, 100, 0.5);
