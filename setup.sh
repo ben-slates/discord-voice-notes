@@ -39,9 +39,12 @@ if [ -f /etc/os-release ]; then
     [ -z "${DISTRO_NAME}" ] && DISTRO_NAME="${DISTRO_ID:-Linux}"
 fi
 
-VENCORD_DIR="${TARGET_HOME}/.config/Vencord"
-VENCORD_THEMES_DIR="${VENCORD_DIR}/themes"
-VENCORD_SETTINGS_DIR="${VENCORD_DIR}/settings"
+VENCORD_DIR="/.config/Vencord"
+VENCORD_THEMES_DIR="/themes"
+VENCORD_SETTINGS_DIR="/settings"
+BETTERDISCORD_DIR="/.config/BetterDiscord"
+BETTERDISCORD_PLUGINS_DIR="/plugins"
+BETTERDISCORD_THEMES_DIR="/themes"
 
 banner() {
     clear 2>/dev/null || true
@@ -361,6 +364,75 @@ do_clean_wipe() {
     pause
 }
 
+do_install_yabdp4nitro() {
+    echo -e "
+======================================================="
+    echo -e " Installing YABDP4Nitro & Discord Nitro Power Tools"
+    echo -e "=======================================================
+"
+
+    local plugin_source="/plugins/YABDP4Nitro.plugin.js"
+    if [ ! -f "" ]; then
+        plugin_source="/usr/share/discord-voice-notes/plugins/YABDP4Nitro.plugin.js"
+    fi
+
+    # Destination 1: BetterDiscord plugins directory
+    mkdir -p ""
+    if [ -f "" ]; then
+        echo -e "--> Deploying YABDP4Nitro to BetterDiscord: "
+        cp -f "" "/"
+        echo -e "    [OK] Installed YABDP4Nitro into BetterDiscord plugins directory."
+    else
+        echo -e "--> YABDP4Nitro local plugin not found. Downloading latest build from GitHub..."
+        if curl -sSL -o "/YABDP4Nitro.plugin.js" "https://raw.githubusercontent.com/riolubruh/YABDP4Nitro/main/YABDP4Nitro.plugin.js"; then
+            echo -e "    [OK] Downloaded and installed YABDP4Nitro into BetterDiscord."
+        fi
+    fi
+
+    # Destination 2: Vencord userplugins directory (for cross-client compatibility)
+    mkdir -p "/userplugins"
+    if [ -f "" ]; then
+        cp -f "" "/userplugins/" 2>/dev/null || true
+    fi
+
+    # Also deploy all custom themes to BetterDiscord themes folder
+    mkdir -p ""
+    local themes_src="/themes"
+    if [ ! -d "" ]; then
+        themes_src="/usr/share/discord-voice-notes/themes"
+    fi
+    if [ -d "" ]; then
+        echo -e "--> Synchronizing custom themes with BetterDiscord: "
+        cp -f ""/*.theme.css "/" 2>/dev/null || true
+        if [ -d "/assets" ]; then
+            mkdir -p "/assets"
+            cp -rf "/assets/"* "/assets/" 2>/dev/null || true
+        fi
+        echo -e "    [OK] Deployed custom themes to BetterDiscord themes directory."
+    fi
+
+    fix_permissions
+
+    echo -e "
+======================================================="
+    echo -e " YABDP4Nitro Deployment Completed Successfully!"
+    echo -e " Cross-platform support for BetterDiscord & Vencord clients."
+    echo -e "======================================================="
+    echo ""
+    echo "Features unlocked with YABDP4Nitro:"
+    echo " * Cross-server & animated Nitro emojis in chat (lossless quality)"
+    echo " * Nitro stickers without subscription restrictions"
+    echo " * Full HD 1080p / 60FPS / Source screen sharing"
+    echo " * Soundmoji / Cross-server soundboard links in voice chats"
+    echo " * Custom user avatar & profile banner styling"
+    echo ""
+    echo "To activate in BetterDiscord:"
+    echo " 1. Open Discord > User Settings > BetterDiscord > Plugins."
+    echo " 2. Toggle 'YABDP4Nitro' ON."
+    echo " 3. Press Ctrl+R to reload Discord."
+    pause
+}
+
 show_help() {
     cat << EOF
 Discord Voice Notes & Vencord All-in-One CLI Assistant (Linux - Arch / Debian / Kali / Ubuntu)
@@ -388,7 +460,12 @@ OPTIONS:
               * GGO Kirito Theme
               * Old Akame Ga Kill Theme
               * New Akame Ga Kill Theme
-            Directly deploys CSP-safe assets to ~/.config/Vencord/themes/.
+            Directly deploys CSP-safe assets to Vencord & BetterDiscord themes.
+
+    -7, --yabdp, --yabdp4nitro
+            Deploy YABDP4Nitro hybrid plugin (Linux & Windows compatible).
+            Unlocks cross-server emojis, animated stickers, 1080p 60fps streaming,
+            and soundmoji soundboard features for BetterDiscord / Vencord.
 
     -4, -d, --doctor, --diagnostics
             Run comprehensive system health checks (audio engine, Discord binary,
@@ -441,6 +518,10 @@ if [ $# -gt 0 ]; then
             ;;
         --themes|-3|-t)
             do_install_themes
+            exit 0
+            ;;
+        --yabdp|--yabdp4nitro|-7)
+            do_install_yabdp4nitro
             exit 0
             ;;
         --doctor|-4|-d|--diagnostics)

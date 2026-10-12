@@ -5466,3 +5466,98 @@ body,
 #app-mount .chat_f75fb0 .channelRow_e4503a:hover { 
     background-color: rgba(100, 100, 100, 0.5) !important; 
 }
+
+
+/* =======================================================================
+   Direct Messages & Friends Tab - Complete Transparency & Theme Styling
+   Forces Theme Background Across DM Side Panel, Channels & Active Now
+   ======================================================================= */
+
+/* Direct Messages Sidebar Containers (Universal & Visual Refresh) */
+.privateChannels__35e86,
+[class*="privateChannels"],
+.sidebar__5e434,
+[class*="sidebar_"],
+.container__2637a,
+[class*="container__2637a"],
+.scroller__99e7c,
+[class*="scroller__99e7c"],
+[class*="sidebarList"] {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* DM Channel Item Rows & Interactive Buttons */
+.channel__972a0,
+[class*="channel__972a0"],
+[class*="interactive__972a0"],
+[class*="categoryItem_"] {
+    margin-bottom: 2px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease-in-out;
+}
+.channel__972a0:hover,
+[class*="channel__972a0"]:hover,
+[class*="interactive__972a0"]:hover,
+[class*="categoryItem_"]:hover,
+[class*="interactiveSelected"],
+.interactive-1vLZ_I.interactiveSelected__972a0 {
+    background-color: rgba(100, 100, 100, 0.5) !important;
+}
+
+/* Direct Messages Header (Direct Messages Title Pill) */
+[class*="privateChannelsHeaderContainer"],
+.privateChannelsHeaderContainer__99e7c {
+    background-color: rgba(204, 102, 119, 0.6) !important;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+/* Friends Tab & Direct Messages Main View (Active Now & Tab Body) */
+.container__133bf,
+[class*="container__133bf"],
+.container__9293f,
+[class*="container__9293f"],
+.tabBody__133bf,
+[class*="tabBody"],
+.container__7d20c,
+[class*="container__7d20c"],
+.peopleColumn__133bf,
+[class*="peopleColumn"],
+.nowPlayingColumn__133bf,
+[class*="nowPlayingColumn"],
+[class*="nowPlayingSidebar"] {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* Friends Tab Search Bar */
+[class*="tabBody"] [class*="searchBar"],
+.tabBody__133bf .searchBar__5ec2f {
+    background-color: rgba(0, 0, 0, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+[class*="tabBody"] [class*="searchBar"]:focus-within,
+.tabBody__133bf .searchBar__5ec2f:focus-within {
+    border-color: #f44 !important;
+}
+
+/* Add Friend Button in Friends Tab */
+[class*="addFriend"] {
+    background-color: #f44 !important;
+    color: #ffffff !important;
+}
+
+/* Active Now Item Cards Translucent Glass */
+[class*="nowPlayingColumn"] [class*="itemCard"] {
+    background-color: rgba(0, 0, 0, 0.6) !important;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+[class*="nowPlayingColumn"] [class*="itemCard"]:hover {
+    background-color: rgba(100, 100, 100, 0.5) !important;
+}
+[class*="nowPlayingColumn"] [class*="itemCard"] [class*="body_"] {
+    background-color: transparent !important;
+}

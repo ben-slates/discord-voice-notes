@@ -1,0 +1,180 @@
+{
+	"7.0.8": [
+		{
+			"changes": [
+				{
+					"title": "Dispatcher Hotfix",
+					"type": "fixed",
+					"items": [
+						"Fixed App Icons, Client Themes, and uploading files not working due to dispatcher being undefined."
+					]
+				}
+			]
+		}
+	],
+	"7.0.7": [
+		{
+			"changes": [
+				{
+					"title": "Modal Hotfixes",
+					"type": "fixed",
+					"items": [
+						"Fixed plugin modals not working after Discord update.",
+						"Fixed upsell in User Profile Modal appearing again after Discord update."
+					]
+				}
+			]
+		}
+	],
+	"7.0.6": [
+		{
+			"changes": [
+				{
+					"title": "Mo' Hotfixes",
+					"type": "fixed",
+					"items": [
+						"Fixed ZipClips not working after Discord update.",
+						"Fixed Unlock Stickers patch erroring."
+					]
+				}
+			]
+		}
+	],
+	"7.0.5": [
+		{
+			"changes": [
+				{
+					"title": "Hotfixes",
+					"type": "fixed",
+					"items": [
+						"Added new Display Name Styles fonts.",
+						"Fixed YABDP4Nitro profile tab not appearing.",
+						"Fixed error appearing in console for the Clips max file size patch."
+					]
+				}
+			]
+		}
+	],
+	"7.0.4": [
+		{
+			"changes": [
+				{
+					"title": "New Features",
+					"type": "added",
+					"items": [
+						"Added the ability to completely ignore peoples profile customization features. You can ignore a user's 3y3 and/or normal Nitro profile customization.",
+						"Added Fetch Members on Scroll option which will automatically fetch user profiles so that 3y3 in the user's bio can affect their fake profile without opening their profile."
+					]
+				},
+				{
+					"title": "Russian User Update Checker Notice",
+					"type": "improved",
+					"items": [
+						"Added a notice if the update checker fails and the user is Russian explaining the problem and prompting the user to either disable the update checker or enable a VPN."
+					]
+				}
+			]
+		}
+	],
+	"7.0.3": [
+		{
+			"changes": [
+				{
+					"title": "ZAPRET / Networking Issue Fixes",
+					"type": "fixed",
+					"items": [
+						"Fixed an issue Russian users running ZAPRET were having where patches would not load, i.e. the plugin would not work, because `Net.fetch` calls would hang indefinitely.",
+						"Fixed regression in 7.0.0 - re-added toast to warn the user if the plugin fails to check for updates."
+					]
+				}
+			]
+		}
+	],
+	"7.0.2": [
+		{
+			"changes": [
+				{
+					"title": "New debug system & changelog changes",
+					"type": "added",
+					"items": [
+						"Added a new debug system to assist developers with any issues you encounter while using the plugin. Can be found at the bottom of plugin settings.",
+						"You can now view previous changelogs starting with v7.0.0 by right-clicking the changelog button at the bottom-left of settings.",
+						"Added a button to go to the support server in the changelog modal."
+					]
+				},
+				{
+					"title": "Hotfix",
+					"type": "fixed",
+					"items": [
+						"Fixed incompatibility with FreeStickers.",
+						"Fixed an incompatibility caused by some package managers (looking at you, Fedora) shipping 5-year-old Electron builds.",
+						"Fixed Discord crashing when selecting a System theme.",
+						"Fixed Discord potentially crashing when opening the custom theme selector.",
+						"Fixed FFmpeg loading & muxing breaking if the very first thing you do is drag multiple clip files into Discord."
+					]
+				}
+			]
+		}
+	],
+	"7.0.1": [
+		{
+			"changes": [
+				{
+					"title": "Post-release hotfixes",
+					"type": "fixed",
+					"items": [
+						"Fixed YABDP4Nitro User Badge not appearing despite 3y3 being detected.",
+						"Fixed a bug where the color pickers in the Display Name Styles modal could get stuck disabled.",
+						"Restored YABDP4Nitro start & stop logs in console.",
+						"Improved loading of User Profile Modal."
+					]
+				}
+			]
+		}
+	],
+	"7.0.0": [
+		{
+			"banner": "https://i.kym-cdn.com/photos/images/original/001/652/630/6e8.jpg",
+			"changes": [
+				{
+					"title": "YABDP4Nitro Huge Revamp",
+					"type": "improved",
+					"items": [
+						"Fully rewritten internals from the ground up.",
+						"Improved performance and stability.",
+						"Cleaner, more maintainable codebase for future updates.",
+						"Improved UI.",
+						"Moved 3y3 profile editing to a YABDP4Nitro tab in the profile editor.",
+						"Removed some redundant/unnecessary settings.",
+						"Removed data json - you can now delete it.",
+						"Limited edition, quest-only, off-sale, and developer collectibles are now consistently included in the 3y3 UI.",
+						"Download All Attachments button now zips the files when downloading.",
+						"Experiment override options (Clips, Soundmoji experiments) no longer put you into staff mode.",
+						"You no longer need to refresh to remove staff/experiments.",
+						"Changing min, target, max, or audio bitrate in the Quick Swapper now applies to the active stream / audio connection instantly upon pressing Apply.",
+						"Contributor badge is now red instead of being identical to the developer badge.",
+						"Fixed a bug with the Audio Clips bypass where the audio could sometimes end too early or too late by up to 10 seconds.",
+						"All kinds of Imgur URLs should now work."
+					]
+				},
+				{
+					"title": "Known Bugs/Issues",
+					"type": "progress",
+					"items": [
+						"Disabling and re-enabling the plugin may cause features to patch in slower than usual — this is intentional, for stability.",
+						"**\"Opening the `Nameplates` and `Avatar Decorations` lags!\"**, We know. That's because **Discord:tm:** loves money. Theres a lot of decorations..."
+					]
+				},
+				{
+					"title": "Extra",
+					"type": "added",
+					"items": [
+						"Added 3y3 Profile Frames.",
+						"You can now set a custom camera background \uD83E\uDD73\uD83C\uDF89\uD83C\uDF89\uD83C\uDF89!!",
+						"<@917630027477159986> joins the team for future development of the plugin!"
+					]
+				}
+			]
+		}
+	]
+},

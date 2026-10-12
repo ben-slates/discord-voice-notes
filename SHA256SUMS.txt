@@ -1,3 +1,3 @@
-8e99311d68712ded9a6f2532907930747d34553c649a2b072456aa62965972a8  discord-voice-notes.deb
-84bfc65cbff550eb620bf0b2f8cc32b72de644311386796844e6dddd9d8b6eed  discord-voice-notes-1.0.0-1-any.pkg.tar.zst
-16ba72feaddce2b0781bd7c8087dafe553949dfbb6114ce7d9a274311aef4074  DiscordVoiceNotesInstaller.exe
+c296ec7191f0038a26d1e9b908dc4d6084aa79a59d4a47b536d2638ecadddf13  discord-voice-notes.deb
+f20b2132c79f4df37b677e88cbab4d1c5d60e265f0a85fa4d2683abeffcfe3bd  discord-voice-notes-1.0.0-1-any.pkg.tar.zst
+dd2e938b7891ffe7169ebeb49bc1eae2a0ac617bb530a5054fa03e25d06551a6  DiscordVoiceNotesInstaller.exe

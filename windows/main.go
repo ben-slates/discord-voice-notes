@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-//go:embed embed/dist/* embed/plugin/*
+//go:embed embed/dist/* embed/plugin/* embed/plugins/*
 var embeddedAssets embed.FS
 
 const (
@@ -44,11 +44,12 @@ func main() {
 		fmt.Println("Select an option:")
 		fmt.Println("  [1] Install Discord Voice Notes & Vencord (Standard)")
 		fmt.Println("  [2] Install Voice Notes + Enable Free Nitro (FakeNitro)")
-		fmt.Println("  [3] Run System Diagnostics (Doctor)")
-		fmt.Println("  [4] Restore Vanilla Discord (Unpatch / Revert)")
-		fmt.Println("  [5] Exit")
+		fmt.Println("  [3] Deploy YABDP4Nitro Hybrid Plugin (BetterDiscord & Vencord)")
+		fmt.Println("  [4] Run System Diagnostics (Doctor)")
+		fmt.Println("  [5] Restore Vanilla Discord (Unpatch / Revert)")
+		fmt.Println("  [6] Exit")
 		fmt.Println("")
-		fmt.Print("Enter your choice (1-5): ")
+		fmt.Print("Enter your choice (1-6): ")
 
 		input, _ := reader.ReadString('\n')
 		choice := strings.TrimSpace(input)
@@ -59,14 +60,16 @@ func main() {
 		case "2":
 			doInstall(true, reader)
 		case "3":
-			doDoctor(reader)
+			doInstallYABDP4Nitro(reader)
 		case "4":
-			doRestore(reader)
+			doDoctor(reader)
 		case "5":
+			doRestore(reader)
+		case "6":
 			fmt.Println("\nExiting. Have a great day!")
 			return
 		default:
-			fmt.Println("\nInvalid choice. Please select 1 through 5.")
+			fmt.Println("\nInvalid choice. Please select 1 through 6.")
 			time.Sleep(1 * time.Second)
 		}
 	}
@@ -326,6 +329,50 @@ func updateSettings(enableFakeNitro bool) error {
 	return nil
 }
 
+func doInstallYABDP4Nitro(reader *bufio.Reader) {
+	fmt.Println()
+	fmt.Println("=======================================================")
+	fmt.Println(" Installing YABDP4Nitro Hybrid Plugin on Windows")
+	fmt.Println("=======================================================")
+	fmt.Println()
+
+	appData := getAppData()
+	bdPluginsDir := filepath.Join(appData, "BetterDiscord", "plugins")
+	vencordPluginsDir := filepath.Join(appData, "Vencord", "userplugins")
+
+	_ = os.MkdirAll(bdPluginsDir, 0755)
+	_ = os.MkdirAll(vencordPluginsDir, 0755)
+
+	pluginData, err := embeddedAssets.ReadFile("embed/plugins/YABDP4Nitro.plugin.js")
+	if err != nil {
+		fmt.Println("[ERROR] Failed to load embedded YABDP4Nitro plugin:", err)
+		pause(reader)
+		return
+	}
+
+	bdDest := filepath.Join(bdPluginsDir, "YABDP4Nitro.plugin.js")
+	if err := os.WriteFile(bdDest, pluginData, 0644); err != nil {
+		fmt.Println("[WARN] Could not write to BetterDiscord plugins:", err)
+	} else {
+		fmt.Println("[OK] Deployed YABDP4Nitro to BetterDiscord:", bdDest)
+	}
+
+	vcDest := filepath.Join(vencordPluginsDir, "YABDP4Nitro.plugin.js")
+	if err := os.WriteFile(vcDest, pluginData, 0644); err != nil {
+		fmt.Println("[WARN] Could not write to Vencord plugins:", err)
+	} else {
+		fmt.Println("[OK] Deployed YABDP4Nitro to Vencord:", vcDest)
+	}
+
+	fmt.Println()
+	fmt.Println("=======================================================")
+	fmt.Println(" YABDP4Nitro Installation Complete on Windows!")
+	fmt.Println(" Unlocks custom emojis, stickers, 1080p 60fps streaming,")
+	fmt.Println(" and soundmoji soundboard audio links.")
+	fmt.Println("=======================================================")
+	pause(reader)
+}
+
 func doInstall(enableFakeNitro bool, reader *bufio.Reader) {
 	fmt.Println("\n=======================================================")
 	if enableFakeNitro {
@@ -425,7 +472,7 @@ func doInstall(enableFakeNitro bool, reader *bufio.Reader) {
 }
 
 func doRestore(reader *bufio.Reader) {
-	fmt.Println("\n=======================================================")
+fmt.Println("\n=======================================================")
 	fmt.Println(" Restoring Vanilla Discord (Reverting All Patches)     ")
 	fmt.Println("=======================================================")
 
@@ -457,7 +504,7 @@ func doRestore(reader *bufio.Reader) {
 }
 
 func doDoctor(reader *bufio.Reader) {
-	fmt.Println("\n=======================================================")
+fmt.Println("\n=======================================================")
 	fmt.Println(" System Diagnostic & Doctor Check (Windows)           ")
 	fmt.Println("=======================================================")
 
