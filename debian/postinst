@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -e
+
+case "$1" in
+    configure)
+        chmod +x /usr/bin/discord-voice-notes
+        chmod -R a+rX /usr/share/discord-voice-notes
+
+        cat << 'EOF'
+================================================================
+ Discord Voice Notes for Debian Linux successfully installed!  
+================================================================
+
+Important Information:
+ 1. Discord Voice Notes does not automatically modify Discord
+    files without your explicit action.
+ 2. To verify your audio subsystem and Discord installation, run:
+       discord-voice-notes --doctor
+ 3. To set up the plugin for your current desktop user:
+       discord-voice-notes --userplugin
+ 4. To set up Vencord and the plugin automatically:
+       discord-voice-notes --setup-vencord
+ 5. To restore Discord to its original vanilla state anytime:
+       discord-voice-notes --restore
+================================================================
+EOF
+    ;;
+    abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac
+
+exit 0

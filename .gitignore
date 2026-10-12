@@ -1,0 +1,21 @@
+# Node dependencies
+node_modules/
+package-lock.json.bak
+
+# Build outputs and temporary packaging files
+/dist/
+*.deb
+*.zip
+*.tar.gz
+*.exe
+
+# Logs and cache
+*.log
+.npm/
+.cache/
+
+# OS and Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

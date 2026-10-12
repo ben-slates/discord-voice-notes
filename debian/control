@@ -1,0 +1,24 @@
+Source: discord-voice-notes
+Section: sound
+Priority: optional
+Maintainer: Discord Voice Notes Contributors <contact@discord-voice-notes.local>
+Build-Depends: debhelper-compat (= 13), nodejs (>= 18.0.0), npm
+Standards-Version: 4.6.2
+Homepage: https://github.com/Vendicated/Vencord
+
+Package: discord-voice-notes
+Architecture: all
+Depends: ${misc:Depends}, nodejs (>= 18.0.0), curl, alsa-utils | pipewire-alsa | pulseaudio-utils
+Recommends: libnotify-bin
+Suggests: dialog
+Description: Native voice message recording add-on for Discord Linux
+ Discord Voice Notes provides a non-invasive, open-source client add-on
+ enabling native voice message recording, waveform visualization, audio
+ preview, and upload integration within the official Discord Linux application.
+ .
+ Features:
+  * Audio recording via Web Audio and MediaRecorder APIs (Opus in Ogg/WebM).
+  * Real-time waveform computation and Base64 metadata encoding.
+  * Integration with Discord composer toolbar.
+  * System diagnostics tool (discord-voice-notes --doctor).
+  * 100% reversible modification and recovery tools.

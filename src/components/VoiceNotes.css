@@ -1,0 +1,155 @@
+/* Discord Voice Notes UI Styles */
+
+.dvn-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background: var(--background-secondary, #2b2d31);
+    border: 1px solid var(--background-tertiary, #1e1f22);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    margin-bottom: 8px;
+    user-select: none;
+    font-family: var(--font-primary, "gg sans", "Noto Sans", "Helvetica Neue", Helvetica, Arial, sans-serif);
+    color: var(--text-normal, #dbdee1);
+}
+
+.dvn-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.dvn-recording-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.dvn-pulse-dot {
+    width: 12px;
+    height: 12px;
+    background-color: var(--status-danger, #f23f43);
+    border-radius: 50%;
+    animation: dvn-pulse 1.2s infinite ease-in-out;
+}
+
+@keyframes dvn-pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(242, 63, 67, 0.7);
+    }
+    70% {
+        transform: scale(1.15);
+        box-shadow: 0 0 0 8px rgba(242, 63, 67, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(242, 63, 67, 0);
+    }
+}
+
+.dvn-timer {
+    font-variant-numeric: tabular-nums;
+    font-family: monospace;
+    font-size: 15px;
+    color: var(--text-normal, #f2f3f5);
+}
+
+.dvn-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dvn-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background-color 0.17s ease, color 0.17s ease;
+    outline: none;
+}
+
+.dvn-btn-primary {
+    background-color: var(--brand-experiment, #5865f2);
+    color: #ffffff;
+}
+
+.dvn-btn-primary:hover {
+    background-color: var(--brand-experiment-560, #4752c4);
+}
+
+.dvn-btn-danger {
+    background-color: transparent;
+    color: var(--status-danger, #f23f43);
+}
+
+.dvn-btn-danger:hover {
+    background-color: rgba(242, 63, 67, 0.15);
+}
+
+.dvn-btn-secondary {
+    background-color: var(--background-tertiary, #1e1f22);
+    color: var(--text-normal, #dbdee1);
+}
+
+.dvn-btn-secondary:hover {
+    background-color: var(--background-modifier-hover, #35373c);
+}
+
+.dvn-waveform-preview {
+    display: flex;
+    align-items: center;
+    height: 36px;
+    gap: 2px;
+    background: var(--background-tertiary, #1e1f22);
+    padding: 4px 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.dvn-waveform-bar {
+    flex: 1;
+    min-width: 2px;
+    max-width: 4px;
+    background-color: var(--interactive-normal, #b5bac1);
+    border-radius: 2px;
+    transition: height 0.1s ease;
+}
+
+.dvn-waveform-bar.played {
+    background-color: var(--brand-experiment, #5865f2);
+}
+
+.dvn-error-banner {
+    padding: 8px 12px;
+    background-color: rgba(242, 63, 67, 0.15);
+    border-left: 3px solid var(--status-danger, #f23f43);
+    color: var(--text-danger, #f23f43);
+    font-size: 13px;
+    border-radius: 4px;
+}
+
+.dvn-fallback-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-muted, #949ba4);
+}
+
+.dvn-fallback-toggle input {
+    cursor: pointer;
+}

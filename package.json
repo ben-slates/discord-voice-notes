@@ -1,0 +1,39 @@
+{
+  "name": "discord-voice-notes",
+  "version": "1.0.0",
+  "description": "Discord Voice Notes add-on for Debian Linux: record, preview, and send native Discord voice messages",
+  "main": "dist/plugin/index.js",
+  "types": "dist/types/src/plugin/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "bash scripts/build.sh",
+    "test": "tsx --test tests/waveform.test.ts tests/recording.test.ts tests/protocol.test.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "package": "bash scripts/package.sh",
+    "doctor": "bash scripts/doctor.sh",
+    "clean": "rm -rf dist",
+    "restore": "bash scripts/restore-discord.sh"
+  },
+  "keywords": [
+    "discord",
+    "voice-notes",
+    "voice-messages",
+    "debian",
+    "linux",
+    "vencord",
+    "electron"
+  ],
+  "author": "Discord Voice Notes Maintainers",
+  "license": "GPL-3.0-or-later",
+  "devDependencies": {
+    "@types/node": "^26.0.1",
+    "@types/react": "^19.1.0",
+    "esbuild": "^0.28.2",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
