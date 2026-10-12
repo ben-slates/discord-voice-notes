@@ -47,10 +47,11 @@ This opens the interactive CLI menu:
 - `[1]` Install Voice Notes & Vencord (Standard)
 - `[2]` Install Voice Notes + Enable Free Nitro (FakeNitro & Profile Themes)
 - `[3]` Install Custom Themes (Kemono Friends, GGO Kirito, Akame Ga Kill)
-- `[4]` Run System Diagnostics (Doctor)
-- `[5]` Restore Vanilla Discord (Unpatch / Revert)
-- `[6]` Complete Clean Wipe (Remove All & Revert to Vanilla)
-- `[7]` Exit
+- `[4]` Install YABDP4Nitro (Hybrid Nitro Plugin - BetterDiscord / Vencord)
+- `[5]` Run System Diagnostics (Doctor)
+- `[6]` Restore Vanilla Discord (Unpatch / Revert)
+- `[7]` Complete Clean Wipe (Remove All & Revert to Vanilla)
+- `[8]` Exit
 
 #### Activation in Discord:
 - Open Discord.
@@ -68,9 +69,23 @@ For Windows 10/11 users, a standalone native Windows executable is included:
 3. Select from the interactive menu:
    - `[1]` Install Voice Notes & Vencord Runtime
    - `[2]` Install Voice Notes + Enable Free Nitro (FakeNitro)
-   - `[3]` Run Diagnostics & Doctor check
-   - `[4]` Restore Vanilla Discord (Unpatch)
-4. The tool automatically locates Discord in `%LOCALAPPDATA%\Discord\app-*`, patches it offline, enables `VoiceMessages` in Vencord settings, and configures the environment.
+   - `[3]` Install YABDP4Nitro (Hybrid Nitro Plugin for BetterDiscord / Vencord)
+   - `[4]` Run Diagnostics & Doctor check
+   - `[5]` Restore Vanilla Discord (Unpatch)
+4. The tool automatically locates Discord in `%LOCALAPPDATA%\Discord\app-*`, patches it offline, enables `VoiceMessages` in Vencord settings, deploys embedded plugins, and configures the environment.
+
+---
+
+### YABDP4Nitro (Hybrid Nitro Power Tools)
+
+This repository includes a fully merged, offline-capable build of [YABDP4Nitro](https://github.com/riolubruh/YABDP4Nitro) (`plugins/YABDP4Nitro.plugin.js`) for both Linux and Windows:
+
+- **Cross-Server Nitro Emojis**: Send custom animated and static emojis from any server without a Nitro subscription (transmits high-quality lossless PNG/GIF links automatically).
+- **Custom Stickers**: Access full-resolution custom stickers across all text channels.
+- **1080p 60FPS / Source Streaming**: Unlocks high-definition, high-framerate screensharing in voice channels and direct calls.
+- **Cross-Server Soundboard & Soundmojis**: Send soundboard sounds and soundmojis across any channel or voice call.
+- **Profile Banner & Avatar Customization**: Client-side custom avatar styling and banner rendering.
+- **Dual-Client Compatibility**: Automatically deploys to **BetterDiscord** (`~/.config/BetterDiscord/plugins/` / `%APPDATA%\BetterDiscord\plugins\`) and **Vencord** (`~/.config/Vencord/userplugins/` / `%APPDATA%\Vencord\userplugins\`).
 
 ---
 
@@ -170,41 +185,45 @@ Both `setup.sh` and the installed `discord-voice-notes` command support full CLI
 
 | Flag | Short | Action |
 |------|-------|--------|
-| `--install` | `-1`, `-i` | Standard Voice Notes & Vencord offline install |
-| `--nitro` | `-2`, `-n` | Voice Notes + auto-enable Free Nitro (FakeNitro & Profile Themes) |
-| `--themes` | `-3`, `-t` | Deploy all 4 bundled custom themes to `~/.config/Vencord/themes/` |
-| `--doctor` | `-4`, `-d` | Run system diagnostics and audio checks |
-| `--restore` | `-5`, `-r` | Restore Discord to stock vanilla state (unpatch) |
-| `--clean` | `-6`, `-c` | Complete clean wipe (restores Discord, removes Vencord, clears caches) |
-| `--non-interactive` | `-y` | Run unattended in batch mode without interactive confirmation prompts |
+| `--install` | `-1`, `-i`, `--standard` | Standard Voice Notes & Vencord offline install |
+| `--nitro` | `-2`, `-n`, `--fake-nitro` | Voice Notes + auto-enable Free Nitro (FakeNitro & Profile Themes) |
+| `--themes` | `-3`, `-t` | Deploy all 4 bundled custom themes to Vencord & BetterDiscord |
+| `--yabdp`, `--yabdp4nitro` | `-4` | Deploy YABDP4Nitro hybrid plugin (Linux & Windows cross-client) |
+| `--doctor` | `-5`, `-d`, `--diagnostics` | Run comprehensive system diagnostics and audio checks |
+| `--restore` | `-6`, `-r`, `--revert` | Restore Discord to stock vanilla state (unpatch) |
+| `--clean` | `-7`, `-c`, `--wipe` | Complete clean wipe (restores Discord, removes Vencord, clears caches) |
+| `--non-interactive` | `-y`, `--yes` | Run unattended in batch mode without interactive confirmation prompts |
 | `--help` | `-h` | Display complete help and usage documentation |
 
 ---
 
-## Custom Themes
+## Custom Themes (Full GGO Engine & DM Transparency)
 
-The repository includes pre-configured, modernized themes in `themes/`:
+All four themes in `themes/` are built on the proven **GGO Kirito glass engine** and share full transparency architecture across all views:
 
+- **Complete Direct Message (DM) Transparency**: Fully fixes the DM tab side panel, friends list, and private conversation views so wallpapers display seamlessly without solid pitch-black overlays (`.homeWrapper__0920e`, `#app-mount .privateChannels`, and `.sidebar_c48ade` are 100% translucent).
+- **High-Contrast Text Readability**: Enforces bright white typography (`--text-normal: #ffffff`) with subtle drop shadows (`text-shadow: 0 1px 2px rgba(0,0,0,0.7)`), guaranteeing message clarity over any background image.
+- **Server Channels & Members Slider**: Smooth hover slide animation for member lists, translucent category headers, and animated voice chat speaking indicators.
+- **Translucent Popouts & Profiles**: Glass modal windows and user profile cards with custom accent palettes.
+
+### Available Themes:
 - **New Kemono Friends Theme (`themes/NewKemonoFriends.theme.css`)**:
-  - Fully compatible with modern Discord builds and Visual Refresh.
-  - Fixes CSP ("unknown source") image loading issues with direct reliable hosting and universal CSS background hooks.
-
+  - Warm Japari Park amber & rose palette (`#ff7b54` / `rgba(204, 102, 119, 0.6)`).
+  - High-res Kemono Friends anime wallpaper with full DM panel transparency.
 - **GGO Kirito Theme (`themes/GGOKirito.theme.css`)**:
-  - Fully inlined and offline-ready (removes brittle `raw.githack.com` external `@import`).
-  - Bundles the 2834×1464 high-resolution GGO Kirito background locally to bypass Discord CSP errors.
-
+  - Crimson sniper aesthetic with Kirito & Death Gun battle wallpaper (`red` / `rgba(100, 0, 0, 0.6)`).
+  - High-res 2834×1464 background with zero external CDN dependencies.
 - **Old Akame Ga Kill Theme (`themes/OldAkameGaKill.theme.css`)**:
-  - Classic Akame Ga Kill dark aesthetic updated for modern Discord & Visual Refresh.
-  - Bundles the 1920×1080 background locally without external CDN dependencies.
-
+  - Assassin crimson & shadow noir palette (`#e63946` / `rgba(150, 20, 30, 0.6)`).
+  - High-res 1920×1080 Akame wallpaper with modernized visual refresh support.
 - **New Akame Ga Kill! Theme (`themes/NewAkameGaKill.theme.css`)**:
-  - Modernized Akame Ga Kill theme with enhanced transparency and custom accent colors.
-  - Bundles the 2000×1200 background asset locally.
+  - Night Raid Murasame ruby & dark blood palette (`#ff0055` / `rgba(160, 0, 50, 0.6)`).
+  - High-res 2000×1200 background asset with custom glass transparency.
 
 ### How to Install Themes:
-- **Automatic**: Run `sudo ./setup.sh --themes` (or select Option 3 in the interactive menu).
-- **Manual**: Copy any `.theme.css` file into `~/.config/Vencord/themes/` (Linux) or `%APPDATA%\Vencord\themes\` (Windows).
-- In Discord, go to **User Settings** -> **Vencord** -> **Themes** and toggle on your desired theme.
+- **Automatic**: Run `sudo ./setup.sh --themes` (or select Option `[3]` in the interactive menu). Deploys automatically to both Vencord (`~/.config/Vencord/themes/`) and BetterDiscord (`~/.config/BetterDiscord/themes/`).
+- **Manual**: Copy any `.theme.css` file into your themes folder.
+- In Discord, go to **User Settings** -> **Vencord** (or **BetterDiscord**) -> **Themes** and toggle on your desired theme. Press `Ctrl+R` to reload.
 
 ---
 
