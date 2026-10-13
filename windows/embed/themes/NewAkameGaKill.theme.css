@@ -244,9 +244,18 @@ body,
         #app-mount .childWrapper__6e9f8 ,#app-mount .circleIconButton__5bc7e {background-color: var(--secondary1-colour);}
         #app-mount .childWrapper__6e9f8:hover ,#app-mount .circleIconButton__5bc7e:hover {background-color: var(--primary3-colour);}
 
-    /*Server Folders*/
-        #app-mount .folderGroup__48112 .folderGroupBackground__48112 { 
-            background-color: var(--secondary3-colour); 
+    /*Server Folders (Collapsed & Opened / Expanded)*/
+        #app-mount [class*="folderGroupBackground"],
+        #app-mount [class*="expandedFolderBackground"],
+        #app-mount .folderGroup__48112 .folderGroupBackground__48112,
+        #app-mount .expandedFolderBackground__48112,
+        #app-mount [class*="folder_"] [class*="folderIconWrapper"],
+        #app-mount [class*="closedFolderIconWrapper"],
+        #app-mount [class*="expandedFolderIconWrapper"],
+        #app-mount [class*="folderGroup_"],
+        #app-mount [class*="folder_"] { 
+            background: transparent !important; 
+            background-color: transparent !important; 
         }
         
     /*Server Boosting*/
