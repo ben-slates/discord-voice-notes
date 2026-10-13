@@ -35,6 +35,18 @@ html.vc-has-active-theme {
     --voice-call-background: transparent !important;
     --call-background: transparent !important;
     --voice-empty-state-background: transparent !important;
+    --background-primary: transparent !important;
+    --background-secondary: transparent !important;
+    --background-secondary-alt: transparent !important;
+    --background-tertiary: transparent !important;
+    --background-floating: rgba(0, 0, 0, 0.6) !important;
+    --bg-base-primary: transparent !important;
+    --bg-base-secondary: transparent !important;
+    --bg-base-tertiary: transparent !important;
+    --bg-surface-raised: rgba(0, 0, 0, 0.4) !important;
+    --bg-surface-overlay: rgba(0, 0, 0, 0.5) !important;
+    --channel-container: transparent !important;
+    --chat-background: transparent !important;
 }
 
 /* Server icon sidebar */
@@ -179,7 +191,25 @@ html.vc-has-active-theme [class*="prompt_"][class*="stage_"] {
     background-image: none !important;
 }
 
-/* Remove solid dark navy/purple/black gradient overlays that block wallpaper in voice calls and voice channels */
+/* Annihilate solid dark navy/purple/black gradient overlays that block wallpaper in voice calls and voice channels */
+html.vc-has-active-theme [class*="pulseGradient"],
+html.vc-has-active-theme [class*="pulseGradient_"],
+html.vc-has-active-theme .pulseGradient__11664,
+html.vc-has-active-theme [class*="gradientContainer"],
+html.vc-has-active-theme [class*="gradientContainer_"],
+html.vc-has-active-theme [class*="videoBackground"],
+html.vc-has-active-theme [class*="videoBackground_"],
+html.vc-has-active-theme [class*="gradient_"]:not([class*="banner"]):not([class*="badge"]),
+html.vc-has-active-theme [class*="idle_"] [class*="gradient_"],
+html.vc-has-active-theme [class*="callContainer"] [class*="gradientContainer"],
+html.vc-has-active-theme [class*="callContainer"] [class*="pulseGradient"],
+html.vc-has-active-theme [class*="voiceChannel"] [class*="gradientContainer"],
+html.vc-has-active-theme [class*="voiceChannel"] [class*="pulseGradient"] {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
 html.vc-has-active-theme [class*="gradientContainer"],
 html.vc-has-active-theme [class*="gradientContainer_"],
 html.vc-has-active-theme [class*="pulseGradient_"],

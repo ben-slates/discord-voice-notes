@@ -671,6 +671,18 @@ html.vc-has-active-theme {
     --voice-call-background: transparent !important;
     --call-background: transparent !important;
     --voice-empty-state-background: transparent !important;
+    --background-primary: transparent !important;
+    --background-secondary: transparent !important;
+    --background-secondary-alt: transparent !important;
+    --background-tertiary: transparent !important;
+    --background-floating: rgba(0, 0, 0, 0.6) !important;
+    --bg-base-primary: transparent !important;
+    --bg-base-secondary: transparent !important;
+    --bg-base-tertiary: transparent !important;
+    --bg-surface-raised: rgba(0, 0, 0, 0.4) !important;
+    --bg-surface-overlay: rgba(0, 0, 0, 0.5) !important;
+    --channel-container: transparent !important;
+    --chat-background: transparent !important;
 }
 
 /* Server icon sidebar */
@@ -815,7 +827,25 @@ html.vc-has-active-theme [class*="prompt_"][class*="stage_"] {
     background-image: none !important;
 }
 
-/* Remove solid dark navy/purple/black gradient overlays that block wallpaper in voice calls and voice channels */
+/* Annihilate solid dark navy/purple/black gradient overlays that block wallpaper in voice calls and voice channels */
+html.vc-has-active-theme [class*="pulseGradient"],
+html.vc-has-active-theme [class*="pulseGradient_"],
+html.vc-has-active-theme .pulseGradient__11664,
+html.vc-has-active-theme [class*="gradientContainer"],
+html.vc-has-active-theme [class*="gradientContainer_"],
+html.vc-has-active-theme [class*="videoBackground"],
+html.vc-has-active-theme [class*="videoBackground_"],
+html.vc-has-active-theme [class*="gradient_"]:not([class*="banner"]):not([class*="badge"]),
+html.vc-has-active-theme [class*="idle_"] [class*="gradient_"],
+html.vc-has-active-theme [class*="callContainer"] [class*="gradientContainer"],
+html.vc-has-active-theme [class*="callContainer"] [class*="pulseGradient"],
+html.vc-has-active-theme [class*="voiceChannel"] [class*="gradientContainer"],
+html.vc-has-active-theme [class*="voiceChannel"] [class*="pulseGradient"] {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
 html.vc-has-active-theme [class*="gradientContainer"],
 html.vc-has-active-theme [class*="gradientContainer_"],
 html.vc-has-active-theme [class*="pulseGradient_"],
@@ -1109,12 +1139,25 @@ const themeVoiceSectionCss = `/* ===============================================
     --voice-call-background: transparent !important;
     --call-background: transparent !important;
     --voice-empty-state-background: transparent !important;
+    --background-primary: transparent !important;
+    --background-secondary: transparent !important;
+    --background-secondary-alt: transparent !important;
+    --background-tertiary: transparent !important;
+    --background-floating: rgba(0, 0, 0, 0.6) !important;
+    --bg-base-primary: transparent !important;
+    --bg-base-secondary: transparent !important;
+    --bg-base-tertiary: transparent !important;
+    --bg-surface-raised: rgba(0, 0, 0, 0.4) !important;
+    --bg-surface-overlay: rgba(0, 0, 0, 0.5) !important;
+    --channel-container: transparent !important;
+    --chat-background: transparent !important;
 }
 
 /* 1. Main Call, Video Grid, Stage, Voice Screen & Lobby Containers (Connected & Disconnected) */
 #app-mount .callContainer_cb9592,
 #app-mount .callContainer__37e49,
 #app-mount .callContainer_d880dc,
+#app-mount [class*="callContainer_"],
 #app-mount [class*="callContainer"],
 #app-mount [class*="callContainer"] [class*="root_"],
 #app-mount [class*="callContainer"] > div,
@@ -1199,32 +1242,71 @@ const themeVoiceSectionCss = `/* ===============================================
 #app-mount [class*="stagePrompt_"],
 #app-mount [class*="stageCard_"],
 #app-mount [class*="stageParticipant_"],
-#app-mount [class*="prompt_"][class*="stage_"] {
+#app-mount [class*="prompt_"][class*="stage_"],
+#app-mount [class*="chat_"],
+#app-mount [class*="chatContent_"],
+#app-mount [class*="pageWrapper_"],
+#app-mount [class*="content_"]:not([class*="sidebar"]):not([class*="panels_"]) {
     background: transparent !important;
     background-color: transparent !important;
     background-image: none !important;
 }
 
-/* Remove solid dark navy/purple/black gradient overlays that block wallpaper in voice calls and voice channels */
-#app-mount [class*="gradientContainer"],
-#app-mount [class*="gradientContainer_"],
+/* Annihilate pulse gradient & video background overlays */
+#app-mount [class*="pulseGradient"],
 #app-mount [class*="pulseGradient_"],
 #app-mount .pulseGradient__11664,
+#app-mount [class*="gradientContainer"],
+#app-mount [class*="gradientContainer_"],
+#app-mount [class*="videoBackground"],
+#app-mount [class*="videoBackground_"],
+#app-mount [class*="gradient_"]:not([class*="banner"]):not([class*="badge"]),
+#app-mount [class*="idle_"] [class*="gradient_"],
+#app-mount [class*="callContainer"] [class*="gradientContainer"],
+#app-mount [class*="callContainer"] [class*="pulseGradient"],
+#app-mount [class*="voiceChannel"] [class*="gradientContainer"],
+#app-mount [class*="voiceChannel"] [class*="pulseGradient"] {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+/* Remove solid dark navy/purple/black gradient overlays that block wallpaper in voice calls and voice channels */
 #app-mount [class*="background_"][class*="video_"],
 #app-mount [class*="idle"][class*="gradientContainer"],
 #app-mount [class*="idle_"][class*="gradientContainer_"],
-#app-mount [class*="callContainer"] [class*="gradientContainer"],
 #app-mount [class*="callContainer"] [class*="idle_"],
 #app-mount [class*="callContainer"] canvas,
-#app-mount [class*="callContainer"] [class*="videoBackground"],
-#app-mount [class*="callContainer"] [class*="videoBackground_"],
 #app-mount [class*="callContainer"] [class*="background_"]:not([class*="tile"]):not([class*="user"]):not([class*="avatar"]),
-#app-mount [class*="voiceChannel"] [class*="gradientContainer"],
 #app-mount [class*="voiceChannel"] [class*="background_"],
 #app-mount [class*="voiceChannel"] canvas {
     background: transparent !important;
     background-color: transparent !important;
     background-image: none !important;
+}
+
+/* Modern Top Navigation & Channel Header Bar */
+#app-mount section[class*="title_"],
+#app-mount [class*="title_"][class*="container_"],
+#app-mount [class*="themed_"][class*="container_"],
+#app-mount [class*="subtitleContainer_"],
+#app-mount [class*="headerBar_"]:not([class*="shop"]),
+#app-mount [class*="children_"][class*="title_"] {
+    background: rgba(0, 0, 0, 0.22) !important;
+    background-color: rgba(0, 0, 0, 0.22) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Modern User Panel at bottom-left */
+#app-mount [class*="panels_"],
+#app-mount section[class*="panels_"],
+#app-mount .panels__5e434 {
+    background-color: rgba(0, 0, 0, 0.28) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 /* 2. User Boxes & Participant Tiles (Connected & in Voice Views) */
@@ -1287,6 +1369,15 @@ const themeVoiceSectionCss = `/* ===============================================
     -webkit-backdrop-filter: blur(14px) !important;
     border: 1px solid rgba(255, 255, 255, 0.12) !important;
     border-radius: 12px !important;
+}
+
+/* Voice Channel empty state text readability */
+#app-mount [class*="voiceChannel_"] h2,
+#app-mount [class*="voiceChannel_"] [class*="title_"],
+#app-mount [class*="callContainer"] h2,
+#app-mount [class*="callContainer"] [class*="title_"] {
+    color: #ffffff !important;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85) !important;
 }
 
 /* 3. Voice call bottom controls & floating action bars */
@@ -1364,6 +1455,37 @@ for (const dir of themeDirs) {
         }
     }
     console.log(`[inject] Updated theme files in ${dir}`);
+}
+
+// Deploy updated themes and vencord dist to live config directories (~/.config/Vencord & ~/.config/BetterDiscord)
+const targetHomes = ['/home/admin', '/home/ben', process.env.HOME].filter(Boolean);
+for (const h of new Set(targetHomes)) {
+    const vcThemes = path.join(h, '.config/Vencord/themes');
+    if (fs.existsSync(vcThemes)) {
+        const srcDir = path.join(__dirname, '../themes');
+        for (const f of fs.readdirSync(srcDir).filter(x => x.endsWith('.theme.css'))) {
+            fs.copyFileSync(path.join(srcDir, f), path.join(vcThemes, f));
+        }
+        console.log(`[deploy] Deployed 83 themes to ${vcThemes}`);
+    }
+    const bdThemes = path.join(h, '.config/BetterDiscord/themes');
+    if (fs.existsSync(bdThemes)) {
+        const srcDir = path.join(__dirname, '../themes');
+        for (const f of fs.readdirSync(srcDir).filter(x => x.endsWith('.theme.css'))) {
+            fs.copyFileSync(path.join(srcDir, f), path.join(bdThemes, f));
+        }
+        console.log(`[deploy] Deployed 83 themes to ${bdThemes}`);
+    }
+    const vcDist = path.join(h, '.config/Vencord/dist');
+    if (fs.existsSync(vcDist)) {
+        const distSrc = path.join(__dirname, '../vencord/dist');
+        for (const f of ['renderer.css', 'renderer.js']) {
+            if (fs.existsSync(path.join(distSrc, f))) {
+                fs.copyFileSync(path.join(distSrc, f), path.join(vcDist, f));
+            }
+        }
+        console.log(`[deploy] Deployed renderer files to ${vcDist}`);
+    }
 }
 
 console.log("[inject-custom-plugins] All components updated successfully!");
