@@ -423,78 +423,70 @@ body,
                 /* =======================================================================
    Complete Voice Channel, Stage & Video Call Transparency & Theming
    ======================================================================= */
-/* 1. Main Call, Video Grid, Stage & Voice Containers (Connected) */
+/* Discord native voice & call variables override */
+:root,
+.theme-dark,
+.theme-light,
+#app-mount {
+    --voice-video-background: transparent !important;
+    --voice-video-tile-background: rgba(0, 0, 0, 0.35) !important;
+    --voice-video-tile-blur-fallback: rgba(0, 0, 0, 0.35) !important;
+    --voice-channel-background: transparent !important;
+    --voice-grid-background: transparent !important;
+    --voice-call-background: transparent !important;
+    --call-background: transparent !important;
+    --voice-empty-state-background: transparent !important;
+}
+
+/* 1. Main Call, Video Grid, Stage, Voice Screen & Lobby Containers (Connected & Disconnected) */
 #app-mount .callContainer_cb9592,
 #app-mount .callContainer__37e49,
 #app-mount .callContainer_d880dc,
 #app-mount [class*="callContainer"],
 #app-mount [class*="callContainer"] [class*="root_"],
+#app-mount [class*="callContainer"] > div,
+#app-mount [class*="callContainer"] [class*="wrapper_"],
+#app-mount [class*="callContainer"] [class*="center_"],
+#app-mount [class*="callContainer"] [class*="container_"],
+#app-mount [class*="callContainer"] [class*="scroller_"],
+#app-mount [class*="callContainer"] [class*="scrollerBase_"],
+#app-mount [class*="callContainer"] [class*="idle_"],
+#app-mount [class*="callContainer"] [class*="overlay_"],
+#app-mount [class*="callContainer"] [class*="gradientContainer"],
+#app-mount [class*="callContainer"] [class*="gradientContainer_"],
+#app-mount [class*="callContainer"] [class*="pulseGradient_"],
+#app-mount [class*="callContainer"] [class*="videoBackground"],
+#app-mount [class*="callContainer"] [class*="videoBackground_"],
+#app-mount [class*="callContainer"] [class*="video_"],
+#app-mount [class*="callContainer"] [class*="videoGrid"],
+#app-mount [class*="callContainer"] [class*="videoGrid_"],
+#app-mount [class*="callContainer"] [class*="videoWrapper"],
+#app-mount [class*="callContainer"] [class*="videoWrapper_"],
+#app-mount [class*="callContainer"] canvas,
 #app-mount [class*="wrapper_"][class*="video_"],
 #app-mount [class*="videoGridWrapper"],
 #app-mount [class*="videoGrid_"],
 #app-mount [class*="videoGrid"],
 #app-mount [class*="videoWrapper_"],
 #app-mount [class*="videoWrapper"],
+#app-mount [class*="overviewContainer_"],
 #app-mount [class*="overviewContainer"],
 #app-mount [class*="overviewContainerNoVideo"],
 #app-mount [class*="overviewContainerWithVideo"],
-#app-mount [class*="stageSection"],
 #app-mount [class*="stageSection_"],
-#app-mount [class*="stageContainer"],
+#app-mount [class*="stageSection"],
 #app-mount [class*="stageContainer_"],
-#app-mount [class*="scrollerBase"]:has([class*="videoGrid"]),
+#app-mount [class*="stageContainer"],
 #app-mount [class*="scrollerBase_"]:has([class*="videoGrid"]),
 #app-mount [class*="scroller_"][class*="camera_"],
 #app-mount [class*="container_"]:has([class*="callContainer"]),
 #app-mount [class*="chat_"]:has([class*="callContainer"]),
 #app-mount [class*="channelChatWrapper_"],
-#app-mount [class*="chatContent_"]:has([class*="callContainer"]) {
-    background: transparent !important;
-    background-color: transparent !important;
-}
-
-/* 2. User Boxes & Participant Tiles (Connected & in Voice Views) */
-#app-mount [class*="callContainer"] [class*="tile_"],
-#app-mount [class*="callContainer"] [class*="tileChild_"],
-#app-mount [class*="videoGrid"] [class*="tile_"],
-#app-mount [class*="videoGrid_"] [class*="tile_"],
-#app-mount [class*="tile_"],
-#app-mount [class*="tileChild_"],
-#app-mount [class*="tileInner_"],
-#app-mount [class*="userTile_"],
-#app-mount [class*="videoTile_"],
-#app-mount [class*="tile__72090"],
-#app-mount [data-selenium-video-tile],
-#app-mount [class*="root_"][class*="tile_"],
-#app-mount [class*="flex_"][class*="tile_"],
-#app-mount [class*="speaking_"],
-#app-mount [class*="voiceUser_"],
-#app-mount [class*="voiceUsers_"] [class*="user_"],
-#app-mount [class*="voiceUsers_"] [class*="tile_"],
-#app-mount [class*="voiceUsers_"] [class*="userTile_"],
-#app-mount [class*="voiceUsers_"] [class*="card_"] {
-    background-color: rgba(0, 0, 0, 0.32) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    border-radius: 8px !important;
-}
-
-/* Clear solid opaque inner backgrounds inside user boxes / tiles */
-#app-mount [class*="tile_"] [class*="background_"],
-#app-mount [class*="tileChild_"] [class*="background_"],
-#app-mount [class*="tileInner_"] [class*="background_"],
-#app-mount [class*="userTile_"] [class*="background_"],
-#app-mount [class*="videoTile_"] [class*="background_"],
-#app-mount [class*="tileChild_"] > div:not([class*="overlay_"]):not([class*="indicators_"]):not([class*="status_"]),
-#app-mount [class*="videoGrid_"] [class*="background_"],
-#app-mount [class*="videoWrapper_"] [class*="background_"],
-#app-mount [class*="callContainer"] [class*="background_"] {
-    background: transparent !important;
-    background-color: transparent !important;
-}
-
-/* 3. Voice Box when Not Connected (Lobby, Preview, Prompt, Empty State, Stage Cards, Users List) */
+#app-mount [class*="chatContent_"]:has([class*="callContainer"]),
+#app-mount [class*="chat_"]:has([class*="video_"]),
+#app-mount [class*="chatContent_"]:has([class*="video_"]),
+#app-mount [class*="chat_"]:has([class*="videoGrid"]),
+#app-mount [class*="chatContent_"]:has([class*="videoGrid"]),
 #app-mount [class*="wrapper_"]:has([class*="voiceChannel_"]),
 #app-mount [class*="container_"]:has([class*="voiceChannel_"]),
 #app-mount [class*="chat_"]:has([class*="voiceChannel_"]),
@@ -508,7 +500,6 @@ body,
 #app-mount [class*="voiceChannel_"] [class*="inner_"],
 #app-mount [class*="voiceChannel_"] [class*="center_"],
 #app-mount [class*="voiceChannel_"] [class*="scroller_"],
-#app-mount [class*="voiceChannel_"] [class*="emptyState_"],
 #app-mount [class*="voiceChannel_"] [class*="lobby_"],
 #app-mount [class*="voiceChannel_"] [class*="panel_"],
 #app-mount [class*="voiceChannel_"] [class*="previewWrapper_"],
@@ -538,35 +529,94 @@ body,
 #app-mount [class*="prompt_"][class*="stage_"] {
     background: transparent !important;
     background-color: transparent !important;
+    background-image: none !important;
 }
 
-/* Translucent glass for voice channel lobby / preview card when not connected */
-#app-mount [class*="voiceChannel_"] [class*="card_"],
-#app-mount [class*="voiceChannel_"] [class*="emptyState_"],
-#app-mount [class*="voiceChannelCard_"],
-#app-mount [class*="stageCard_"],
-#app-mount [class*="stagePrompt_"] {
-    background-color: rgba(0, 0, 0, 0.3) !important;
-    backdrop-filter: blur(14px) !important;
-    -webkit-backdrop-filter: blur(14px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    border-radius: 12px !important;
-}
-
-/* 4. Hide solid gradient overlays that darken or obscure voice calls */
+/* Remove solid dark navy/purple/black gradient overlays that block wallpaper in voice calls and voice channels */
 #app-mount [class*="gradientContainer"],
 #app-mount [class*="gradientContainer_"],
 #app-mount [class*="pulseGradient_"],
 #app-mount .pulseGradient__11664,
 #app-mount [class*="background_"][class*="video_"],
 #app-mount [class*="idle"][class*="gradientContainer"],
-#app-mount [class*="gradient_"] {
+#app-mount [class*="idle_"][class*="gradientContainer_"],
+#app-mount [class*="callContainer"] [class*="gradientContainer"],
+#app-mount [class*="callContainer"] [class*="idle_"],
+#app-mount [class*="callContainer"] canvas,
+#app-mount [class*="callContainer"] [class*="videoBackground"],
+#app-mount [class*="callContainer"] [class*="videoBackground_"],
+#app-mount [class*="callContainer"] [class*="background_"]:not([class*="tile"]):not([class*="user"]):not([class*="avatar"]),
+#app-mount [class*="voiceChannel"] [class*="gradientContainer"],
+#app-mount [class*="voiceChannel"] [class*="background_"],
+#app-mount [class*="voiceChannel"] canvas {
     background: transparent !important;
     background-color: transparent !important;
-    opacity: 0 !important;
+    background-image: none !important;
 }
 
-/* 5. Voice call bottom controls & floating action bars */
+/* 2. User Boxes & Participant Tiles (Connected & in Voice Views) */
+#app-mount [class*="callContainer"] [class*="tile_"],
+#app-mount [class*="callContainer"] [class*="tileChild_"],
+#app-mount [class*="videoGrid"] [class*="tile_"],
+#app-mount [class*="videoGrid_"] [class*="tile_"],
+#app-mount [class*="tile_"]:not([class*="emoji"]):not([class*="sticker"]):not([class*="reaction"]):not([class*="item"]):not([class*="icon"]),
+#app-mount [class*="tileChild_"],
+#app-mount [class*="tileInner_"],
+#app-mount [class*="userTile_"],
+#app-mount [class*="videoTile_"],
+#app-mount [class*="tile__72090"],
+#app-mount [data-selenium-video-tile],
+#app-mount [class*="root_"][class*="tile_"],
+#app-mount [class*="flex_"][class*="tile_"],
+#app-mount [class*="voiceUser_"],
+#app-mount [class*="voiceUsers_"] [class*="user_"],
+#app-mount [class*="voiceUsers_"] [class*="tile_"],
+#app-mount [class*="voiceUsers_"] [class*="userTile_"],
+#app-mount [class*="voiceUsers_"] [class*="card_"],
+#app-mount [class*="participant_"],
+#app-mount [class*="participantTile_"],
+#app-mount [class*="participantCard_"] {
+    background: rgba(0, 0, 0, 0.35) !important;
+    background-color: rgba(0, 0, 0, 0.35) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Clear solid opaque inner backgrounds inside user boxes / tiles so glass shows through */
+#app-mount [class*="tile_"] [class*="background_"],
+#app-mount [class*="tileChild_"] [class*="background_"],
+#app-mount [class*="tileInner_"] [class*="background_"],
+#app-mount [class*="userTile_"] [class*="background_"],
+#app-mount [class*="videoTile_"] [class*="background_"],
+#app-mount [class*="tileChild_"] > div:not([class*="overlay_"]):not([class*="indicators_"]):not([class*="status_"]):not([class*="avatar_"]):not([class*="avatarWrapper_"]),
+#app-mount [class*="videoGrid_"] [class*="background_"],
+#app-mount [class*="videoWrapper_"] [class*="background_"],
+#app-mount [class*="callContainer"] [class*="tile_"] [class*="background_"],
+#app-mount [class*="callContainer"] [class*="background_"] {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+}
+
+/* Translucent glass for voice channel lobby / preview card / stage card when not connected */
+#app-mount [class*="voiceChannel_"] [class*="card_"],
+#app-mount [class*="voiceChannel_"] [class*="emptyState_"],
+#app-mount [class*="voiceChannelCard_"],
+#app-mount [class*="voiceCard_"],
+#app-mount [class*="stageCard_"],
+#app-mount [class*="stagePrompt_"] {
+    background: rgba(0, 0, 0, 0.3) !important;
+    background-color: rgba(0, 0, 0, 0.3) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 12px !important;
+}
+
+/* 3. Voice call bottom controls & floating action bars */
 #app-mount [class*="bottomControls"],
 #app-mount [class*="bottomControls_"],
 #app-mount [class*="videoControls"],
@@ -578,13 +628,12 @@ body,
     background-color: transparent !important;
 }
 
-/* 6. Sidebar active voice connection panel */
+/* 4. Sidebar active voice connection panel */
 #app-mount [class*="connection_"],
 #app-mount [class*="voiceUsersList_"],
 #app-mount [class*="container_"]:has([class*="connection_"]) {
     background-color: transparent !important;
 }
-
 /*Noise Suporession*/
                 #app-mount .noiseCancellationPopout_e131a9 { background-color: var(--secondary3-colour); }
 

@@ -25,6 +25,18 @@ html.vc-has-active-theme .container__5c7e7 {
     background-color: transparent !important;
 }
 
+/* Discord native voice & call variables override */
+html.vc-has-active-theme {
+    --voice-video-background: transparent !important;
+    --voice-video-tile-background: rgba(0, 0, 0, 0.35) !important;
+    --voice-video-tile-blur-fallback: rgba(0, 0, 0, 0.35) !important;
+    --voice-channel-background: transparent !important;
+    --voice-grid-background: transparent !important;
+    --voice-call-background: transparent !important;
+    --call-background: transparent !important;
+    --voice-empty-state-background: transparent !important;
+}
+
 /* Server icon sidebar */
 html.vc-has-active-theme .guilds__5e434,
 html.vc-has-active-theme .wrapper_ef3116,
@@ -72,10 +84,32 @@ html.vc-has-active-theme [class*="members_"] {
     background-color: transparent !important;
 }
 
-/* Voice Call, Stage, Video Grid & Overview Containers (Connected) */
+/* Voice Call, Stage, Video Grid, Voice Screen & Lobby Containers (Connected & Disconnected) */
+html.vc-has-active-theme .callContainer_cb9592,
+html.vc-has-active-theme .callContainer__37e49,
+html.vc-has-active-theme .callContainer_d880dc,
 html.vc-has-active-theme [class*="callContainer_"],
-html.vc-has-active-theme [class*="callContainer__"],
 html.vc-has-active-theme [class*="callContainer"],
+html.vc-has-active-theme [class*="callContainer"] [class*="root_"],
+html.vc-has-active-theme [class*="callContainer"] > div,
+html.vc-has-active-theme [class*="callContainer"] [class*="wrapper_"],
+html.vc-has-active-theme [class*="callContainer"] [class*="center_"],
+html.vc-has-active-theme [class*="callContainer"] [class*="container_"],
+html.vc-has-active-theme [class*="callContainer"] [class*="scroller_"],
+html.vc-has-active-theme [class*="callContainer"] [class*="scrollerBase_"],
+html.vc-has-active-theme [class*="callContainer"] [class*="idle_"],
+html.vc-has-active-theme [class*="callContainer"] [class*="overlay_"],
+html.vc-has-active-theme [class*="callContainer"] [class*="gradientContainer"],
+html.vc-has-active-theme [class*="callContainer"] [class*="gradientContainer_"],
+html.vc-has-active-theme [class*="callContainer"] [class*="pulseGradient_"],
+html.vc-has-active-theme [class*="callContainer"] [class*="videoBackground"],
+html.vc-has-active-theme [class*="callContainer"] [class*="videoBackground_"],
+html.vc-has-active-theme [class*="callContainer"] [class*="video_"],
+html.vc-has-active-theme [class*="callContainer"] [class*="videoGrid"],
+html.vc-has-active-theme [class*="callContainer"] [class*="videoGrid_"],
+html.vc-has-active-theme [class*="callContainer"] [class*="videoWrapper"],
+html.vc-has-active-theme [class*="callContainer"] [class*="videoWrapper_"],
+html.vc-has-active-theme [class*="callContainer"] canvas,
 html.vc-has-active-theme [class*="wrapper_"][class*="video_"],
 html.vc-has-active-theme [class*="videoGridWrapper"],
 html.vc-has-active-theme [class*="videoGrid_"],
@@ -95,49 +129,11 @@ html.vc-has-active-theme [class*="scroller_"][class*="camera_"],
 html.vc-has-active-theme [class*="container_"]:has([class*="callContainer"]),
 html.vc-has-active-theme [class*="chat_"]:has([class*="callContainer"]),
 html.vc-has-active-theme [class*="channelChatWrapper_"],
-html.vc-has-active-theme [class*="chatContent_"]:has([class*="callContainer"]) {
-    background: transparent !important;
-    background-color: transparent !important;
-}
-
-/* User Boxes / Participant Tiles (Connected & in Voice Views) */
-html.vc-has-active-theme [class*="tile_"],
-html.vc-has-active-theme [class*="tileChild_"],
-html.vc-has-active-theme [class*="tileInner_"],
-html.vc-has-active-theme [class*="userTile_"],
-html.vc-has-active-theme [class*="videoTile_"],
-html.vc-has-active-theme [class*="tile__72090"],
-html.vc-has-active-theme [data-selenium-video-tile],
-html.vc-has-active-theme [class*="root_"][class*="tile_"],
-html.vc-has-active-theme [class*="flex_"][class*="tile_"],
-html.vc-has-active-theme [class*="speaking_"],
-html.vc-has-active-theme [class*="voiceUser_"],
-html.vc-has-active-theme [class*="voiceUsers_"] [class*="user_"],
-html.vc-has-active-theme [class*="voiceUsers_"] [class*="tile_"],
-html.vc-has-active-theme [class*="voiceUsers_"] [class*="userTile_"],
-html.vc-has-active-theme [class*="voiceUsers_"] [class*="card_"] {
-    background-color: rgba(0, 0, 0, 0.32) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    border-radius: 8px !important;
-}
-
-/* Clear solid opaque inner backgrounds inside user boxes / tiles */
-html.vc-has-active-theme [class*="tile_"] [class*="background_"],
-html.vc-has-active-theme [class*="tileChild_"] [class*="background_"],
-html.vc-has-active-theme [class*="tileInner_"] [class*="background_"],
-html.vc-has-active-theme [class*="userTile_"] [class*="background_"],
-html.vc-has-active-theme [class*="videoTile_"] [class*="background_"],
-html.vc-has-active-theme [class*="tileChild_"] > div:not([class*="overlay_"]):not([class*="indicators_"]):not([class*="status_"]),
-html.vc-has-active-theme [class*="videoGrid_"] [class*="background_"],
-html.vc-has-active-theme [class*="videoWrapper_"] [class*="background_"],
-html.vc-has-active-theme [class*="callContainer"] [class*="background_"] {
-    background: transparent !important;
-    background-color: transparent !important;
-}
-
-/* Voice Box when Not Connected (Voice Channel Lobby, Preview, Prompt, Empty State) */
+html.vc-has-active-theme [class*="chatContent_"]:has([class*="callContainer"]),
+html.vc-has-active-theme [class*="chat_"]:has([class*="video_"]),
+html.vc-has-active-theme [class*="chatContent_"]:has([class*="video_"]),
+html.vc-has-active-theme [class*="chat_"]:has([class*="videoGrid"]),
+html.vc-has-active-theme [class*="chatContent_"]:has([class*="videoGrid"]),
 html.vc-has-active-theme [class*="wrapper_"]:has([class*="voiceChannel_"]),
 html.vc-has-active-theme [class*="container_"]:has([class*="voiceChannel_"]),
 html.vc-has-active-theme [class*="chat_"]:has([class*="voiceChannel_"]),
@@ -151,7 +147,6 @@ html.vc-has-active-theme [class*="voiceChannel_"] [class*="body_"],
 html.vc-has-active-theme [class*="voiceChannel_"] [class*="inner_"],
 html.vc-has-active-theme [class*="voiceChannel_"] [class*="center_"],
 html.vc-has-active-theme [class*="voiceChannel_"] [class*="scroller_"],
-html.vc-has-active-theme [class*="voiceChannel_"] [class*="emptyState_"],
 html.vc-has-active-theme [class*="voiceChannel_"] [class*="lobby_"],
 html.vc-has-active-theme [class*="voiceChannel_"] [class*="panel_"],
 html.vc-has-active-theme [class*="voiceChannel_"] [class*="previewWrapper_"],
@@ -181,32 +176,92 @@ html.vc-has-active-theme [class*="stageParticipant_"],
 html.vc-has-active-theme [class*="prompt_"][class*="stage_"] {
     background: transparent !important;
     background-color: transparent !important;
+    background-image: none !important;
 }
 
-/* Translucent glass for voice channel lobby / preview card when not connected */
-html.vc-has-active-theme [class*="voiceChannel_"] [class*="card_"],
-html.vc-has-active-theme [class*="voiceChannel_"] [class*="emptyState_"],
-html.vc-has-active-theme [class*="voiceChannelCard_"],
-html.vc-has-active-theme [class*="stageCard_"],
-html.vc-has-active-theme [class*="stagePrompt_"] {
-    background-color: rgba(0, 0, 0, 0.3) !important;
-    backdrop-filter: blur(14px) !important;
-    -webkit-backdrop-filter: blur(14px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    border-radius: 12px !important;
-}
-
-/* Hide solid gradient overlays that darken voice calls / voice channel views */
+/* Remove solid dark navy/purple/black gradient overlays that block wallpaper in voice calls and voice channels */
 html.vc-has-active-theme [class*="gradientContainer"],
 html.vc-has-active-theme [class*="gradientContainer_"],
 html.vc-has-active-theme [class*="pulseGradient_"],
 html.vc-has-active-theme .pulseGradient__11664,
 html.vc-has-active-theme [class*="background_"][class*="video_"],
 html.vc-has-active-theme [class*="idle"][class*="gradientContainer"],
-html.vc-has-active-theme [class*="gradient_"] {
+html.vc-has-active-theme [class*="idle_"][class*="gradientContainer_"],
+html.vc-has-active-theme [class*="callContainer"] [class*="gradientContainer"],
+html.vc-has-active-theme [class*="callContainer"] [class*="idle_"],
+html.vc-has-active-theme [class*="callContainer"] canvas,
+html.vc-has-active-theme [class*="callContainer"] [class*="videoBackground"],
+html.vc-has-active-theme [class*="callContainer"] [class*="videoBackground_"],
+html.vc-has-active-theme [class*="callContainer"] [class*="background_"]:not([class*="tile"]):not([class*="user"]):not([class*="avatar"]),
+html.vc-has-active-theme [class*="voiceChannel"] [class*="gradientContainer"],
+html.vc-has-active-theme [class*="voiceChannel"] [class*="background_"],
+html.vc-has-active-theme [class*="voiceChannel"] canvas {
     background: transparent !important;
     background-color: transparent !important;
-    opacity: 0 !important;
+    background-image: none !important;
+}
+
+/* User Boxes / Participant Tiles (Connected & in Voice Views) */
+html.vc-has-active-theme [class*="callContainer"] [class*="tile_"],
+html.vc-has-active-theme [class*="callContainer"] [class*="tileChild_"],
+html.vc-has-active-theme [class*="videoGrid"] [class*="tile_"],
+html.vc-has-active-theme [class*="videoGrid_"] [class*="tile_"],
+html.vc-has-active-theme [class*="tile_"]:not([class*="emoji"]):not([class*="sticker"]):not([class*="reaction"]):not([class*="item"]):not([class*="icon"]),
+html.vc-has-active-theme [class*="tileChild_"],
+html.vc-has-active-theme [class*="tileInner_"],
+html.vc-has-active-theme [class*="userTile_"],
+html.vc-has-active-theme [class*="videoTile_"],
+html.vc-has-active-theme [class*="tile__72090"],
+html.vc-has-active-theme [data-selenium-video-tile],
+html.vc-has-active-theme [class*="root_"][class*="tile_"],
+html.vc-has-active-theme [class*="flex_"][class*="tile_"],
+html.vc-has-active-theme [class*="speaking_"],
+html.vc-has-active-theme [class*="voiceUser_"],
+html.vc-has-active-theme [class*="voiceUsers_"] [class*="user_"],
+html.vc-has-active-theme [class*="voiceUsers_"] [class*="tile_"],
+html.vc-has-active-theme [class*="voiceUsers_"] [class*="userTile_"],
+html.vc-has-active-theme [class*="voiceUsers_"] [class*="card_"],
+html.vc-has-active-theme [class*="participant_"],
+html.vc-has-active-theme [class*="participantTile_"],
+html.vc-has-active-theme [class*="participantCard_"] {
+    background: rgba(0, 0, 0, 0.35) !important;
+    background-color: rgba(0, 0, 0, 0.35) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Clear solid opaque inner backgrounds inside user boxes / tiles so glass shows through */
+html.vc-has-active-theme [class*="tile_"] [class*="background_"],
+html.vc-has-active-theme [class*="tileChild_"] [class*="background_"],
+html.vc-has-active-theme [class*="tileInner_"] [class*="background_"],
+html.vc-has-active-theme [class*="userTile_"] [class*="background_"],
+html.vc-has-active-theme [class*="videoTile_"] [class*="background_"],
+html.vc-has-active-theme [class*="tileChild_"] > div:not([class*="overlay_"]):not([class*="indicators_"]):not([class*="status_"]):not([class*="avatar_"]):not([class*="avatarWrapper_"]),
+html.vc-has-active-theme [class*="videoGrid_"] [class*="background_"],
+html.vc-has-active-theme [class*="videoWrapper_"] [class*="background_"],
+html.vc-has-active-theme [class*="callContainer"] [class*="tile_"] [class*="background_"],
+html.vc-has-active-theme [class*="callContainer"] [class*="background_"] {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+}
+
+/* Translucent glass for voice channel lobby / preview card / stage card when not connected */
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="card_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="emptyState_"],
+html.vc-has-active-theme [class*="voiceChannelCard_"],
+html.vc-has-active-theme [class*="voiceCard_"],
+html.vc-has-active-theme [class*="stageCard_"],
+html.vc-has-active-theme [class*="stagePrompt_"] {
+    background: rgba(0, 0, 0, 0.3) !important;
+    background-color: rgba(0, 0, 0, 0.3) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 12px !important;
 }
 
 /* Top navigation, title bar, and channel headers */
