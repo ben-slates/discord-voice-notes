@@ -512,6 +512,24 @@ body,
     --voice-empty-state-background: transparent !important;
 }
 
+/* Server side panel channels and categories - completely transparent, no glassy effect box beside/around their names */
+#app-mount [class*="sidebar_"] [class*="containerDefault_"],
+#app-mount [class*="sidebar_"] [class*="categoryItem_"],
+#app-mount [class*="sidebar_"] [class*="category_"],
+#app-mount [class*="sidebar_"] [class*="wrapper_"][class*="category"],
+#app-mount [class*="sidebar_"] [class*="name_"][class*="category"],
+#app-mount [class*="sidebar_"] [class*="wrapper_"][class*="channel"],
+#app-mount [class*="sidebar_"] [class*="link_"],
+#app-mount [class*="sidebar_"] [class*="mainContent_"],
+#app-mount [class*="sidebar_"] [class*="channel_"] {
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
 /* 1. Main Call, Video Grid, Stage, Voice Screen & Lobby Containers (Connected & Disconnected) */
 #app-mount .callContainer_cb9592,
 #app-mount .callContainer__37e49,

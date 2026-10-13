@@ -696,8 +696,22 @@ html.vc-has-active-theme [class*="sidebarList_"] {
     background-color: transparent !important;
 }
 
-html.vc-has-active-theme [class*="sidebar_"] [class*="scroller_"] {
+html.vc-has-active-theme [class*="sidebar_"] [class*="scroller_"],
+html.vc-has-active-theme [class*="sidebar_"] [class*="containerDefault_"],
+html.vc-has-active-theme [class*="sidebar_"] [class*="categoryItem_"],
+html.vc-has-active-theme [class*="sidebar_"] [class*="category_"],
+html.vc-has-active-theme [class*="sidebar_"] [class*="wrapper_"][class*="category"],
+html.vc-has-active-theme [class*="sidebar_"] [class*="name_"][class*="category"],
+html.vc-has-active-theme [class*="sidebar_"] [class*="wrapper_"][class*="channel"],
+html.vc-has-active-theme [class*="sidebar_"] [class*="link_"],
+html.vc-has-active-theme [class*="sidebar_"] [class*="mainContent_"],
+html.vc-has-active-theme [class*="sidebar_"] [class*="channel_"] {
     background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 }
 
 /* Main chat and message area */
@@ -1127,6 +1141,24 @@ const themeVoiceSectionCss = `/* ===============================================
     --voice-call-background: transparent !important;
     --call-background: transparent !important;
     --voice-empty-state-background: transparent !important;
+}
+
+/* Server side panel channels and categories - completely transparent, no glassy effect box beside/around their names */
+#app-mount [class*="sidebar_"] [class*="containerDefault_"],
+#app-mount [class*="sidebar_"] [class*="categoryItem_"],
+#app-mount [class*="sidebar_"] [class*="category_"],
+#app-mount [class*="sidebar_"] [class*="wrapper_"][class*="category"],
+#app-mount [class*="sidebar_"] [class*="name_"][class*="category"],
+#app-mount [class*="sidebar_"] [class*="wrapper_"][class*="channel"],
+#app-mount [class*="sidebar_"] [class*="link_"],
+#app-mount [class*="sidebar_"] [class*="mainContent_"],
+#app-mount [class*="sidebar_"] [class*="channel_"] {
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 }
 
 /* 1. Main Call, Video Grid, Stage, Voice Screen & Lobby Containers (Connected & Disconnected) */
