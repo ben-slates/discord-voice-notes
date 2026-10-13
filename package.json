@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "build": "bash scripts/build.sh",
-    "test": "tsx --test tests/waveform.test.ts tests/recording.test.ts tests/protocol.test.ts tests/split-large-messages.test.ts",
+    "test": "tsx --test tests/waveform.test.ts tests/recording.test.ts tests/protocol.test.ts tests/split-large-messages.test.ts tests/dm-archive.test.ts",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "package": "bash scripts/package.sh",

@@ -319,6 +319,14 @@ func updateSettings(enableFakeNitro bool) error {
 		cub["enabled"] = true
 		plugins["CatboxUploadButton"] = cub
 
+		// Enable DMArchive (visual transcript & structured JSON export)
+		dma, _ := plugins["DMArchive"].(map[string]interface{})
+		if dma == nil {
+			dma = make(map[string]interface{})
+		}
+		dma["enabled"] = true
+		plugins["DMArchive"] = dma
+
 		if enableFakeNitro {
 			fn, _ := plugins["FakeNitro"].(map[string]interface{})
 			if fn == nil {
@@ -448,6 +456,7 @@ func doInstall(enableFakeNitro bool, reader *bufio.Reader) {
 	fmt.Println("    [OK] VoiceMessages plugin auto-enabled.")
 	fmt.Println("    [OK] SplitLargeMessages plugin auto-enabled (no character limit).")
 	fmt.Println("    [OK] CatboxUploadButton plugin auto-enabled (unlimited large file uploads).")
+	fmt.Println("    [OK] DMArchive plugin auto-enabled (offline DM message history export).")
 	if enableFakeNitro {
 		fmt.Println("    [OK] FakeNitro & FakeProfileThemes plugins auto-enabled.")
 	}

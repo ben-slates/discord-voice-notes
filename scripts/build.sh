@@ -35,6 +35,21 @@ echo "--> Bundling plugin with esbuild (CommonJS)..."
     --external:react-dom
 echo "    [OK] CommonJS bundle generated at dist/plugin/index.cjs"
 
+echo "--> Bundling DM Archive plugin with esbuild..."
+./node_modules/.bin/esbuild src/plugins/dmArchive/index.ts \
+    --bundle \
+    --outfile=dist/plugin/dmArchive.js \
+    --format=esm \
+    --platform=browser \
+    --target=es2022 \
+    --external:react \
+    --external:react-dom
+echo "    [OK] DM Archive ESM bundle generated at dist/plugin/dmArchive.js"
+
+echo "--> Injecting custom plugins into Vencord distribution bundles..."
+node scripts/inject-custom-plugins.cjs
+echo "    [OK] Injected plugins refreshed in distribution bundles."
+
 echo "--> Generating TypeScript declaration files..."
 ./node_modules/.bin/tsc --emitDeclarationOnly
 echo "    [OK] Declarations generated at dist/types/"

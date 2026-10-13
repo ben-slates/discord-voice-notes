@@ -12,6 +12,7 @@ A Debian-compatible add-on that enables users of the official Discord Linux desk
 - **Normal Attachment Fallback**: Toggle to fall back to standard audio attachment upload if a channel restricts voice messages.
 - **Auto Split Large Messages (No Character Limit)**: Built-in `SplitLargeMessages` plugin automatically intercepts messages exceeding Discord's 2,000 / 4,000 character limit and splits them into clean consecutive segments queued smoothly without API rate limits.
 - **Large File Upload Bypasser (Catbox Direct)**: Built-in `CatboxUploadButton` plugin adds "Upload Large File (Catbox)" to Discord's `+` attachment menu, bypassing the 10MB/50MB upload limits for files up to 200MB+ and pasting the direct stream/download link.
+- **DM Archive (Visual Transcript & Data Backup)**: Built-in `DMArchive` plugin exports full or filtered DM and Group DM conversation histories to standalone offline HTML transcripts (with dark theme, attachments, code syntax, and real-time offline search) or structured JSON backups. Supports date range filtering, attachment toggling, rate-limit backoff handling, and 100% local client export.
 - **83 Full HD Themes & Real-Time Theme Search Bar**: Full glass transparency engine for voice channel overlays, video calls, opened/expanded server folders, and chat styling across 83 unique wallpapers, plus an interactive real-time search bar in the Themes settings page to instantly filter themes by name, author, or keyword.
 - **100% Client-Side & Secure**: Zero credential harvesting, zero token interception, and no external tracking servers.
 - **Non-Invasive & Reversible**: Can be enabled, disabled, or completely uninstalled with single-line commands.
@@ -60,6 +61,8 @@ This opens the interactive CLI menu:
 - In any chat, right-click the '+' attachment button:
   - **Send Voice Message**: Record and transmit voice audio notes.
   - **Upload Large File (Catbox)**: Bypass the 10MB/50MB file size restriction (up to 200MB+).
+- In any Direct Message (DM), Group DM, or user context menu:
+  - **Export DM History**: Open the DM Archive modal to export full or filtered message histories to responsive HTML transcripts and structured JSON backups.
 - Paste or type text of any length; `SplitLargeMessages` automatically segments long messages.
 - If FakeNitro was selected (Option `[2]`), cross-server emojis, stickers, and 1080p 60FPS streaming are pre-configured and active!
 
@@ -94,6 +97,36 @@ When Option `[2]` (or `--nitro`) is selected, Vencord's built-in **`FakeNitro`**
 - **Custom Stickers**: Access and send custom stickers across all chats.
 - **1080p 60FPS / Source Streaming**: Unlocks high-definition, high-framerate screensharing in voice channels and direct calls.
 - **Fake Profile Themes**: Customize gradient accents on your profile visible to other users.
+
+---
+
+### Vencord Custom User Plugin: DM Archive
+
+The built-in **`DMArchive`** plugin provides complete, offline export of individual Discord DM and Group DM conversations without relying on bot tokens, external services, or scraping:
+
+1. **User Interface & Context Menus**:
+   - Right-click any DM in the channel sidebar or channel header -> **Export DM History**.
+   - Right-click any Group DM -> **Export Group DM History**.
+   - Right-click any user profile -> **Export DM History**.
+   - Interactive glass-styled modal opens with real-time conversation preview (recipients, conversation type, channel ID).
+
+2. **Supported Formats**:
+   - **HTML (Visual Interactive Transcript)**: Discord-accurate dark theme styling with message grouping, avatars, Markdown formatting, embeds, images, attachment links, and instant offline search filtering.
+   - **JSON (Structured Data Backup)**: Machine-readable schema including author profiles, timestamps, edited timestamps, reply references, attachments, and embeds.
+   - **Both**: Exports both formats simultaneously with identical retrieved datasets.
+
+3. **Message History & Pagination**:
+   - Uses Discord client internal REST client (`/channels/{id}/messages`) with backward pagination (`limit: 100`, `before: message_id`).
+   - Deduplicates messages using unique snowflake sets (`seenIds`) and sorts results chronologically (oldest to newest).
+   - Gracefully handles HTTP 429 rate limits using exponential backoff (`retry_after` countdown displayed live in the UI).
+   - Supports user cancellation anytime during multi-batch fetches.
+   - **Guaranteed Transparency**: Clearly tags archives as `✓ Complete Archive` or `⚠ Partial Archive` in both metadata and transcript banners, never claiming partial downloads are complete.
+
+4. **Filtering & Privacy Guarantee**:
+   - **Date Range**: Optional Start Date and End Date filters to export specific timeframes.
+   - **Attachments**: Toggle to include or exclude attachment media links and previews.
+   - **Custom Filenames**: Custom name override or auto-generated `{channel_name}_{timestamp}` naming.
+   - **100% Client-Side Privacy**: Exports are generated entirely within the client via JavaScript Blobs and native browser download triggers. Message content and tokens are never sent to any external server.
 
 ---
 
@@ -154,13 +187,21 @@ discord-voice-notes/
 │   │   ├── Icons.tsx       # Microphone, wave, and control SVG icons
 │   │   ├── VoiceNotes.css  # Native Discord styling & animations
 │   │   └── VoicePanel.tsx  # Floating recording & preview panel
-│   └── plugin/             # Vencord plugin registration
-│       ├── VoiceBarButton.tsx # Toolbar composer button injection
-│       └── index.ts        # Main Vencord plugin export
-├── tests/                  # Automated unit test suite
+│   ├── plugin/             # Vencord plugin registration
+│   │   ├── VoiceBarButton.tsx # Toolbar composer button injection
+│   │   └── index.ts        # Main Vencord plugin export
+│   └── plugins/            # Additional custom Vencord plugins
+│       └── dmArchive/      # DM Archive plugin (history fetcher, formatters, modal)
+│           ├── types.ts    # Archive data structures & filter options
+│           ├── fetcher.ts  # History pagination, rate limit backoff & deduplication
+│           ├── formatters.ts # Responsive HTML transcript & JSON backup generators
+│           └── index.ts    # Vencord plugin export & context menu integrations
+├── tests/                  # Automated unit & integration test suite
 │   ├── waveform.test.ts    # Waveform and Base64 algorithm tests
 │   ├── recording.test.ts   # Audio controller state machine tests
-│   └── protocol.test.ts    # Discord protocol & upload tests
+│   ├── protocol.test.ts    # Discord protocol & upload tests
+│   ├── split-large-messages.test.ts # Smart message splitting & formatting tests
+│   └── dm-archive.test.ts  # DM export pagination, filtering & format tests
 ├── themes/                 # Modernized Vencord custom themes
 │   ├── NewKemonoFriends.theme.css  # Fixed & modernized Kemono Friends theme
 │   ├── GGOKirito.theme.css         # Fixed & modernized GGO Kirito theme

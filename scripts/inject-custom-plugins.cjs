@@ -162,6 +162,365 @@ var _catboxUploadPlugin = h({
     }
 });`;
 
+// Production implementation of DMArchive plugin
+const dmArchiveCode = `function _triggerDmDownload(content, filename, mimeType) {
+    var blob = new Blob([content], { type: mimeType || "text/plain;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 2500);
+}
+
+function _escapeHtmlDm(s) {
+    return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
+function _formatTimestampDm(iso) {
+    try {
+        return new Date(iso).toLocaleString("en-US", { year: "numeric", month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
+    } catch(e) { return iso; }
+}
+
+function _renderMiniMarkdownDm(c) {
+    if (!c) return "";
+    var codeBlocks = [];
+    var res = c.replace(/\`\`\`([a-zA-Z0-9_-]*)\\n?([\\s\\S]*?)\`\`\`/g, function(_, lang, code) {
+        var idx = codeBlocks.length;
+        codeBlocks.push("<pre class=\\"codeblock\\"><code>" + _escapeHtmlDm(code) + "</code></pre>");
+        return "@@CB_" + idx + "@@";
+    });
+    var inlines = [];
+    res = res.replace(/\`([^\`]+)\`/g, function(_, code) {
+        var idx = inlines.length;
+        inlines.push("<code class=\\"inline-code\\">" + _escapeHtmlDm(code) + "</code>");
+        return "@@IC_" + idx + "@@";
+    });
+    res = _escapeHtmlDm(res);
+    res = res.replace(/(https?:\\/\\/[^\\s<>"]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="chat-link">$1</a>');
+    res = res.replace(/\\*\\*\\*(.+?)\\*\\*\\*/g, "<strong><em>$1</em></strong>");
+    res = res.replace(/\\*\\*(.+?)\\*\\*/g, "<strong>$1</strong>");
+    res = res.replace(/\\*([^*]+?)\\*/g, "<em>$1</em>");
+    res = res.replace(/__(.+?)__/g, "<u>$1</u>");
+    res = res.replace(/~~(.+?)~~/g, "<del>$1</del>");
+    res = res.replace(/^(&gt;|>)\\s?(.*)$/gm, '<blockquote class="quote">$2</blockquote>');
+    res = res.replace(/\\n/g, "<br>");
+    inlines.forEach(function(codeHtml, i) { res = res.replace("@@IC_" + i + "@@", codeHtml); });
+    codeBlocks.forEach(function(codeHtml, i) { res = res.replace("@@CB_" + i + "@@", codeHtml); });
+    return res;
+}
+
+function _generateHtmlDocDm(meta, msgs) {
+    var isComp = meta.isComplete;
+    var chName = _escapeHtmlDm(meta.channel.name);
+    var recList = meta.channel.recipients.map(function(r) { return _escapeHtmlDm(r.globalName ? r.globalName + " (@" + r.username + ")" : "@" + r.username); }).join(", ");
+    var dateRange = (meta.filter.startDate || meta.filter.endDate) ? ((meta.filter.startDate || "Beginning") + " to " + (meta.filter.endDate || "Latest")) : "Full History";
+
+    var msgsHtml = msgs.map(function(m) {
+        var authorDisplay = _escapeHtmlDm(m.author.globalName || m.author.username);
+        var authorUser = _escapeHtmlDm(m.author.username);
+        var timeStr = _formatTimestampDm(m.timestamp);
+        var editedStr = m.editedTimestamp ? '<span class="edited-badge" title="Edited: ' + _formatTimestampDm(m.editedTimestamp) + '">(edited)</span>' : '';
+        var contentHtml = _renderMiniMarkdownDm(m.content);
+        var attHtml = "";
+        if (m.attachments && m.attachments.length) {
+            attHtml = '<div class="attachments-list">' + m.attachments.map(function(a) {
+                var isImg = (a.contentType && a.contentType.startsWith("image/")) || /\\.(png|jpe?g|webp|gif)$/i.test(a.filename);
+                if (isImg) {
+                    return '<div class="attachment-item"><a href="' + _escapeHtmlDm(a.url) + '" target="_blank"><img class="attachment-img" src="' + _escapeHtmlDm(a.url) + '" alt="' + _escapeHtmlDm(a.filename) + '" loading="lazy" /></a><div class="attachment-info"><a href="' + _escapeHtmlDm(a.url) + '" target="_blank">' + _escapeHtmlDm(a.filename) + '</a> (' + (a.size ? (a.size/1024).toFixed(1) + ' KB' : '') + ')</div></div>';
+                }
+                return '<div class="attachment-item"><div class="attachment-file"><span class="file-icon">&#128190;</span><a href="' + _escapeHtmlDm(a.url) + '" target="_blank">' + _escapeHtmlDm(a.filename) + '</a> (' + (a.size ? (a.size/1024).toFixed(1) + ' KB' : '') + ')</div></div>';
+            }).join("") + '</div>';
+        }
+        var embHtml = "";
+        if (m.embeds && m.embeds.length) {
+            embHtml = '<div class="embeds-list">' + m.embeds.map(function(em) {
+                var cBorder = em.color ? '#' + em.color.toString(16).padStart(6, '0') : 'rgba(255,255,255,0.15)';
+                var emTitle = em.title ? '<div class="embed-title">' + (em.url ? '<a href="' + _escapeHtmlDm(em.url) + '" target="_blank">' + _escapeHtmlDm(em.title) + '</a>' : _escapeHtmlDm(em.title)) + '</div>' : '';
+                var emDesc = em.description ? '<div class="embed-desc">' + _escapeHtmlDm(em.description) + '</div>' : '';
+                return '<div class="embed-box" style="border-left-color: ' + cBorder + ';">' + emTitle + emDesc + '</div>';
+            }).join("") + '</div>';
+        }
+
+        var avatar = m.author.avatarUrl || 'https://cdn.discordapp.com/embed/avatars/0.png';
+        return '<div class="message-row" id="msg-' + m.id + '"><img class="avatar" src="' + _escapeHtmlDm(avatar) + '" alt="" loading="lazy" /><div class="message-body"><div class="message-meta"><span class="author-name">' + authorDisplay + '</span><span class="author-handle">@' + authorUser + '</span><span class="timestamp">' + timeStr + '</span>' + editedStr + '</div>' + (contentHtml ? '<div class="message-text">' + contentHtml + '</div>' : '') + attHtml + embHtml + '</div></div>';
+    }).join("\\n");
+
+    return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>DM Archive — ' + chName + '</title><style>:root{--bg-primary:#313338;--bg-secondary:#2b2d31;--bg-tertiary:#1e1f22;--text-normal:#dbdee1;--text-muted:#949ba4;--text-heading:#ffffff;--link-color:#00a8fc;--border-subtle:rgba(255,255,255,0.08);--code-bg:#1e1f22;--success-color:#23a55a;--warning-color:#f0b232}*{box-sizing:border-box;margin:0;padding:0}body{font-family:"gg sans","Noto Sans",sans-serif;background-color:var(--bg-primary);color:var(--text-normal);line-height:1.45;font-size:15px;display:flex;flex-direction:column;min-height:100vh}header.archive-header{background-color:var(--bg-tertiary);border-bottom:1px solid var(--border-subtle);padding:18px 24px}.header-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}.header-title-section h1{font-size:20px;font-weight:700;color:var(--text-heading);display:flex;align-items:center;gap:10px}.status-badge{font-size:11px;font-weight:600;padding:4px 9px;border-radius:12px;text-transform:uppercase;letter-spacing:0.5px}.status-badge.complete{background:rgba(35,165,90,0.2);color:var(--success-color);border:1px solid rgba(35,165,90,0.4)}.status-badge.partial{background:rgba(240,178,50,0.2);color:var(--warning-color);border:1px solid rgba(240,178,50,0.4)}.search-container input{background-color:var(--bg-primary);border:1px solid var(--border-subtle);color:var(--text-normal);padding:7px 12px;border-radius:6px;font-size:13px;width:240px;outline:none}.header-meta{margin-top:12px;display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--text-muted)}.header-meta strong{color:var(--text-normal)}.chat-container{flex:1;padding:16px 24px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}.message-row{display:flex;gap:16px;padding:4px 8px;border-radius:6px;transition:background 0.15s}.message-row:hover{background-color:rgba(255,255,255,0.03)}.avatar{width:40px;height:40px;border-radius:50%;flex-shrink:0}.message-body{flex:1;min-width:0}.message-meta{display:flex;align-items:baseline;gap:8px;margin-bottom:3px}.author-name{font-weight:600;color:var(--text-heading);font-size:15px}.author-handle{color:var(--text-muted);font-size:12px}.timestamp{color:var(--text-muted);font-size:12px}.edited-badge{color:var(--text-muted);font-size:11px}.message-text{word-break:break-word}.codeblock{background:var(--code-bg);padding:10px;border-radius:6px;margin:6px 0;font-family:monospace;font-size:13px;overflow-x:auto}.inline-code{background:var(--code-bg);padding:2px 5px;border-radius:4px;font-family:monospace;font-size:13px}.quote{border-left:4px solid var(--border-subtle);padding-left:10px;margin:4px 0;color:var(--text-muted)}.chat-link{color:var(--link-color);text-decoration:none}.chat-link:hover{text-decoration:underline}.attachments-list{margin-top:8px;display:flex;flex-direction:column;gap:8px}.attachment-img{max-width:400px;max-height:300px;border-radius:6px}.attachment-file{background:var(--bg-secondary);padding:8px 12px;border-radius:6px;display:inline-flex;align-items:center;gap:8px;font-size:13px}.embed-box{background:var(--bg-secondary);border-left:4px solid;border-radius:4px;padding:10px 14px;margin-top:8px;max-width:520px}.embed-title{font-weight:600;color:var(--text-heading);font-size:14px}.embed-desc{font-size:13px;color:var(--text-normal);margin-top:4px}footer.archive-footer{background-color:var(--bg-tertiary);border-top:1px solid var(--border-subtle);text-align:center;padding:16px;font-size:12px;color:var(--text-muted)}</style></head><body><header class="archive-header"><div class="header-top"><div class="header-title-section"><h1><span>&#128172;</span> ' + chName + ' <span class="status-badge ' + (isComp ? 'complete' : 'partial') + '">' + (isComp ? '&#10003; Complete Archive' : '&#9888; Partial Archive') + '</span></h1></div><div class="search-container"><input type="text" id="transcript-search" placeholder="Filter messages..." oninput="filterMessages(this.value)" /></div></div><div class="header-meta"><span>Recipients: <strong>' + recList + '</strong></span><span>Messages: <strong>' + msgs.length + '</strong></span><span>Date Range: <strong>' + dateRange + '</strong></span><span>Exported: <strong>' + _formatTimestampDm(meta.exportedAt) + '</strong></span><span>Status: <strong>' + _escapeHtmlDm(meta.statusMessage || (isComp ? 'Complete' : 'Partial')) + '</strong></span></div></header>' + (!isComp ? '<div style="background:rgba(240,178,50,0.15);border-left:4px solid var(--warning-color);padding:12px 24px;color:#ffdc7a;font-size:14px;margin:12px 24px 0 24px;border-radius:4px;"><strong>&#9888; Partial Archive:</strong> ' + _escapeHtmlDm(meta.statusMessage || 'This export was interrupted or cancelled.') + '</div>' : '') + '<main class="chat-container">' + msgsHtml + '</main><footer class="archive-footer">Generated locally by Vencord DM Archive Plugin &bull; End-to-End Client Export &bull; No external transmission</footer><script>function filterMessages(q){q=(q||"").toLowerCase();var rows=document.querySelectorAll(".message-row");for(var i=0;i<rows.length;i++){rows[i].style.display=(!q||rows[i].innerText.toLowerCase().indexOf(q)!==-1)?"":"none";}}<\/script></body></html>';
+}
+
+function _openDmArchiveModal(channelId) {
+    var ch = K.getChannel(channelId);
+    if (!ch) {
+        se("Could not find DM channel (" + channelId + ")", "failure");
+        return;
+    }
+
+    var isGroup = Boolean(ch.type === 3 || ch.isGroupDM?.() || (ch.type !== 1 && !ch.isDM?.() && Array.isArray(ch.recipients) && ch.recipients.length > 2));
+    var chType = isGroup ? "Group DM" : "Direct Message";
+    var currentUserId = k.getCurrentUser()?.id;
+    var chRecipients = (ch.recipients || []).map(function(r) {
+        var u = (typeof r === "object") ? r : k.getUser(r);
+        return {
+            id: String(u?.id || r),
+            username: u?.username || "User",
+            globalName: u?.globalName || u?.global_name,
+            avatarUrl: u ? ("https://cdn.discordapp.com/avatars/" + u.id + "/" + u.avatar + ".png?size=64") : ""
+        };
+    });
+
+    var chName = ch.name || "";
+    if (!chName) {
+        if (chRecipients.length > 0) {
+            var others = currentUserId ? chRecipients.filter(function(u){ return u.id !== currentUserId; }) : chRecipients;
+            chName = (others.length ? others : chRecipients).map(function(u){ return u.globalName || u.username; }).join(", ");
+        } else {
+            chName = "DM (" + channelId + ")";
+        }
+    }
+
+    var existingModal = document.getElementById("vc-dm-archive-modal-overlay");
+    if (existingModal) existingModal.remove();
+
+    var overlay = document.createElement("div");
+    overlay.id = "vc-dm-archive-modal-overlay";
+    overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;";
+
+    var modal = document.createElement("div");
+    modal.style.cssText = "background:rgba(18,22,32,0.95);border:1px solid rgba(255,255,255,0.14);box-shadow:0 16px 40px rgba(0,0,0,0.6);border-radius:12px;width:540px;max-width:100%;color:#fff;display:flex;flex-direction:column;gap:16px;padding:24px;font-family:inherit;box-sizing:border-box;";
+
+    modal.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:12px;"><div style="display:flex;align-items:center;gap:10px;"><span style="font-size:22px;">&#128172;</span><h2 style="font-size:18px;font-weight:600;margin:0;">Export DM Message History</h2></div><button id="vc-dm-close-btn" style="background:transparent;border:none;color:rgba(255,255,255,0.7);font-size:20px;cursor:pointer;padding:4px 8px;border-radius:4px;">&#10005;</button></div><div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px;font-size:13px;display:flex;flex-direction:column;gap:4px;"><div><span style="color:rgba(255,255,255,0.6);">Conversation:</span> <strong style="color:#fff;">' + _escapeHtmlDm(chName) + '</strong> (' + chType + ')</div><div><span style="color:rgba(255,255,255,0.6);">Recipients:</span> <span>' + _escapeHtmlDm(chRecipients.map(function(r){ return r.globalName ? r.globalName + " (@" + r.username + ")" : "@" + r.username; }).join(", ")) + '</span></div></div><div style="display:flex;flex-direction:column;gap:12px;font-size:13px;"><label style="display:flex;flex-direction:column;gap:4px;"><span style="color:rgba(255,255,255,0.8);font-weight:500;">Export Format:</span><select id="vc-dm-format" style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:8px 10px;border-radius:6px;outline:none;"><option value="html" selected>HTML (Visual Interactive Transcript)</option><option value="json">JSON (Structured Data Backup)</option><option value="both">Both (HTML + JSON)</option></select></label><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><label style="display:flex;flex-direction:column;gap:4px;"><span style="color:rgba(255,255,255,0.8);">Start Date (Optional):</span><input type="date" id="vc-dm-start-date" style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:6px 10px;border-radius:6px;outline:none;" /></label><label style="display:flex;flex-direction:column;gap:4px;"><span style="color:rgba(255,255,255,0.8);">End Date (Optional):</span><input type="date" id="vc-dm-end-date" style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:6px 10px;border-radius:6px;outline:none;" /></label></div><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="vc-dm-include-att" checked style="cursor:pointer;" /><span>Include attachment links and image previews</span></label><label style="display:flex;flex-direction:column;gap:4px;"><span style="color:rgba(255,255,255,0.8);">Custom Output Filename (Optional):</span><input type="text" id="vc-dm-custom-name" placeholder="Leave empty for default timestamped name" style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:8px 10px;border-radius:6px;outline:none;" /></label></div><div id="vc-dm-progress-box" style="display:none;background:rgba(88,101,242,0.12);border:1px solid rgba(88,101,242,0.3);border-radius:8px;padding:12px;font-size:13px;flex-direction:column;gap:6px;"><div id="vc-dm-progress-status" style="font-weight:500;color:#82a5ff;">Preparing history export...</div><div id="vc-dm-progress-rate" style="display:none;color:#f0b232;font-size:12px;">Discord rate limit encountered (429). Retrying...</div></div><div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px;"><button id="vc-dm-cancel-btn" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:8px 16px;border-radius:6px;cursor:pointer;">Cancel</button><button id="vc-dm-start-btn" style="background:#5865f2;border:none;color:#fff;padding:8px 20px;border-radius:6px;font-weight:600;cursor:pointer;">Start Export</button></div>';
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    var isCancelled = false;
+    var isExporting = false;
+
+    function closeModal() {
+        if (isExporting) isCancelled = true;
+        overlay.remove();
+    }
+
+    document.getElementById("vc-dm-close-btn").onclick = closeModal;
+    document.getElementById("vc-dm-cancel-btn").onclick = function() {
+        if (isExporting) {
+            isCancelled = true;
+            document.getElementById("vc-dm-progress-status").innerText = "Cancelling... generating partial export.";
+        } else {
+            closeModal();
+        }
+    };
+
+    document.getElementById("vc-dm-start-btn").onclick = async function() {
+        isExporting = true;
+        document.getElementById("vc-dm-start-btn").disabled = true;
+        document.getElementById("vc-dm-start-btn").style.opacity = "0.5";
+        document.getElementById("vc-dm-start-btn").innerText = "Exporting...";
+        var pBox = document.getElementById("vc-dm-progress-box");
+        var pStatus = document.getElementById("vc-dm-progress-status");
+        var pRate = document.getElementById("vc-dm-progress-rate");
+        pBox.style.display = "flex";
+
+        var formatVal = document.getElementById("vc-dm-format").value;
+        var startDateVal = document.getElementById("vc-dm-start-date").value || null;
+        var endDateVal = document.getElementById("vc-dm-end-date").value || null;
+        var includeAttVal = document.getElementById("vc-dm-include-att").checked;
+        var customNameVal = (document.getElementById("vc-dm-custom-name").value || "").trim();
+
+        var allRaw = [];
+        var seenIds = new Set();
+        var lastId = null;
+        var batchNum = 0;
+        var isComp = false;
+        var status = "complete";
+        var statusMsg = "All accessible messages retrieved.";
+
+        try {
+            while (true) {
+                if (isCancelled) {
+                    status = "cancelled";
+                    statusMsg = "Export cancelled by user.";
+                    isComp = false;
+                    break;
+                }
+
+                var q = { limit: 100 };
+                if (lastId) q.before = lastId;
+
+                var batch = [];
+                try {
+                    var res = await nt.get({ url: bt.Endpoints.MESSAGES(channelId), query: q, retries: 2 });
+                    pRate.style.display = "none";
+                    batch = Array.isArray(res?.body) ? res.body : [];
+                } catch (err) {
+                    if (err?.status === 429 || err?.body?.retry_after) {
+                        var waitMs = Math.ceil((Number(err?.body?.retry_after) || 1.5) * 1000);
+                        pRate.style.display = "block";
+                        pRate.innerText = "Discord rate limit encountered (429). Retrying in " + (waitMs/1000).toFixed(1) + "s...";
+                        await new Promise(function(r) { setTimeout(r, waitMs); });
+                        continue;
+                    }
+                    status = "error";
+                    statusMsg = "Fetch error: " + (err?.message || String(err));
+                    isComp = false;
+                    break;
+                }
+
+                if (!batch || !batch.length) {
+                    isComp = true;
+                    break;
+                }
+
+                for (var b = 0; b < batch.length; b++) {
+                    var m = batch[b];
+                    if (m?.id && !seenIds.has(m.id)) {
+                        seenIds.add(m.id);
+                        allRaw.push(m);
+                    }
+                }
+
+                batchNum++;
+                pStatus.innerText = "Fetched " + allRaw.length + " messages (Batch " + batchNum + ")...";
+
+                if (batch.length < 100) {
+                    isComp = true;
+                    break;
+                }
+
+                lastId = batch[batch.length - 1].id;
+                await new Promise(function(r) { setTimeout(r, 350); });
+            }
+
+            var parsedMsgs = allRaw.map(function(raw) {
+                var auth = {
+                    id: String(raw.author?.id || "0"),
+                    username: String(raw.author?.username || "Unknown"),
+                    globalName: raw.author?.global_name || undefined,
+                    avatarUrl: raw.author?.avatar ? ("https://cdn.discordapp.com/avatars/" + raw.author.id + "/" + raw.author.avatar + ".png?size=64") : "https://cdn.discordapp.com/embed/avatars/0.png"
+                };
+                var atts = (includeAttVal && Array.isArray(raw.attachments)) ? raw.attachments.map(function(a) {
+                    return { id: String(a.id), filename: String(a.filename||"file"), size: Number(a.size||0), url: String(a.url||a.proxy_url||""), contentType: a.content_type };
+                }) : [];
+                var embs = Array.isArray(raw.embeds) ? raw.embeds.map(function(em) {
+                    return { type: em.type, title: em.title, description: em.description, url: em.url, color: em.color };
+                }) : [];
+                return {
+                    id: String(raw.id),
+                    channelId: String(raw.channel_id),
+                    content: String(raw.content || ""),
+                    author: auth,
+                    timestamp: String(raw.timestamp || new Date().toISOString()),
+                    editedTimestamp: raw.edited_timestamp ? String(raw.edited_timestamp) : null,
+                    attachments: atts,
+                    embeds: embs
+                };
+            });
+
+            parsedMsgs.sort(function(a, b) {
+                var diff = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+                if (diff !== 0) return diff;
+                try { return BigInt(a.id) < BigInt(b.id) ? -1 : 1; } catch(e) { return a.id.localeCompare(b.id); }
+            });
+
+            if (startDateVal) {
+                var st = new Date(startDateVal).getTime();
+                if (!isNaN(st)) parsedMsgs = parsedMsgs.filter(function(m){ return new Date(m.timestamp).getTime() >= st; });
+            }
+            if (endDateVal) {
+                var et = new Date(endDateVal + "T23:59:59.999Z").getTime();
+                if (!isNaN(et)) parsedMsgs = parsedMsgs.filter(function(m){ return new Date(m.timestamp).getTime() <= et; });
+            }
+
+            var metadata = {
+                version: "1.0.0",
+                exportedAt: new Date().toISOString(),
+                isComplete: isComp,
+                status: status,
+                statusMessage: statusMsg,
+                channel: { id: channelId, name: chName, type: isGroup ? "GROUP_DM" : "DM", recipients: chRecipients },
+                filter: { startDate: startDateVal, endDate: endDateVal, includeAttachments: includeAttVal },
+                totalMessages: parsedMsgs.length
+            };
+
+            var dateSlug = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+            var safeName = chName.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 32) || "dm_archive";
+            var baseFilename = customNameVal ? customNameVal.replace(/\\.(html|json)$/i, "") : (safeName + "_" + dateSlug);
+
+            if (formatVal === "html" || formatVal === "both") {
+                var htmlDoc = _generateHtmlDocDm(metadata, parsedMsgs);
+                _triggerDmDownload(htmlDoc, baseFilename + ".html", "text/html;charset=utf-8");
+            }
+
+            if (formatVal === "json" || formatVal === "both") {
+                var jsonDoc = JSON.stringify({ metadata: metadata, messages: parsedMsgs }, null, 2);
+                _triggerDmDownload(jsonDoc, baseFilename + ".json", "application/json;charset=utf-8");
+            }
+
+            se("DM Export complete: " + parsedMsgs.length + " messages saved (" + (isComp ? "Complete" : "Partial") + ")", isComp ? "success" : "info");
+            setTimeout(closeModal, 1200);
+        } catch (fatalErr) {
+            console.error("[DMArchive] Export failed:", fatalErr);
+            se("Export failed: " + (fatalErr.message || String(fatalErr)), "failure");
+            document.getElementById("vc-dm-start-btn").disabled = false;
+            document.getElementById("vc-dm-start-btn").style.opacity = "1";
+            document.getElementById("vc-dm-start-btn").innerText = "Start Export";
+        }
+    };
+}
+
+window.openDmArchiveModal = _openDmArchiveModal;
+window.openDmArchiveModalForUser = function(userId) {
+    var dmChId = K.getDMFromUserId(userId);
+    if (dmChId) {
+        _openDmArchiveModal(dmChId);
+    } else {
+        se("No open DM channel found for user. Open a direct message first.", "info");
+    }
+};
+
+var _dmArchiveCtxPatch = function(e, t) {
+    var ch = t?.channel;
+    if (!ch) return;
+    var isDM = Boolean(ch.type === 1 || ch.type === 3 || ch.isDM?.() || ch.isGroupDM?.());
+    if (!isDM) return;
+    e.push(r(I.MenuItem, {
+        id: "vc-export-dm-history",
+        iconLeft: so,
+        leadingAccessory: { type: "icon", icon: so },
+        label: ch.type === 3 || ch.isGroupDM?.() ? "Export Group DM History" : "Export DM History",
+        action: function() { _openDmArchiveModal(ch.id); }
+    }));
+};
+
+var _dmArchiveUserCtxPatch = function(e, t) {
+    var u = t?.user;
+    if (!u) return;
+    e.push(r(I.MenuItem, {
+        id: "vc-export-user-dm-history",
+        iconLeft: so,
+        leadingAccessory: { type: "icon", icon: so },
+        label: "Export DM History",
+        action: function() { window.openDmArchiveModalForUser(u.id); }
+    }));
+};
+
+var _dmArchivePlugin = h({
+    name: "DMArchive",
+    description: "Export message history of individual Discord DMs or Group DMs to styled standalone HTML transcripts and structured JSON backups.",
+    tags: ["Chat", "Utility", "Messages", "Backup"],
+    authors: [m.Ven],
+    contextMenus: {
+        "channel-context": _dmArchiveCtxPatch,
+        "gdm-context": _dmArchiveCtxPatch,
+        "user-context": _dmArchiveUserCtxPatch
+    }
+});`;
+
 // Glass Theme Search Bar Component
 const modernSearchL4 = `function l4(){let e=De(["enabledThemes"]),t=Ue(null),[o,n]=C(null),[q,sq]=C("");Z(()=>{i()},[]);async function i(){let s=await VencordNative.themes.getThemesList();n(s)}let filt=o?.filter(s=>{if(!q)return true;let lk=q.toLowerCase().trim();if(!lk)return true;let terms=lk.split(/\\s+/);return terms.every(term=>(s.name&&s.name.toLowerCase().includes(term))||(s.fileName&&s.fileName.toLowerCase().includes(term))||(s.description&&s.description.toLowerCase().includes(term))||(s.author&&s.author.toLowerCase().includes(term)))});return r(X,{flexDirection:"column",gap:"1em"},r(Ae,null,r(A.FormTitle,{tag:"h5"},"Find Themes:"),r(X,{gap:"0.4em",flexDirection:"column",justifyContent:"flex-start",className:D.bottom8},r("span",null,"\\u2013 ",r($e,{href:"https://betterdiscord.app/themes"},"BetterDiscord theme list")),r("span",null,"\\u2013 ",r($e,{href:"https://github.com/search?q=discord+theme"},"GitHub"))),r(A.FormText,null,"If using the BD site, click on Download and place the downloaded .theme.css file into your themes folder.")),r(Ae,null,r(A.FormTitle,{tag:"h5"},"External Resources"),r(A.FormText,null,"For security reasons, loading resources from most sites is blocked."),r(A.FormText,null,"Make sure all your assets are hosted on GitHub, GitLab, Codeberg, Imgur, Discord or Google Fonts.")),r("section",null,r(A.FormTitle,{tag:"h5"},"Local Themes"),r(ou,null,r(p,null,r(vr,{text:"Open Themes Folder",action:()=>VencordNative.themes.openFolder(),Icon:mc}),r(vr,{text:"Load missing Themes",action:i,Icon:ts}),r(vr,{text:"Edit QuickCSS",action:()=>VencordNative.quickCss.openEditor(),Icon:os}),xe(xs.name)&&r(vr,{text:"Edit ClientTheme",action:()=>gr(xs),Icon:fc})))),r("div",{className:"vc-theme-search-container "+D.top16},r("div",{className:"vc-theme-search-bar"},r("svg",{className:"vc-theme-search-icon",viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:"2",strokeLinecap:"round",strokeLinejoin:"round"},r("circle",{cx:"11",cy:"11",r:"8"}),r("line",{x1:"21",y1:"21",x2:"16.65",y2:"16.65"})),r("input",{type:"text",className:"vc-theme-search-input",placeholder:"Search 83+ themes by name, author, or keyword...",value:q,onChange:v=>sq(v.target.value),autoFocus:!1,spellCheck:!1}),q?r("button",{type:"button",className:"vc-theme-search-clear",onClick:()=>sq(""),title:"Clear search"},"\\u2715"):null,o?r("div",{className:"vc-theme-search-badge"},filt?(filt.length+" / "+o.length):""):null)),filt?.length?r("div",{className:H8("grid")},filt.map(s=>r(s4,{key:s.fileName,enabled:e.enabledThemes.includes(s.fileName),onChange:l=>a4(s.fileName,l),onDelete:async()=>{a4(s.fileName,!1);await VencordNative.themes.deleteTheme(s.fileName);i()},theme:s}))):r(z,{className:D.top16},q?"No themes found matching \\""+q+"\\". Try searching for another name, anime, or author.":"No themes found in your themes folder."))}`;
 
@@ -185,6 +544,28 @@ for (const rPath of rendererPaths) {
             content = content.replace(',[Mh.name]:Mh,', ',[Mh.name]:Mh,[_splitLargeMessagesPlugin.name]:_splitLargeMessagesPlugin,[_catboxUploadPlugin.name]:_catboxUploadPlugin,');
             content = content.replace('[Mh.name]:{folderName:"voiceMessages",userPlugin:!1},', '[Mh.name]:{folderName:"voiceMessages",userPlugin:!1},[_splitLargeMessagesPlugin.name]:{folderName:"splitLargeMessages",userPlugin:!1},[_catboxUploadPlugin.name]:{folderName:"catboxUploadButton",userPlugin:!1},');
             console.log(`[inject] Injected plugins in ${rPath}`);
+        }
+    }
+
+    // Inject or update DMArchive plugin
+    if (content.includes('name: "DMArchive"') || content.includes('name:"DMArchive"')) {
+        const dmStart = content.indexOf("function _triggerDmDownload(");
+        const dmEnd = content.indexOf('"user-context": _dmArchiveUserCtxPatch\n    }\n});', dmStart);
+        if (dmStart !== -1 && dmEnd !== -1) {
+            const cutEnd = dmEnd + '"user-context": _dmArchiveUserCtxPatch\n    }\n});'.length;
+            content = content.substring(0, dmStart) + dmArchiveCode + content.substring(cutEnd);
+            console.log(`[inject] Refreshed DMArchive plugin code in ${rPath}`);
+        }
+    } else {
+        const catboxEnd = content.indexOf('var _catboxUploadPlugin = h({');
+        if (catboxEnd !== -1) {
+            const pluginEnd = content.indexOf('});', catboxEnd);
+            if (pluginEnd !== -1) {
+                content = content.substring(0, pluginEnd + 3) + "\n\n" + dmArchiveCode + content.substring(pluginEnd + 3);
+                content = content.replaceAll('[_catboxUploadPlugin.name]:_catboxUploadPlugin,', '[_catboxUploadPlugin.name]:_catboxUploadPlugin,[_dmArchivePlugin.name]:_dmArchivePlugin,');
+                content = content.replaceAll('[_catboxUploadPlugin.name]:{folderName:"catboxUploadButton",userPlugin:!1},', '[_catboxUploadPlugin.name]:{folderName:"catboxUploadButton",userPlugin:!1},[_dmArchivePlugin.name]:{folderName:"dmArchive",userPlugin:!1},');
+                console.log(`[inject] Injected DMArchive plugin into ${rPath}`);
+            }
         }
     }
 

@@ -443,6 +443,964 @@ var _catboxUploadPlugin = h({
     }
 });
 
+var _isSplittingSend = false;
+function _splitMsgSmart(text, maxLen) {
+    if (!text || text.length <= maxLen) return [text];
+    function adjustSplitForUnicode(str, idx) {
+        if (idx <= 0) return idx;
+        if (idx >= str.length) return str.length;
+        var prevCode = str.charCodeAt(idx - 1);
+        if (prevCode >= 0xD800 && prevCode <= 0xDBFF) idx--;
+        if (idx > 0 && (str.charCodeAt(idx - 1) === 0x200D || str.charCodeAt(idx - 1) === 0xFE0F)) {
+            idx--;
+            if (idx > 1 && str.charCodeAt(idx - 2) >= 0xDC00 && str.charCodeAt(idx - 2) <= 0xDFFF) idx -= 2;
+        }
+        return idx;
+    }
+    var chunks = [];
+    var remaining = text;
+    var inCodeBlock = false;
+    var codeLanguage = "";
+    while (remaining.length > 0) {
+        if (remaining.length <= maxLen) { chunks.push(remaining); break; }
+        var budget = inCodeBlock ? maxLen - 6 : maxLen;
+        var splitIdx = -1;
+        var pIdx = remaining.lastIndexOf("\n\n", budget);
+        if (pIdx > budget * 0.3) splitIdx = pIdx + 2;
+        if (splitIdx === -1) {
+            var nIdx = remaining.lastIndexOf("\n", budget);
+            if (nIdx > budget * 0.3) splitIdx = nIdx + 1;
+        }
+        if (splitIdx === -1) {
+            var sIdx = remaining.lastIndexOf(" ", budget);
+            if (sIdx > budget * 0.3) splitIdx = sIdx + 1;
+        }
+        if (splitIdx === -1) {
+            splitIdx = adjustSplitForUnicode(remaining, budget);
+            if (splitIdx <= 0) splitIdx = budget;
+        }
+        var chunk = remaining.slice(0, splitIdx);
+        remaining = remaining.slice(splitIdx);
+        var fenceMatches = [...chunk.matchAll(/```([a-zA-Z0-9_-]*)/g)];
+        for (var f = 0; f < fenceMatches.length; f++) {
+            var match = fenceMatches[f];
+            if (!inCodeBlock) { inCodeBlock = true; codeLanguage = match[1] || ""; }
+            else { inCodeBlock = false; codeLanguage = ""; }
+        }
+        if (inCodeBlock) {
+            chunk += "\n```";
+            remaining = "```" + codeLanguage + "\n" + remaining;
+        }
+        chunks.push(chunk);
+    }
+    return chunks;
+}
+var _splitLargeMessagesPlugin = h({
+    name: "SplitLargeMessages",
+    description: "Splits messages exceeding the Discord character limit (2000 chars / 4000 Nitro) and automatically sends consecutive chunks safely.",
+    tags: ["Chat", "Utility", "Messages"],
+    authors: [m.Ven],
+    stop: function() { _isSplittingSend = false; },
+    onBeforeMessageSend: function(e, t) {
+        if (_isSplittingSend) return;
+        if (!t || typeof t.content !== "string") return;
+        var r = t.content;
+        var maxLimit = (k.getCurrentUser()?.premiumType === 2 ? 4000 : 2000);
+        var safeMax = maxLimit - 50;
+        if (r.length <= safeMax) return;
+        var chunks = _splitMsgSmart(r, safeMax);
+        if (!chunks || chunks.length <= 1) return;
+        console.log("[SplitLargeMessages] Oversized message detected: length=" + r.length + ", splitting into " + chunks.length + " chunks");
+        t.content = chunks[0];
+        var remaining = chunks.slice(1);
+        (async function() {
+            _isSplittingSend = true;
+            try {
+                for (var i = 0; i < remaining.length; i++) {
+                    await new Promise(function(res) { setTimeout(res, 650); });
+                    console.log("[SplitLargeMessages] Sending part " + (i + 2) + "/" + chunks.length + " (len=" + remaining[i].length + ")");
+                    try {
+                        await bi(e, { content: remaining[i] });
+                    } catch (err) {
+                        console.error("[SplitLargeMessages] Failed to send part " + (i + 2) + "/" + chunks.length, err);
+                        se("Failed to send split part " + (i + 2) + "/" + chunks.length + ": " + (err.message || String(err)), "failure");
+                        break;
+                    }
+                }
+                se("Successfully split and sent " + chunks.length + " messages", "success");
+            } catch (err) {
+                console.error("[SplitLargeMessages] Error in send sequence:", err);
+            } finally {
+                _isSplittingSend = false;
+            }
+        })();
+    }
+});
+
+function _triggerCatboxUpload() {
+    var inp = document.createElement("input");
+    inp.type = "file";
+    inp.accept = "*/*";
+    inp.onchange = async function(ev) {
+        var f = ev.target?.files?.[0];
+        if (!f) return;
+        se("Uploading " + f.name + " (" + (f.size / (1024*1024)).toFixed(1) + " MB) to Catbox...", "info");
+        try {
+            var fd = new FormData();
+            fd.append("reqtype", "fileupload");
+            fd.append("fileToUpload", f, f.name);
+            var res = await fetch("https://catbox.moe/user/api.php", {
+                method: "POST",
+                body: fd
+            });
+            var txt = (await res.text()).trim();
+            if (txt.startsWith("http://") || txt.startsWith("https://")) {
+                var cid = Ee.getChannelId();
+                if (cid) bi(cid, { content: txt });
+                else Vi(txt);
+                se("File uploaded successfully to Catbox!", "success");
+            } else {
+                se("Catbox upload failed: " + txt.slice(0, 100), "failure");
+            }
+        } catch (err) {
+            se("Upload failed: " + (err.message || String(err)), "failure");
+        }
+    };
+    inp.style.display = "none";
+    document.body.appendChild(inp);
+    inp.click();
+    document.body.removeChild(inp);
+}
+
+var _catboxCtxPatch = function(e, t) {
+    if (t?.channel?.guild_id && !(Ie.can(de.SEND_MESSAGES, t.channel))) return;
+    e.push(r(I.MenuItem, {
+        id: "vc-upload-to-catbox",
+        iconLeft: so,
+        leadingAccessory: { type: "icon", icon: so },
+        label: "Upload Large File (Catbox)",
+        action: _triggerCatboxUpload
+    }));
+};
+
+var _catboxUploadPlugin = h({
+    name: "CatboxUploadButton",
+    description: "Bypasses Discord upload limits: adds 'Upload Large File (Catbox)' option to the + attachment menu, uploads files directly (up to 200MB+), and embeds the link.",
+    tags: ["Upload", "Utility", "Chat"],
+    authors: [m.Ven],
+    contextMenus: {
+        "channel-attach": _catboxCtxPatch
+    }
+});
+
+var _isSplittingSend = false;
+function _splitMsgSmart(text, maxLen) {
+    if (!text || text.length <= maxLen) return [text];
+    function adjustSplitForUnicode(str, idx) {
+        if (idx <= 0) return idx;
+        if (idx >= str.length) return str.length;
+        var prevCode = str.charCodeAt(idx - 1);
+        if (prevCode >= 0xD800 && prevCode <= 0xDBFF) idx--;
+        if (idx > 0 && (str.charCodeAt(idx - 1) === 0x200D || str.charCodeAt(idx - 1) === 0xFE0F)) {
+            idx--;
+            if (idx > 1 && str.charCodeAt(idx - 2) >= 0xDC00 && str.charCodeAt(idx - 2) <= 0xDFFF) idx -= 2;
+        }
+        return idx;
+    }
+    var chunks = [];
+    var remaining = text;
+    var inCodeBlock = false;
+    var codeLanguage = "";
+    while (remaining.length > 0) {
+        if (remaining.length <= maxLen) { chunks.push(remaining); break; }
+        var budget = inCodeBlock ? maxLen - 6 : maxLen;
+        var splitIdx = -1;
+        var pIdx = remaining.lastIndexOf("\n\n", budget);
+        if (pIdx > budget * 0.3) splitIdx = pIdx + 2;
+        if (splitIdx === -1) {
+            var nIdx = remaining.lastIndexOf("\n", budget);
+            if (nIdx > budget * 0.3) splitIdx = nIdx + 1;
+        }
+        if (splitIdx === -1) {
+            var sIdx = remaining.lastIndexOf(" ", budget);
+            if (sIdx > budget * 0.3) splitIdx = sIdx + 1;
+        }
+        if (splitIdx === -1) {
+            splitIdx = adjustSplitForUnicode(remaining, budget);
+            if (splitIdx <= 0) splitIdx = budget;
+        }
+        var chunk = remaining.slice(0, splitIdx);
+        remaining = remaining.slice(splitIdx);
+        var fenceMatches = [...chunk.matchAll(/```([a-zA-Z0-9_-]*)/g)];
+        for (var f = 0; f < fenceMatches.length; f++) {
+            var match = fenceMatches[f];
+            if (!inCodeBlock) { inCodeBlock = true; codeLanguage = match[1] || ""; }
+            else { inCodeBlock = false; codeLanguage = ""; }
+        }
+        if (inCodeBlock) {
+            chunk += "\n```";
+            remaining = "```" + codeLanguage + "\n" + remaining;
+        }
+        chunks.push(chunk);
+    }
+    return chunks;
+}
+var _splitLargeMessagesPlugin = h({
+    name: "SplitLargeMessages",
+    description: "Splits messages exceeding the Discord character limit (2000 chars / 4000 Nitro) and automatically sends consecutive chunks safely.",
+    tags: ["Chat", "Utility", "Messages"],
+    authors: [m.Ven],
+    stop: function() { _isSplittingSend = false; },
+    onBeforeMessageSend: function(e, t) {
+        if (_isSplittingSend) return;
+        if (!t || typeof t.content !== "string") return;
+        var r = t.content;
+        var maxLimit = (k.getCurrentUser()?.premiumType === 2 ? 4000 : 2000);
+        var safeMax = maxLimit - 50;
+        if (r.length <= safeMax) return;
+        var chunks = _splitMsgSmart(r, safeMax);
+        if (!chunks || chunks.length <= 1) return;
+        console.log("[SplitLargeMessages] Oversized message detected: length=" + r.length + ", splitting into " + chunks.length + " chunks");
+        t.content = chunks[0];
+        var remaining = chunks.slice(1);
+        (async function() {
+            _isSplittingSend = true;
+            try {
+                for (var i = 0; i < remaining.length; i++) {
+                    await new Promise(function(res) { setTimeout(res, 650); });
+                    console.log("[SplitLargeMessages] Sending part " + (i + 2) + "/" + chunks.length + " (len=" + remaining[i].length + ")");
+                    try {
+                        await bi(e, { content: remaining[i] });
+                    } catch (err) {
+                        console.error("[SplitLargeMessages] Failed to send part " + (i + 2) + "/" + chunks.length, err);
+                        se("Failed to send split part " + (i + 2) + "/" + chunks.length + ": " + (err.message || String(err)), "failure");
+                        break;
+                    }
+                }
+                se("Successfully split and sent " + chunks.length + " messages", "success");
+            } catch (err) {
+                console.error("[SplitLargeMessages] Error in send sequence:", err);
+            } finally {
+                _isSplittingSend = false;
+            }
+        })();
+    }
+});
+
+function _triggerCatboxUpload() {
+    var inp = document.createElement("input");
+    inp.type = "file";
+    inp.accept = "*/*";
+    inp.onchange = async function(ev) {
+        var f = ev.target?.files?.[0];
+        if (!f) return;
+        se("Uploading " + f.name + " (" + (f.size / (1024*1024)).toFixed(1) + " MB) to Catbox...", "info");
+        try {
+            var fd = new FormData();
+            fd.append("reqtype", "fileupload");
+            fd.append("fileToUpload", f, f.name);
+            var res = await fetch("https://catbox.moe/user/api.php", {
+                method: "POST",
+                body: fd
+            });
+            var txt = (await res.text()).trim();
+            if (txt.startsWith("http://") || txt.startsWith("https://")) {
+                var cid = Ee.getChannelId();
+                if (cid) bi(cid, { content: txt });
+                else Vi(txt);
+                se("File uploaded successfully to Catbox!", "success");
+            } else {
+                se("Catbox upload failed: " + txt.slice(0, 100), "failure");
+            }
+        } catch (err) {
+            se("Upload failed: " + (err.message || String(err)), "failure");
+        }
+    };
+    inp.style.display = "none";
+    document.body.appendChild(inp);
+    inp.click();
+    document.body.removeChild(inp);
+}
+
+var _catboxCtxPatch = function(e, t) {
+    if (t?.channel?.guild_id && !(Ie.can(de.SEND_MESSAGES, t.channel))) return;
+    e.push(r(I.MenuItem, {
+        id: "vc-upload-to-catbox",
+        iconLeft: so,
+        leadingAccessory: { type: "icon", icon: so },
+        label: "Upload Large File (Catbox)",
+        action: _triggerCatboxUpload
+    }));
+};
+
+var _catboxUploadPlugin = h({
+    name: "CatboxUploadButton",
+    description: "Bypasses Discord upload limits: adds 'Upload Large File (Catbox)' option to the + attachment menu, uploads files directly (up to 200MB+), and embeds the link.",
+    tags: ["Upload", "Utility", "Chat"],
+    authors: [m.Ven],
+    contextMenus: {
+        "channel-attach": _catboxCtxPatch
+    }
+});
+
+var _isSplittingSend = false;
+function _splitMsgSmart(text, maxLen) {
+    if (!text || text.length <= maxLen) return [text];
+    function adjustSplitForUnicode(str, idx) {
+        if (idx <= 0) return idx;
+        if (idx >= str.length) return str.length;
+        var prevCode = str.charCodeAt(idx - 1);
+        if (prevCode >= 0xD800 && prevCode <= 0xDBFF) idx--;
+        if (idx > 0 && (str.charCodeAt(idx - 1) === 0x200D || str.charCodeAt(idx - 1) === 0xFE0F)) {
+            idx--;
+            if (idx > 1 && str.charCodeAt(idx - 2) >= 0xDC00 && str.charCodeAt(idx - 2) <= 0xDFFF) idx -= 2;
+        }
+        return idx;
+    }
+    var chunks = [];
+    var remaining = text;
+    var inCodeBlock = false;
+    var codeLanguage = "";
+    while (remaining.length > 0) {
+        if (remaining.length <= maxLen) { chunks.push(remaining); break; }
+        var budget = inCodeBlock ? maxLen - 6 : maxLen;
+        var splitIdx = -1;
+        var pIdx = remaining.lastIndexOf("\n\n", budget);
+        if (pIdx > budget * 0.3) splitIdx = pIdx + 2;
+        if (splitIdx === -1) {
+            var nIdx = remaining.lastIndexOf("\n", budget);
+            if (nIdx > budget * 0.3) splitIdx = nIdx + 1;
+        }
+        if (splitIdx === -1) {
+            var sIdx = remaining.lastIndexOf(" ", budget);
+            if (sIdx > budget * 0.3) splitIdx = sIdx + 1;
+        }
+        if (splitIdx === -1) {
+            splitIdx = adjustSplitForUnicode(remaining, budget);
+            if (splitIdx <= 0) splitIdx = budget;
+        }
+        var chunk = remaining.slice(0, splitIdx);
+        remaining = remaining.slice(splitIdx);
+        var fenceMatches = [...chunk.matchAll(/```([a-zA-Z0-9_-]*)/g)];
+        for (var f = 0; f < fenceMatches.length; f++) {
+            var match = fenceMatches[f];
+            if (!inCodeBlock) { inCodeBlock = true; codeLanguage = match[1] || ""; }
+            else { inCodeBlock = false; codeLanguage = ""; }
+        }
+        if (inCodeBlock) {
+            chunk += "\n```";
+            remaining = "```" + codeLanguage + "\n" + remaining;
+        }
+        chunks.push(chunk);
+    }
+    return chunks;
+}
+var _splitLargeMessagesPlugin = h({
+    name: "SplitLargeMessages",
+    description: "Splits messages exceeding the Discord character limit (2000 chars / 4000 Nitro) and automatically sends consecutive chunks safely.",
+    tags: ["Chat", "Utility", "Messages"],
+    authors: [m.Ven],
+    stop: function() { _isSplittingSend = false; },
+    onBeforeMessageSend: function(e, t) {
+        if (_isSplittingSend) return;
+        if (!t || typeof t.content !== "string") return;
+        var r = t.content;
+        var maxLimit = (k.getCurrentUser()?.premiumType === 2 ? 4000 : 2000);
+        var safeMax = maxLimit - 50;
+        if (r.length <= safeMax) return;
+        var chunks = _splitMsgSmart(r, safeMax);
+        if (!chunks || chunks.length <= 1) return;
+        console.log("[SplitLargeMessages] Oversized message detected: length=" + r.length + ", splitting into " + chunks.length + " chunks");
+        t.content = chunks[0];
+        var remaining = chunks.slice(1);
+        (async function() {
+            _isSplittingSend = true;
+            try {
+                for (var i = 0; i < remaining.length; i++) {
+                    await new Promise(function(res) { setTimeout(res, 650); });
+                    console.log("[SplitLargeMessages] Sending part " + (i + 2) + "/" + chunks.length + " (len=" + remaining[i].length + ")");
+                    try {
+                        await bi(e, { content: remaining[i] });
+                    } catch (err) {
+                        console.error("[SplitLargeMessages] Failed to send part " + (i + 2) + "/" + chunks.length, err);
+                        se("Failed to send split part " + (i + 2) + "/" + chunks.length + ": " + (err.message || String(err)), "failure");
+                        break;
+                    }
+                }
+                se("Successfully split and sent " + chunks.length + " messages", "success");
+            } catch (err) {
+                console.error("[SplitLargeMessages] Error in send sequence:", err);
+            } finally {
+                _isSplittingSend = false;
+            }
+        })();
+    }
+});
+
+function _triggerCatboxUpload() {
+    var inp = document.createElement("input");
+    inp.type = "file";
+    inp.accept = "*/*";
+    inp.onchange = async function(ev) {
+        var f = ev.target?.files?.[0];
+        if (!f) return;
+        se("Uploading " + f.name + " (" + (f.size / (1024*1024)).toFixed(1) + " MB) to Catbox...", "info");
+        try {
+            var fd = new FormData();
+            fd.append("reqtype", "fileupload");
+            fd.append("fileToUpload", f, f.name);
+            var res = await fetch("https://catbox.moe/user/api.php", {
+                method: "POST",
+                body: fd
+            });
+            var txt = (await res.text()).trim();
+            if (txt.startsWith("http://") || txt.startsWith("https://")) {
+                var cid = Ee.getChannelId();
+                if (cid) bi(cid, { content: txt });
+                else Vi(txt);
+                se("File uploaded successfully to Catbox!", "success");
+            } else {
+                se("Catbox upload failed: " + txt.slice(0, 100), "failure");
+            }
+        } catch (err) {
+            se("Upload failed: " + (err.message || String(err)), "failure");
+        }
+    };
+    inp.style.display = "none";
+    document.body.appendChild(inp);
+    inp.click();
+    document.body.removeChild(inp);
+}
+
+var _catboxCtxPatch = function(e, t) {
+    if (t?.channel?.guild_id && !(Ie.can(de.SEND_MESSAGES, t.channel))) return;
+    e.push(r(I.MenuItem, {
+        id: "vc-upload-to-catbox",
+        iconLeft: so,
+        leadingAccessory: { type: "icon", icon: so },
+        label: "Upload Large File (Catbox)",
+        action: _triggerCatboxUpload
+    }));
+};
+
+var _catboxUploadPlugin = h({
+    name: "CatboxUploadButton",
+    description: "Bypasses Discord upload limits: adds 'Upload Large File (Catbox)' option to the + attachment menu, uploads files directly (up to 200MB+), and embeds the link.",
+    tags: ["Upload", "Utility", "Chat"],
+    authors: [m.Ven],
+    contextMenus: {
+        "channel-attach": _catboxCtxPatch
+    }
+});
+
+function _triggerDmDownload(content, filename, mimeType) {
+    var blob = new Blob([content], { type: mimeType || "text/plain;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 2500);
+}
+
+function _escapeHtmlDm(s) {
+    return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
+function _formatTimestampDm(iso) {
+    try {
+        return new Date(iso).toLocaleString("en-US", { year: "numeric", month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
+    } catch(e) { return iso; }
+}
+
+function _renderMiniMarkdownDm(c) {
+    if (!c) return "";
+    var codeBlocks = [];
+    var res = c.replace(/```([a-zA-Z0-9_-]*)\n?([\s\S]*?)```/g, function(_, lang, code) {
+        var idx = codeBlocks.length;
+        codeBlocks.push("<pre class=\"codeblock\"><code>" + _escapeHtmlDm(code) + "</code></pre>");
+        return "@@CB_" + idx + "@@";
+    });
+    var inlines = [];
+    res = res.replace(/`([^`]+)`/g, function(_, code) {
+        var idx = inlines.length;
+        inlines.push("<code class=\"inline-code\">" + _escapeHtmlDm(code) + "</code>");
+        return "@@IC_" + idx + "@@";
+    });
+    res = _escapeHtmlDm(res);
+    res = res.replace(/(https?:\/\/[^\s<>"]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="chat-link">$1</a>');
+    res = res.replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>");
+    res = res.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    res = res.replace(/\*([^*]+?)\*/g, "<em>$1</em>");
+    res = res.replace(/__(.+?)__/g, "<u>$1</u>");
+    res = res.replace(/~~(.+?)~~/g, "<del>$1</del>");
+    res = res.replace(/^(&gt;|>)\s?(.*)$/gm, '<blockquote class="quote">$2</blockquote>');
+    res = res.replace(/\n/g, "<br>");
+    inlines.forEach(function(codeHtml, i) { res = res.replace("@@IC_" + i + "@@", codeHtml); });
+    codeBlocks.forEach(function(codeHtml, i) { res = res.replace("@@CB_" + i + "@@", codeHtml); });
+    return res;
+}
+
+function _generateHtmlDocDm(meta, msgs) {
+    var isComp = meta.isComplete;
+    var chName = _escapeHtmlDm(meta.channel.name);
+    var recList = meta.channel.recipients.map(function(r) { return _escapeHtmlDm(r.globalName ? r.globalName + " (@" + r.username + ")" : "@" + r.username); }).join(", ");
+    var dateRange = (meta.filter.startDate || meta.filter.endDate) ? ((meta.filter.startDate || "Beginning") + " to " + (meta.filter.endDate || "Latest")) : "Full History";
+
+    var msgsHtml = msgs.map(function(m) {
+        var authorDisplay = _escapeHtmlDm(m.author.globalName || m.author.username);
+        var authorUser = _escapeHtmlDm(m.author.username);
+        var timeStr = _formatTimestampDm(m.timestamp);
+        var editedStr = m.editedTimestamp ? '<span class="edited-badge" title="Edited: ' + _formatTimestampDm(m.editedTimestamp) + '">(edited)</span>' : '';
+        var contentHtml = _renderMiniMarkdownDm(m.content);
+        var attHtml = "";
+        if (m.attachments && m.attachments.length) {
+            attHtml = '<div class="attachments-list">' + m.attachments.map(function(a) {
+                var isImg = (a.contentType && a.contentType.startsWith("image/")) || /\.(png|jpe?g|webp|gif)$/i.test(a.filename);
+                if (isImg) {
+                    return '<div class="attachment-item"><a href="' + _escapeHtmlDm(a.url) + '" target="_blank"><img class="attachment-img" src="' + _escapeHtmlDm(a.url) + '" alt="' + _escapeHtmlDm(a.filename) + '" loading="lazy" /></a><div class="attachment-info"><a href="' + _escapeHtmlDm(a.url) + '" target="_blank">' + _escapeHtmlDm(a.filename) + '</a> (' + (a.size ? (a.size/1024).toFixed(1) + ' KB' : '') + ')</div></div>';
+                }
+                return '<div class="attachment-item"><div class="attachment-file"><span class="file-icon">&#128190;</span><a href="' + _escapeHtmlDm(a.url) + '" target="_blank">' + _escapeHtmlDm(a.filename) + '</a> (' + (a.size ? (a.size/1024).toFixed(1) + ' KB' : '') + ')</div></div>';
+            }).join("") + '</div>';
+        }
+        var embHtml = "";
+        if (m.embeds && m.embeds.length) {
+            embHtml = '<div class="embeds-list">' + m.embeds.map(function(em) {
+                var cBorder = em.color ? '#' + em.color.toString(16).padStart(6, '0') : 'rgba(255,255,255,0.15)';
+                var emTitle = em.title ? '<div class="embed-title">' + (em.url ? '<a href="' + _escapeHtmlDm(em.url) + '" target="_blank">' + _escapeHtmlDm(em.title) + '</a>' : _escapeHtmlDm(em.title)) + '</div>' : '';
+                var emDesc = em.description ? '<div class="embed-desc">' + _escapeHtmlDm(em.description) + '</div>' : '';
+                return '<div class="embed-box" style="border-left-color: ' + cBorder + ';">' + emTitle + emDesc + '</div>';
+            }).join("") + '</div>';
+        }
+
+        var avatar = m.author.avatarUrl || 'https://cdn.discordapp.com/embed/avatars/0.png';
+        return '<div class="message-row" id="msg-' + m.id + '"><img class="avatar" src="' + _escapeHtmlDm(avatar) + '" alt="" loading="lazy" /><div class="message-body"><div class="message-meta"><span class="author-name">' + authorDisplay + '</span><span class="author-handle">@' + authorUser + '</span><span class="timestamp">' + timeStr + '</span>' + editedStr + '</div>' + (contentHtml ? '<div class="message-text">' + contentHtml + '</div>' : '') + attHtml + embHtml + '</div></div>';
+    }).join("\n");
+
+    return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>DM Archive — ' + chName + '</title><style>:root{--bg-primary:#313338;--bg-secondary:#2b2d31;--bg-tertiary:#1e1f22;--text-normal:#dbdee1;--text-muted:#949ba4;--text-heading:#ffffff;--link-color:#00a8fc;--border-subtle:rgba(255,255,255,0.08);--code-bg:#1e1f22;--success-color:#23a55a;--warning-color:#f0b232}*{box-sizing:border-box;margin:0;padding:0}body{font-family:"gg sans","Noto Sans",sans-serif;background-color:var(--bg-primary);color:var(--text-normal);line-height:1.45;font-size:15px;display:flex;flex-direction:column;min-height:100vh}header.archive-header{background-color:var(--bg-tertiary);border-bottom:1px solid var(--border-subtle);padding:18px 24px}.header-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}.header-title-section h1{font-size:20px;font-weight:700;color:var(--text-heading);display:flex;align-items:center;gap:10px}.status-badge{font-size:11px;font-weight:600;padding:4px 9px;border-radius:12px;text-transform:uppercase;letter-spacing:0.5px}.status-badge.complete{background:rgba(35,165,90,0.2);color:var(--success-color);border:1px solid rgba(35,165,90,0.4)}.status-badge.partial{background:rgba(240,178,50,0.2);color:var(--warning-color);border:1px solid rgba(240,178,50,0.4)}.search-container input{background-color:var(--bg-primary);border:1px solid var(--border-subtle);color:var(--text-normal);padding:7px 12px;border-radius:6px;font-size:13px;width:240px;outline:none}.header-meta{margin-top:12px;display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--text-muted)}.header-meta strong{color:var(--text-normal)}.chat-container{flex:1;padding:16px 24px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}.message-row{display:flex;gap:16px;padding:4px 8px;border-radius:6px;transition:background 0.15s}.message-row:hover{background-color:rgba(255,255,255,0.03)}.avatar{width:40px;height:40px;border-radius:50%;flex-shrink:0}.message-body{flex:1;min-width:0}.message-meta{display:flex;align-items:baseline;gap:8px;margin-bottom:3px}.author-name{font-weight:600;color:var(--text-heading);font-size:15px}.author-handle{color:var(--text-muted);font-size:12px}.timestamp{color:var(--text-muted);font-size:12px}.edited-badge{color:var(--text-muted);font-size:11px}.message-text{word-break:break-word}.codeblock{background:var(--code-bg);padding:10px;border-radius:6px;margin:6px 0;font-family:monospace;font-size:13px;overflow-x:auto}.inline-code{background:var(--code-bg);padding:2px 5px;border-radius:4px;font-family:monospace;font-size:13px}.quote{border-left:4px solid var(--border-subtle);padding-left:10px;margin:4px 0;color:var(--text-muted)}.chat-link{color:var(--link-color);text-decoration:none}.chat-link:hover{text-decoration:underline}.attachments-list{margin-top:8px;display:flex;flex-direction:column;gap:8px}.attachment-img{max-width:400px;max-height:300px;border-radius:6px}.attachment-file{background:var(--bg-secondary);padding:8px 12px;border-radius:6px;display:inline-flex;align-items:center;gap:8px;font-size:13px}.embed-box{background:var(--bg-secondary);border-left:4px solid;border-radius:4px;padding:10px 14px;margin-top:8px;max-width:520px}.embed-title{font-weight:600;color:var(--text-heading);font-size:14px}.embed-desc{font-size:13px;color:var(--text-normal);margin-top:4px}footer.archive-footer{background-color:var(--bg-tertiary);border-top:1px solid var(--border-subtle);text-align:center;padding:16px;font-size:12px;color:var(--text-muted)}</style></head><body><header class="archive-header"><div class="header-top"><div class="header-title-section"><h1><span>&#128172;</span> ' + chName + ' <span class="status-badge ' + (isComp ? 'complete' : 'partial') + '">' + (isComp ? '&#10003; Complete Archive' : '&#9888; Partial Archive') + '</span></h1></div><div class="search-container"><input type="text" id="transcript-search" placeholder="Filter messages..." oninput="filterMessages(this.value)" /></div></div><div class="header-meta"><span>Recipients: <strong>' + recList + '</strong></span><span>Messages: <strong>' + msgs.length + '</strong></span><span>Date Range: <strong>' + dateRange + '</strong></span><span>Exported: <strong>' + _formatTimestampDm(meta.exportedAt) + '</strong></span><span>Status: <strong>' + _escapeHtmlDm(meta.statusMessage || (isComp ? 'Complete' : 'Partial')) + '</strong></span></div></header>' + (!isComp ? '<div style="background:rgba(240,178,50,0.15);border-left:4px solid var(--warning-color);padding:12px 24px;color:#ffdc7a;font-size:14px;margin:12px 24px 0 24px;border-radius:4px;"><strong>&#9888; Partial Archive:</strong> ' + _escapeHtmlDm(meta.statusMessage || 'This export was interrupted or cancelled.') + '</div>' : '') + '<main class="chat-container">' + msgsHtml + '</main><footer class="archive-footer">Generated locally by Vencord DM Archive Plugin &bull; End-to-End Client Export &bull; No external transmission</footer><script>function filterMessages(q){q=(q||"").toLowerCase();var rows=document.querySelectorAll(".message-row");for(var i=0;i<rows.length;i++){rows[i].style.display=(!q||rows[i].innerText.toLowerCase().indexOf(q)!==-1)?"":"none";}}</script></body></html>';
+}
+
+function _openDmArchiveModal(channelId) {
+    var ch = K.getChannel(channelId);
+    if (!ch) {
+        se("Could not find DM channel (" + channelId + ")", "failure");
+        return;
+    }
+
+    var isGroup = Boolean(ch.type === 3 || ch.isGroupDM?.() || (ch.type !== 1 && !ch.isDM?.() && Array.isArray(ch.recipients) && ch.recipients.length > 2));
+    var chType = isGroup ? "Group DM" : "Direct Message";
+    var currentUserId = k.getCurrentUser()?.id;
+    var chRecipients = (ch.recipients || []).map(function(r) {
+        var u = (typeof r === "object") ? r : k.getUser(r);
+        return {
+            id: String(u?.id || r),
+            username: u?.username || "User",
+            globalName: u?.globalName || u?.global_name,
+            avatarUrl: u ? ("https://cdn.discordapp.com/avatars/" + u.id + "/" + u.avatar + ".png?size=64") : ""
+        };
+    });
+
+    var chName = ch.name || "";
+    if (!chName) {
+        if (chRecipients.length > 0) {
+            var others = currentUserId ? chRecipients.filter(function(u){ return u.id !== currentUserId; }) : chRecipients;
+            chName = (others.length ? others : chRecipients).map(function(u){ return u.globalName || u.username; }).join(", ");
+        } else {
+            chName = "DM (" + channelId + ")";
+        }
+    }
+
+    var existingModal = document.getElementById("vc-dm-archive-modal-overlay");
+    if (existingModal) existingModal.remove();
+
+    var overlay = document.createElement("div");
+    overlay.id = "vc-dm-archive-modal-overlay";
+    overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;";
+
+    var modal = document.createElement("div");
+    modal.style.cssText = "background:rgba(18,22,32,0.95);border:1px solid rgba(255,255,255,0.14);box-shadow:0 16px 40px rgba(0,0,0,0.6);border-radius:12px;width:540px;max-width:100%;color:#fff;display:flex;flex-direction:column;gap:16px;padding:24px;font-family:inherit;box-sizing:border-box;";
+
+    modal.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:12px;"><div style="display:flex;align-items:center;gap:10px;"><span style="font-size:22px;">&#128172;</span><h2 style="font-size:18px;font-weight:600;margin:0;">Export DM Message History</h2></div><button id="vc-dm-close-btn" style="background:transparent;border:none;color:rgba(255,255,255,0.7);font-size:20px;cursor:pointer;padding:4px 8px;border-radius:4px;">&#10005;</button></div><div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px;font-size:13px;display:flex;flex-direction:column;gap:4px;"><div><span style="color:rgba(255,255,255,0.6);">Conversation:</span> <strong style="color:#fff;">' + _escapeHtmlDm(chName) + '</strong> (' + chType + ')</div><div><span style="color:rgba(255,255,255,0.6);">Recipients:</span> <span>' + _escapeHtmlDm(chRecipients.map(function(r){ return r.globalName ? r.globalName + " (@" + r.username + ")" : "@" + r.username; }).join(", ")) + '</span></div></div><div style="display:flex;flex-direction:column;gap:12px;font-size:13px;"><label style="display:flex;flex-direction:column;gap:4px;"><span style="color:rgba(255,255,255,0.8);font-weight:500;">Export Format:</span><select id="vc-dm-format" style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:8px 10px;border-radius:6px;outline:none;"><option value="html" selected>HTML (Visual Interactive Transcript)</option><option value="json">JSON (Structured Data Backup)</option><option value="both">Both (HTML + JSON)</option></select></label><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><label style="display:flex;flex-direction:column;gap:4px;"><span style="color:rgba(255,255,255,0.8);">Start Date (Optional):</span><input type="date" id="vc-dm-start-date" style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:6px 10px;border-radius:6px;outline:none;" /></label><label style="display:flex;flex-direction:column;gap:4px;"><span style="color:rgba(255,255,255,0.8);">End Date (Optional):</span><input type="date" id="vc-dm-end-date" style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:6px 10px;border-radius:6px;outline:none;" /></label></div><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="vc-dm-include-att" checked style="cursor:pointer;" /><span>Include attachment links and image previews</span></label><label style="display:flex;flex-direction:column;gap:4px;"><span style="color:rgba(255,255,255,0.8);">Custom Output Filename (Optional):</span><input type="text" id="vc-dm-custom-name" placeholder="Leave empty for default timestamped name" style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:8px 10px;border-radius:6px;outline:none;" /></label></div><div id="vc-dm-progress-box" style="display:none;background:rgba(88,101,242,0.12);border:1px solid rgba(88,101,242,0.3);border-radius:8px;padding:12px;font-size:13px;flex-direction:column;gap:6px;"><div id="vc-dm-progress-status" style="font-weight:500;color:#82a5ff;">Preparing history export...</div><div id="vc-dm-progress-rate" style="display:none;color:#f0b232;font-size:12px;">Discord rate limit encountered (429). Retrying...</div></div><div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px;"><button id="vc-dm-cancel-btn" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:8px 16px;border-radius:6px;cursor:pointer;">Cancel</button><button id="vc-dm-start-btn" style="background:#5865f2;border:none;color:#fff;padding:8px 20px;border-radius:6px;font-weight:600;cursor:pointer;">Start Export</button></div>';
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    var isCancelled = false;
+    var isExporting = false;
+
+    function closeModal() {
+        if (isExporting) isCancelled = true;
+        overlay.remove();
+    }
+
+    document.getElementById("vc-dm-close-btn").onclick = closeModal;
+    document.getElementById("vc-dm-cancel-btn").onclick = function() {
+        if (isExporting) {
+            isCancelled = true;
+            document.getElementById("vc-dm-progress-status").innerText = "Cancelling... generating partial export.";
+        } else {
+            closeModal();
+        }
+    };
+
+    document.getElementById("vc-dm-start-btn").onclick = async function() {
+        isExporting = true;
+        document.getElementById("vc-dm-start-btn").disabled = true;
+        document.getElementById("vc-dm-start-btn").style.opacity = "0.5";
+        document.getElementById("vc-dm-start-btn").innerText = "Exporting...";
+        var pBox = document.getElementById("vc-dm-progress-box");
+        var pStatus = document.getElementById("vc-dm-progress-status");
+        var pRate = document.getElementById("vc-dm-progress-rate");
+        pBox.style.display = "flex";
+
+        var formatVal = document.getElementById("vc-dm-format").value;
+        var startDateVal = document.getElementById("vc-dm-start-date").value || null;
+        var endDateVal = document.getElementById("vc-dm-end-date").value || null;
+        var includeAttVal = document.getElementById("vc-dm-include-att").checked;
+        var customNameVal = (document.getElementById("vc-dm-custom-name").value || "").trim();
+
+        var allRaw = [];
+        var seenIds = new Set();
+        var lastId = null;
+        var batchNum = 0;
+        var isComp = false;
+        var status = "complete";
+        var statusMsg = "All accessible messages retrieved.";
+
+        try {
+            while (true) {
+                if (isCancelled) {
+                    status = "cancelled";
+                    statusMsg = "Export cancelled by user.";
+                    isComp = false;
+                    break;
+                }
+
+                var q = { limit: 100 };
+                if (lastId) q.before = lastId;
+
+                var batch = [];
+                try {
+                    var res = await nt.get({ url: bt.Endpoints.MESSAGES(channelId), query: q, retries: 2 });
+                    pRate.style.display = "none";
+                    batch = Array.isArray(res?.body) ? res.body : [];
+                } catch (err) {
+                    if (err?.status === 429 || err?.body?.retry_after) {
+                        var waitMs = Math.ceil((Number(err?.body?.retry_after) || 1.5) * 1000);
+                        pRate.style.display = "block";
+                        pRate.innerText = "Discord rate limit encountered (429). Retrying in " + (waitMs/1000).toFixed(1) + "s...";
+                        await new Promise(function(r) { setTimeout(r, waitMs); });
+                        continue;
+                    }
+                    status = "error";
+                    statusMsg = "Fetch error: " + (err?.message || String(err));
+                    isComp = false;
+                    break;
+                }
+
+                if (!batch || !batch.length) {
+                    isComp = true;
+                    break;
+                }
+
+                for (var b = 0; b < batch.length; b++) {
+                    var m = batch[b];
+                    if (m?.id && !seenIds.has(m.id)) {
+                        seenIds.add(m.id);
+                        allRaw.push(m);
+                    }
+                }
+
+                batchNum++;
+                pStatus.innerText = "Fetched " + allRaw.length + " messages (Batch " + batchNum + ")...";
+
+                if (batch.length < 100) {
+                    isComp = true;
+                    break;
+                }
+
+                lastId = batch[batch.length - 1].id;
+                await new Promise(function(r) { setTimeout(r, 350); });
+            }
+
+            var parsedMsgs = allRaw.map(function(raw) {
+                var auth = {
+                    id: String(raw.author?.id || "0"),
+                    username: String(raw.author?.username || "Unknown"),
+                    globalName: raw.author?.global_name || undefined,
+                    avatarUrl: raw.author?.avatar ? ("https://cdn.discordapp.com/avatars/" + raw.author.id + "/" + raw.author.avatar + ".png?size=64") : "https://cdn.discordapp.com/embed/avatars/0.png"
+                };
+                var atts = (includeAttVal && Array.isArray(raw.attachments)) ? raw.attachments.map(function(a) {
+                    return { id: String(a.id), filename: String(a.filename||"file"), size: Number(a.size||0), url: String(a.url||a.proxy_url||""), contentType: a.content_type };
+                }) : [];
+                var embs = Array.isArray(raw.embeds) ? raw.embeds.map(function(em) {
+                    return { type: em.type, title: em.title, description: em.description, url: em.url, color: em.color };
+                }) : [];
+                return {
+                    id: String(raw.id),
+                    channelId: String(raw.channel_id),
+                    content: String(raw.content || ""),
+                    author: auth,
+                    timestamp: String(raw.timestamp || new Date().toISOString()),
+                    editedTimestamp: raw.edited_timestamp ? String(raw.edited_timestamp) : null,
+                    attachments: atts,
+                    embeds: embs
+                };
+            });
+
+            parsedMsgs.sort(function(a, b) {
+                var diff = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+                if (diff !== 0) return diff;
+                try { return BigInt(a.id) < BigInt(b.id) ? -1 : 1; } catch(e) { return a.id.localeCompare(b.id); }
+            });
+
+            if (startDateVal) {
+                var st = new Date(startDateVal).getTime();
+                if (!isNaN(st)) parsedMsgs = parsedMsgs.filter(function(m){ return new Date(m.timestamp).getTime() >= st; });
+            }
+            if (endDateVal) {
+                var et = new Date(endDateVal + "T23:59:59.999Z").getTime();
+                if (!isNaN(et)) parsedMsgs = parsedMsgs.filter(function(m){ return new Date(m.timestamp).getTime() <= et; });
+            }
+
+            var metadata = {
+                version: "1.0.0",
+                exportedAt: new Date().toISOString(),
+                isComplete: isComp,
+                status: status,
+                statusMessage: statusMsg,
+                channel: { id: channelId, name: chName, type: isGroup ? "GROUP_DM" : "DM", recipients: chRecipients },
+                filter: { startDate: startDateVal, endDate: endDateVal, includeAttachments: includeAttVal },
+                totalMessages: parsedMsgs.length
+            };
+
+            var dateSlug = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+            var safeName = chName.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 32) || "dm_archive";
+            var baseFilename = customNameVal ? customNameVal.replace(/\.(html|json)$/i, "") : (safeName + "_" + dateSlug);
+
+            if (formatVal === "html" || formatVal === "both") {
+                var htmlDoc = _generateHtmlDocDm(metadata, parsedMsgs);
+                _triggerDmDownload(htmlDoc, baseFilename + ".html", "text/html;charset=utf-8");
+            }
+
+            if (formatVal === "json" || formatVal === "both") {
+                var jsonDoc = JSON.stringify({ metadata: metadata, messages: parsedMsgs }, null, 2);
+                _triggerDmDownload(jsonDoc, baseFilename + ".json", "application/json;charset=utf-8");
+            }
+
+            se("DM Export complete: " + parsedMsgs.length + " messages saved (" + (isComp ? "Complete" : "Partial") + ")", isComp ? "success" : "info");
+            setTimeout(closeModal, 1200);
+        } catch (fatalErr) {
+            console.error("[DMArchive] Export failed:", fatalErr);
+            se("Export failed: " + (fatalErr.message || String(fatalErr)), "failure");
+            document.getElementById("vc-dm-start-btn").disabled = false;
+            document.getElementById("vc-dm-start-btn").style.opacity = "1";
+            document.getElementById("vc-dm-start-btn").innerText = "Start Export";
+        }
+    };
+}
+
+window.openDmArchiveModal = _openDmArchiveModal;
+window.openDmArchiveModalForUser = function(userId) {
+    var dmChId = K.getDMFromUserId(userId);
+    if (dmChId) {
+        _openDmArchiveModal(dmChId);
+    } else {
+        se("No open DM channel found for user. Open a direct message first.", "info");
+    }
+};
+
+var _dmArchiveCtxPatch = function(e, t) {
+    var ch = t?.channel;
+    if (!ch) return;
+    var isDM = Boolean(ch.type === 1 || ch.type === 3 || ch.isDM?.() || ch.isGroupDM?.());
+    if (!isDM) return;
+    e.push(r(I.MenuItem, {
+        id: "vc-export-dm-history",
+        iconLeft: so,
+        leadingAccessory: { type: "icon", icon: so },
+        label: ch.type === 3 || ch.isGroupDM?.() ? "Export Group DM History" : "Export DM History",
+        action: function() { _openDmArchiveModal(ch.id); }
+    }));
+};
+
+var _dmArchiveUserCtxPatch = function(e, t) {
+    var u = t?.user;
+    if (!u) return;
+    e.push(r(I.MenuItem, {
+        id: "vc-export-user-dm-history",
+        iconLeft: so,
+        leadingAccessory: { type: "icon", icon: so },
+        label: "Export DM History",
+        action: function() { window.openDmArchiveModalForUser(u.id); }
+    }));
+};
+
+var _dmArchivePlugin = h({
+    name: "DMArchive",
+    description: "Export message history of individual Discord DMs or Group DMs to styled standalone HTML transcripts and structured JSON backups.",
+    tags: ["Chat", "Utility", "Messages", "Backup"],
+    authors: [m.Ven],
+    contextMenus: {
+        "channel-context": _dmArchiveCtxPatch,
+        "gdm-context": _dmArchiveCtxPatch,
+        "user-context": _dmArchiveUserCtxPatch
+    }
+});
+
+var _isSplittingSend = false;
+function _splitMsgSmart(text, maxLen) {
+    if (!text || text.length <= maxLen) return [text];
+    function adjustSplitForUnicode(str, idx) {
+        if (idx <= 0) return idx;
+        if (idx >= str.length) return str.length;
+        var prevCode = str.charCodeAt(idx - 1);
+        if (prevCode >= 0xD800 && prevCode <= 0xDBFF) idx--;
+        if (idx > 0 && (str.charCodeAt(idx - 1) === 0x200D || str.charCodeAt(idx - 1) === 0xFE0F)) {
+            idx--;
+            if (idx > 1 && str.charCodeAt(idx - 2) >= 0xDC00 && str.charCodeAt(idx - 2) <= 0xDFFF) idx -= 2;
+        }
+        return idx;
+    }
+    var chunks = [];
+    var remaining = text;
+    var inCodeBlock = false;
+    var codeLanguage = "";
+    while (remaining.length > 0) {
+        if (remaining.length <= maxLen) { chunks.push(remaining); break; }
+        var budget = inCodeBlock ? maxLen - 6 : maxLen;
+        var splitIdx = -1;
+        var pIdx = remaining.lastIndexOf("\n\n", budget);
+        if (pIdx > budget * 0.3) splitIdx = pIdx + 2;
+        if (splitIdx === -1) {
+            var nIdx = remaining.lastIndexOf("\n", budget);
+            if (nIdx > budget * 0.3) splitIdx = nIdx + 1;
+        }
+        if (splitIdx === -1) {
+            var sIdx = remaining.lastIndexOf(" ", budget);
+            if (sIdx > budget * 0.3) splitIdx = sIdx + 1;
+        }
+        if (splitIdx === -1) {
+            splitIdx = adjustSplitForUnicode(remaining, budget);
+            if (splitIdx <= 0) splitIdx = budget;
+        }
+        var chunk = remaining.slice(0, splitIdx);
+        remaining = remaining.slice(splitIdx);
+        var fenceMatches = [...chunk.matchAll(/```([a-zA-Z0-9_-]*)/g)];
+        for (var f = 0; f < fenceMatches.length; f++) {
+            var match = fenceMatches[f];
+            if (!inCodeBlock) { inCodeBlock = true; codeLanguage = match[1] || ""; }
+            else { inCodeBlock = false; codeLanguage = ""; }
+        }
+        if (inCodeBlock) {
+            chunk += "\n```";
+            remaining = "```" + codeLanguage + "\n" + remaining;
+        }
+        chunks.push(chunk);
+    }
+    return chunks;
+}
+var _splitLargeMessagesPlugin = h({
+    name: "SplitLargeMessages",
+    description: "Splits messages exceeding the Discord character limit (2000 chars / 4000 Nitro) and automatically sends consecutive chunks safely.",
+    tags: ["Chat", "Utility", "Messages"],
+    authors: [m.Ven],
+    stop: function() { _isSplittingSend = false; },
+    onBeforeMessageSend: function(e, t) {
+        if (_isSplittingSend) return;
+        if (!t || typeof t.content !== "string") return;
+        var r = t.content;
+        var maxLimit = (k.getCurrentUser()?.premiumType === 2 ? 4000 : 2000);
+        var safeMax = maxLimit - 50;
+        if (r.length <= safeMax) return;
+        var chunks = _splitMsgSmart(r, safeMax);
+        if (!chunks || chunks.length <= 1) return;
+        console.log("[SplitLargeMessages] Oversized message detected: length=" + r.length + ", splitting into " + chunks.length + " chunks");
+        t.content = chunks[0];
+        var remaining = chunks.slice(1);
+        (async function() {
+            _isSplittingSend = true;
+            try {
+                for (var i = 0; i < remaining.length; i++) {
+                    await new Promise(function(res) { setTimeout(res, 650); });
+                    console.log("[SplitLargeMessages] Sending part " + (i + 2) + "/" + chunks.length + " (len=" + remaining[i].length + ")");
+                    try {
+                        await bi(e, { content: remaining[i] });
+                    } catch (err) {
+                        console.error("[SplitLargeMessages] Failed to send part " + (i + 2) + "/" + chunks.length, err);
+                        se("Failed to send split part " + (i + 2) + "/" + chunks.length + ": " + (err.message || String(err)), "failure");
+                        break;
+                    }
+                }
+                se("Successfully split and sent " + chunks.length + " messages", "success");
+            } catch (err) {
+                console.error("[SplitLargeMessages] Error in send sequence:", err);
+            } finally {
+                _isSplittingSend = false;
+            }
+        })();
+    }
+});
+
+function _triggerCatboxUpload() {
+    var inp = document.createElement("input");
+    inp.type = "file";
+    inp.accept = "*/*";
+    inp.onchange = async function(ev) {
+        var f = ev.target?.files?.[0];
+        if (!f) return;
+        se("Uploading " + f.name + " (" + (f.size / (1024*1024)).toFixed(1) + " MB) to Catbox...", "info");
+        try {
+            var fd = new FormData();
+            fd.append("reqtype", "fileupload");
+            fd.append("fileToUpload", f, f.name);
+            var res = await fetch("https://catbox.moe/user/api.php", {
+                method: "POST",
+                body: fd
+            });
+            var txt = (await res.text()).trim();
+            if (txt.startsWith("http://") || txt.startsWith("https://")) {
+                var cid = Ee.getChannelId();
+                if (cid) bi(cid, { content: txt });
+                else Vi(txt);
+                se("File uploaded successfully to Catbox!", "success");
+            } else {
+                se("Catbox upload failed: " + txt.slice(0, 100), "failure");
+            }
+        } catch (err) {
+            se("Upload failed: " + (err.message || String(err)), "failure");
+        }
+    };
+    inp.style.display = "none";
+    document.body.appendChild(inp);
+    inp.click();
+    document.body.removeChild(inp);
+}
+
+var _catboxCtxPatch = function(e, t) {
+    if (t?.channel?.guild_id && !(Ie.can(de.SEND_MESSAGES, t.channel))) return;
+    e.push(r(I.MenuItem, {
+        id: "vc-upload-to-catbox",
+        iconLeft: so,
+        leadingAccessory: { type: "icon", icon: so },
+        label: "Upload Large File (Catbox)",
+        action: _triggerCatboxUpload
+    }));
+};
+
+var _catboxUploadPlugin = h({
+    name: "CatboxUploadButton",
+    description: "Bypasses Discord upload limits: adds 'Upload Large File (Catbox)' option to the + attachment menu, uploads files directly (up to 200MB+), and embeds the link.",
+    tags: ["Upload", "Utility", "Chat"],
+    authors: [m.Ven],
+    contextMenus: {
+        "channel-attach": _catboxCtxPatch
+    }
+});
+
 
 var _isSplittingSend = false;
 function _splitMsgSmart(text, maxLen) {
@@ -596,7 +1554,7 @@ var _catboxUploadPlugin = h({
 
 function B7(e,t){let o=Ee.getChannelId(),n=yn.getPendingReply(o);n&&L.dispatch({type:"DELETE_PENDING_REPLY",channelId:o});let i=new O7({file:new File([e],"voice-message.ogg",{type:"audio/ogg; codecs=opus"}),isThumbnail:!1,platform:1},o);i.on("complete",()=>{nt.post({url:bt.Endpoints.MESSAGES(o),body:{flags:8192,channel_id:o,content:"",nonce:No.fromTimestamp(Date.now()),sticker_ids:[],type:0,attachments:[{id:"0",filename:i.filename,uploaded_filename:i.uploadedFilename,waveform:t.waveform,duration_secs:t.duration}],message_reference:n?eo.getSendMessageOptionsForReply(n)?.messageReference:null}})}),i.on("error",()=>se("Failed to upload voice message","failure")),i.upload()}function F7(){let[e,t]=C();return[e,n=>{e&&URL.revokeObjectURL(e),t(URL.createObjectURL(n))}]}function $7({modalProps:e}){let[t,o]=C(!1),[n,i]=C(),[s,l]=F7();Z(()=>()=>{s&&URL.revokeObjectURL(s)},[s]);let[c,u]=rt(async()=>{if(!n)return F2;let g=await new AudioContext().decodeAudioData(await n.arrayBuffer()),y=g.getChannelData(0),S=new Uint8Array(oc.clamp(Math.floor(g.duration*10),Math.min(32,y.length),256)),T=Math.floor(y.length/S.length);for(let M=0;M<S.length;M++){let _=0;for(let U=0;U<T;U++){let $=M*T+U;_+=y[$]**2}S[M]=~~(Math.sqrt(_/T)*255)}let v=Math.max(...S),P=1+(255/v-1)*Math.min(1,100*(v/255)**3);for(let M=0;M<S.length;M++)S[M]=Math.min(255,~~(S[M]*P));return{waveform:window.btoa(String.fromCharCode(...S)),duration:g.duration}},{deps:[n],fallbackValue:F2}),d=n&&(!n.type.startsWith("audio/ogg")||n.type.includes("codecs")&&!n.type.includes("opus"));return r(ve,{...e,title:"Record Voice Message",actions:[{text:"Send",variant:"primary",onClick:()=>{B7(n,c??F2),e.onClose(),se("Now sending voice message... Please be patient","clock")},disabled:!n}]},r("div",{className:Gs("buttons")},r(E7,{setAudioBlob:f=>{i(f),l(f)},onRecordingChange:o}),r(te,{onClick:async()=>{let f=await vx("audio/*");f&&(i(f),l(f))}},"Upload File")),r(A.FormTitle,null,"Preview"),u?r(z,{className:Gs("error")},"Failed to parse selected audio file: ",u.message):r(HP,{src:s,waveform:c.waveform,recording:t}),d&&r(Ae,{variant:"warning",className:D.top16,defaultPadding:!0},r(A.FormText,null,"Voice Messages have to be OggOpus to be playable on iOS. This file is ",r("code",null,n.type)," so it will not be playable on iOS."),r(A.FormText,{className:D.top8},"To fix it, first convert it to OggOpus, for example using the ",r($e,{href:"https://convertio.co/mp3-opus/"},"convertio web converter"))))}a();w();
 
-var G7=x({multiplier:{description:"Volume Multiplier",type:5,markers:ir(1,5,.5),default:2,stickToMarkers:!0}}),Nh=h({name:"VolumeBooster",authors:[m.Nuckyz,m.sadan],description:"Allows you to set the user and stream volume above the default maximum",tags:["Voice","Utility"],settings:G7,patches:[{find:"#{intl::USER_VOLUME}",replacement:{match:/(?<=maxValue:)\i\.isPlatformEmbedded\?(\i\.\i):\i\.\i(?=,)/,replace:(e,t)=>`${t}*$self.settings.store.multiplier`}},{find:"currentVolume:",replacement:{match:/(?<=maxValue:)\i\.\i\?(\d+?):\d+?(?=,)/,replace:(e,t)=>`${t}*$self.settings.store.multiplier`}},{find:"streamSourceNode",predicate:()=>!1,group:!0,replacement:[{match:/Math\.max.{0,30}\)\)/,replace:"arguments[0]"},{match:/\}return"video"/,replace:"this.updateAudioElement();$&"},{match:/\.volume=this\._volume\/100;/,replace:".volume=0.00;$self.patchVolume(this);"}]},{find:"AudioContextSettingsMigrated",replacement:[{match:/(?<=isLocalMute\(\i,\i\),volume:(\i).+?\(0,\i\.\i\)\(\i,\i,\{volume:)\1(?=\}\))/,replace:"$&>200?200:$&"},{match:/(?<=Object\.entries\(\i\.localMutes\).+?volume:).+?(?=,)/,replace:"$&>200?200:$&"},{match:/(?<=Object\.entries\(\i\.localVolumes\).+?volume:).+?(?=})/,replace:"$&>200?200:$&"}]},{find:'="MediaEngineStore",',replacement:[{match:/(\.settings\.audioContextSettings.+?)(\i\[\i\])=(\i\.volume)(.+?setLocalVolume\(\i,).+?\)/,replace:(e,t,o,n,i)=>t+`(${o}>200?void 0:${o}=${n})`+i+`${o}??${n})`}]}],patchVolume(e){if(e.stream.getAudioTracks().length!==0){if(e.streamSourceNode??=e.audioContext.createMediaStreamSource(e.stream),!e.gainNode){let t=e.gainNode=e.audioContext.createGain();e.streamSourceNode.connect(t),t.connect(e.audioContext.destination)}e.sinkId!=null&&e.sinkId!==e.audioContext.sinkId&&"setSinkId"in AudioContext.prototype&&e.audioContext.setSinkId(e.sinkId==="default"?"":e.sinkId),e.gainNode.gain.value=e._mute?0:e._volume/100}}});a();w();ee();lt();b();var $2=null,H7=new Ro,WP={};function z7(e,t,o){let n=t.name+(t.id?`:${t.id}`:"");return nt.get({url:bt.Endpoints.REACTIONS(e.channel_id,e.id,n),query:{limit:100,type:o},oldFormErrors:!0}).then(i=>{for(let s of i.body)L.dispatch({type:"USER_UPDATE",user:s});L.dispatch({type:"MESSAGE_REACTION_ADD_USERS",channelId:e.channel_id,messageId:e.id,users:i.body,emoji:t,reactionType:o})}).catch(console.error).finally(()=>Tr(250))}function W7(e,t,o){let n=`${e.id}:${t.name}:${t.id??""}:${o}`,i=WP[n]??={fetched:!1,users:new Map};return i.fetched||(H7.unshift(()=>z7(e,t,o)),i.fetched=!0),i.users}function zP(e){e.stopPropagation()}function j7({message:e,users:t}){return ui(()=>{$2?.scrollCounter>0&&$2.setAutomaticAnchor(null)}),r("div",{style:{marginLeft:"0.5em",transform:"scale(0.9)"}},r("div",{onClick:zP,onKeyDown:zP,style:jP.store.clickableAvatars?{}:{pointerEvents:"none"}},r(Mr,{users:t,guildId:K.getChannel(e.channel_id)?.guild_id,renderIcon:!1,max:5,showDefaultAvatarsForNullUsers:!0,showUserPopout:!0})))}var jP=x({clickableAvatars:{description:"While this is enabled, clicking a reacting user's avatar will open their profile instead of adding the reaction",type:3,default:!0,restartNeeded:!0}}),Ch=h({name:"WhoReacted",description:"Renders the avatars of users who reacted to a message",tags:["Reactions","Chat","Appearance"],authors:[m.Ven,m.KannaDev,m.newwares,m.paige],settings:jP,patches:[{find:",reactionRef:",replacement:{match:/(\i)\?null:\(0,\i\.jsx\)\(\i\.\i,{className:\i\.reactionCount,.*?}\),(?<=(emoji:\i,message:\i,type:\i).+?)/,replace:"$&$1?null:$self.renderUsers({$2}),"}},{find:'"MessageReactionsStore"',replacement:{match:/CONNECTION_OPEN:function\(\){(\i)={}/,replace:"$&;$self.reactions=$1;"}},{find:"cleanAutomaticAnchor(){",replacement:{match:/constructor\(\i\)\{(?=.{0,100}(?:automaticAnchor|\.messages\.loadingMore))/,replace:"$&$self.setScrollObj(this);"}}],renderUsers:N.wrap(({message:e,emoji:t,type:o})=>{let n=Vo();if(Z(()=>{let l=c=>{c?.messageId===e.id&&n()};return L.subscribe("MESSAGE_REACTION_ADD_USERS",l),()=>L.unsubscribe("MESSAGE_REACTION_ADD_USERS",l)},[e.id,n]),e.reactions.length>10)return null;let i=W7(e,t,o),s=Array.from(i,([l])=>k.getUser(l)).filter(Boolean);return xe(rn.name)&&(s=s.filter(l=>!rn.shouldIgnoreUser(l.id))),s.length===0?null:r(j7,{message:e,users:s})},{noop:!0}),setScrollObj(e){$2=e},set reactions(e){WP=e}});a();w();le();F();b();var Ah=lo(e=>e.ANNOUNCEMENT_THREAD===10),q7=fe(".SUPPRESS_NOTIFICATIONS))return!1"),Pke=new O("XSOverlay"),Ft=x({webSocketPort:{type:1,description:"Websocket port",default:42070,async onChange(){await G2()}},preferUDP:{type:3,displayName:"Prefer UDP",description:"Enable if you use an older build of XSOverlay unable to connect through websockets. This setting is ignored on web.",default:!1,disabled:()=>!1},botNotifications:{type:3,description:"Allow bot notifications",default:!1},serverNotifications:{type:3,description:"Allow server notifications",default:!0},dmNotifications:{type:3,displayName:"DM Notifications",description:"Allow Direct Message notifications",default:!0},groupDmNotifications:{type:3,displayName:"Group DM Notifications",description:"Allow Group DM notifications",default:!0},callNotifications:{type:3,description:"Allow call notifications",default:!0},pingColor:{type:0,description:"User mention color",default:"#7289da"},channelPingColor:{type:0,description:"Channel mention color",default:"#8a2be2"},soundPath:{type:0,description:"Notification sound (default/warning/error)",default:"default"},timeout:{type:1,description:"Notification duration (secs)",default:3},lengthBasedTimeout:{type:3,description:"Extend duration with message length",default:!0},opacity:{type:5,description:"Notif opacity",default:1,markers:ir(0,1,.1)},volume:{type:5,description:"Volume",default:.2,markers:ir(0,1,.1)}}),Qn;async function G2(){return Qn&&Qn.close(),Qn=new WebSocket(`ws://127.0.0.1:${Ft.store.webSocketPort??42070}/?client=Vencord`),new Promise((e,t)=>{Qn.onopen=e,Qn.onerror=t,setTimeout(t,3e3)})}var KP=VencordNative.pluginHelpers.XSOverlay,kh=h({name:"XSOverlay",description:"Forwards discord notifications to XSOverlay, for easy viewing in VR",tags:["Notifications"],authors:[m.Nyako],searchTerms:["vr","notify"],reporterTestable:2,settings:Ft,flux:{CALL_UPDATE({call:e}){if(e?.ringing?.includes(k.getCurrentUser().id)&&Ft.store.callNotifications){let t=K.getChannel(e.channel_id);qP("Incoming call",`${t.name} is calling you...`)}},MESSAGE_CREATE({message:e,optimistic:t}){if(t)return;let o=K.getChannel(e.channel_id);if(!Z7(e,e.channel_id))return;let n=Ft.store.pingColor.replaceAll("#","").trim(),i=Ft.store.channelPingColor.replaceAll("#","").trim(),s=e.content,l="";if(o.guild_id){let f=Re.getGuild(o.guild_id);l=`${e.author.username} (${f.name}, #${o.name})`}switch(o.type){case Ah.DM:l=e.author.username.trim();break;case Ah.GROUP_DM:let f=o.name.trim()??o.rawRecipients.map(g=>g.username).join(", ");l=`${e.author.username} (${f})`;break}if(e.referenced_message&&(l+=" (reply)"),e.embeds.length>0&&(s+=" [embed] ",e.content===""&&(s="sent message embed(s)")),e.sticker_items&&(s+=" [sticker] ",e.content===""&&(s="sent a sticker")),e.attachments.filter(f=>typeof f?.content_type=="string"&&f?.content_type.startsWith("image")).forEach(f=>{s+=` [image: ${f.filename}] `}),e.attachments.filter(f=>f&&!f.content_type?.startsWith("image")).forEach(f=>{s+=` [attachment: ${f.filename}] `}),e.mentions.length>0&&(s=s.replace(/<@!?(\d{17,20})>/g,(f,g)=>`<color=#${n}><b>@${k.getUser(g)?.username||"unknown-user"}</color></b>`)),e.mention_roles.length>0)for(let f of e.mention_roles){let g=gt.getRole(o.guild_id,f);if(!g)continue;let y=g.colorString??`#${n}`;s=s.replace(`<@&${f}>`,`<b><color=${y}>@${g.name}</color></b>`)}let u=s.match(new RegExp("(<a?:\\w+:\\d+>)","g")),d=s.match(new RegExp("<(#\\d+)>","g"));if(u)for(let f of u)s=s.replace(new RegExp(`${f}`,"g"),`:${f.split(":")[1]}:`);if(d)for(let f of d){let g=f.split("<#")[1];g=g.substring(0,g.length-1),s=s.replace(new RegExp(`${f}`,"g"),`<b><color=#${i}>#${K.getChannel(g).name}</color></b>`)}K7(o)||Y7(l,s,e)}},start:G2,stop(){Qn.close(),KP.closeSocket()},settingsAboutComponent:()=>r(p,null,r(te,{onClick:()=>qP("This is a test notification! explode","Hello from Vendor!")},"Send test notification"))});function K7(e){return e.type===Ah.DM&&Ft.store.dmNotifications||e.type===Ah.GROUP_DM&&Ft.store.groupDmNotifications?!1:!Ft.store.serverNotifications}function Y7(e,t,o){fetch(`https://cdn.discordapp.com/avatars/${o.author.id}/${o.author.avatar}.png?size=128`).then(n=>n.blob()).then(n=>new Promise(i=>{let s=new FileReader;s.onload=()=>i(s.result.split(",")[1]),s.readAsDataURL(n)})).then(n=>{let i={type:1,timeout:Ft.store.lengthBasedTimeout?QP(t):Ft.store.timeout,height:ZP(t),opacity:Ft.store.opacity,volume:Ft.store.volume,audioPath:Ft.store.soundPath,title:e,content:t,useBase64Icon:!0,icon:n,sourceApp:"Vencord"};YP(i)})}function qP(e,t){let o={type:1,timeout:Ft.store.lengthBasedTimeout?QP(e):Ft.store.timeout,height:ZP(e),opacity:Ft.store.opacity,volume:Ft.store.volume,audioPath:Ft.store.soundPath,title:t,content:e,useBase64Icon:!1,icon:"default",sourceApp:"Vencord"};YP(o)}async function YP(e){if(Ft.store.preferUDP){KP.sendToOverlay(e);return}let t={sender:"Vencord",target:"xsoverlay",command:"SendNotification",jsonData:JSON.stringify(e),rawData:null};Qn.readyState!==Qn.OPEN&&await G2(),Qn.send(JSON.stringify(t))}function Z7(e,t){let o=k.getCurrentUser();return e.author.id===o.id||e.author.bot&&!Ft.store.botNotifications?!1:q7(e,t)}function ZP(e){return e.length<=100?100:e.length<=200?150:e.length<=300?200:250}function QP(e){return e.length<=100?3:e.length<=200?4:e.length<=300?5:6}a();w();var Rh=h({name:"YoutubeAdblock",description:"Block ads in YouTube embeds and the WatchTogether activity via AdGuard",tags:["Media","Utility"],authors:[m.ImLvna,m.Ven]});var He={[Vn.name]:Vn,[rp.name]:rp,[np.name]:np,[ip.name]:ip,[sp.name]:sp,[ap.name]:ap,[lp.name]:lp,[cp.name]:cp,[up.name]:up,[dp.name]:dp,[pp.name]:pp,[mp.name]:mp,[fp.name]:fp,[gp.name]:gp,[hp.name]:hp,[vp.name]:vp,[bp.name]:bp,[_r.name]:_r,[Sp.name]:Sp,[wp.name]:wp,[Tp.name]:Tp,[Ip.name]:Ip,[Pp.name]:Pp,[Mp.name]:Mp,[Np.name]:Np,[kp.name]:kp,[Lp.name]:Lp,[_p.name]:_p,[Op.name]:Op,[Up.name]:Up,[Bp.name]:Bp,[Fp.name]:Fp,[$p.name]:$p,[Gp.name]:Gp,[Hp.name]:Hp,[zp.name]:zp,[Wp.name]:Wp,[qp.name]:qp,[Kp.name]:Kp,[xs.name]:xs,[Yp.name]:Yp,[Zp.name]:Zp,[Jp.name]:Jp,[Xp.name]:Xp,[Vp.name]:Vp,[tm.name]:tm,[om.name]:om,[nm.name]:nm,[lm.name]:lm,[cm.name]:cm,[Di.name]:Di,[fm.name]:fm,[za.name]:za,[vm.name]:vm,[bm.name]:bm,[xm.name]:xm,[_a.name]:_a,[wm.name]:wm,[Rm.name]:Rm,[Dm.name]:Dm,[Lm.name]:Lm,[_m.name]:_m,[Om.name]:Om,[Em.name]:Em,[Um.name]:Um,[Bm.name]:Bm,[Fm.name]:Fm,[$m.name]:$m,[Gm.name]:Gm,[zm.name]:zm,[Wm.name]:Wm,[qm.name]:qm,[Ym.name]:Ym,[Zm.name]:Zm,[Qm.name]:Qm,[Jm.name]:Jm,[Xm.name]:Xm,[Vm.name]:Vm,[ef.name]:ef,[tf.name]:tf,[of.name]:of,[nf.name]:nf,[sf.name]:sf,[lf.name]:lf,[cf.name]:cf,[df.name]:df,[pf.name]:pf,[ff.name]:ff,[hf.name]:hf,[yf.name]:yf,[Sf.name]:Sf,[Tf.name]:Tf,[If.name]:If,[rn.name]:rn,[Pf.name]:Pf,[Mf.name]:Mf,[Nf.name]:Nf,[Cf.name]:Cf,[Af.name]:Af,[kf.name]:kf,[Rf.name]:Rf,[Df.name]:Df,[on.name]:on,[Lf.name]:Lf,[_f.name]:_f,[Of.name]:Of,[Ef.name]:Ef,[Uf.name]:Uf,[Bf.name]:Bf,[Ff.name]:Ff,[zn.name]:zn,[$f.name]:$f,[Gf.name]:Gf,[Hf.name]:Hf,[_s.name]:_s,[Zf.name]:Zf,[Qf.name]:Qf,[Vf.name]:Vf,[eg.name]:eg,[tg.name]:tg,[og.name]:og,[rg.name]:rg,[ng.name]:ng,[ig.name]:ig,[sg.name]:sg,[cg.name]:cg,[ug.name]:ug,[dg.name]:dg,[pg.name]:pg,[fg.name]:fg,[wg.name]:wg,[Tg.name]:Tg,[Ig.name]:Ig,[Mg.name]:Mg,[Ng.name]:Ng,[Cg.name]:Cg,[Dg.name]:Dg,[Lg.name]:Lg,[Og.name]:Og,[tl.name]:tl,[Eg.name]:Eg,[Ug.name]:Ug,[Bg.name]:Bg,[Fg.name]:Fg,[$g.name]:$g,[Gg.name]:Gg,[Hg.name]:Hg,[zg.name]:zg,[Wg.name]:Wg,[jg.name]:jg,[qg.name]:qg,[Kg.name]:Kg,[Zg.name]:Zg,[Jg.name]:Jg,[Xg.name]:Xg,[eh.name]:eh,[oh.name]:oh,[il.name]:il,[rh.name]:rh,[nh.name]:nh,[ih.name]:ih,[sh.name]:sh,[uh.name]:uh,[ph.name]:ph,[mh.name]:mh,[gh.name]:gh,[hh.name]:hh,[xh.name]:xh,[Ts.name]:Ts,[wh.name]:wh,[Ih.name]:Ih,[Ph.name]:Ph,[Mh.name]:Mh,[_splitLargeMessagesPlugin.name]:_splitLargeMessagesPlugin,[_catboxUploadPlugin.name]:_catboxUploadPlugin,[_splitLargeMessagesPlugin.name]:_splitLargeMessagesPlugin,[_catboxUploadPlugin.name]:_catboxUploadPlugin,[Nh.name]:Nh,[Ch.name]:Ch,[kh.name]:kh,[Rh.name]:Rh},Ni={[Vn.name]:{folderName:"_api/badges",userPlugin:!1},[rp.name]:{folderName:"_api/chatButtons.ts",userPlugin:!1},[np.name]:{folderName:"_api/commands.ts",userPlugin:!1},[ip.name]:{folderName:"_api/contextMenu.ts",userPlugin:!1},[sp.name]:{folderName:"_api/dynamicImageModalApi.ts",userPlugin:!1},[ap.name]:{folderName:"_api/memberListDecorators",userPlugin:!1},[lp.name]:{folderName:"_api/messageAccessories.ts",userPlugin:!1},[cp.name]:{folderName:"_api/messageDecorations",userPlugin:!1},[up.name]:{folderName:"_api/messageEvents.ts",userPlugin:!1},[dp.name]:{folderName:"_api/messagePopover.ts",userPlugin:!1},[pp.name]:{folderName:"_api/messageUpdater.ts",userPlugin:!1},[mp.name]:{folderName:"_api/notices.ts",userPlugin:!1},[fp.name]:{folderName:"_api/serverList.ts",userPlugin:!1},[gp.name]:{folderName:"_api/userSettings.ts",userPlugin:!1},[hp.name]:{folderName:"_core/concatenatedComponentExtractor.tsx",userPlugin:!1},[vp.name]:{folderName:"_core/fixDiscordCss.ts",userPlugin:!1},[bp.name]:{folderName:"_core/noTrack.ts",userPlugin:!1},[_r.name]:{folderName:"_core/settings.tsx",userPlugin:!1},[Sp.name]:{folderName:"_core/supportHelper.tsx",userPlugin:!1},[wp.name]:{folderName:"accountPanelServerProfile",userPlugin:!1},[Tp.name]:{folderName:"addAttachments",userPlugin:!1},[Ip.name]:{folderName:"alwaysAnimate",userPlugin:!1},[Pp.name]:{folderName:"alwaysExpandRoles",userPlugin:!1},[Mp.name]:{folderName:"alwaysTrust",userPlugin:!1},[Np.name]:{folderName:"anonymiseFileNames",userPlugin:!1},[kp.name]:{folderName:"autoDndWhilePlaying.discordDesktop",userPlugin:!1},[Lp.name]:{folderName:"betterFolders",userPlugin:!1},[_p.name]:{folderName:"betterGifAltText",userPlugin:!1},[Op.name]:{folderName:"betterGifPicker",userPlugin:!1},[Up.name]:{folderName:"betterRoleContext",userPlugin:!1},[Bp.name]:{folderName:"betterRoleDot",userPlugin:!1},[Fp.name]:{folderName:"betterSessions",userPlugin:!1},[$p.name]:{folderName:"betterSettings",userPlugin:!1},[Gp.name]:{folderName:"betterUploadButton",userPlugin:!1},[Hp.name]:{folderName:"biggerStreamPreview",userPlugin:!1},[zp.name]:{folderName:"blurNsfw",userPlugin:!1},[Wp.name]:{folderName:"callTimer",userPlugin:!1},[qp.name]:{folderName:"characterCounter",userPlugin:!1},[Kp.name]:{folderName:"clearURLs",userPlugin:!1},[xs.name]:{folderName:"clientTheme",userPlugin:!1},[Yp.name]:{folderName:"colorSighted",userPlugin:!1},[Zp.name]:{folderName:"consoleJanitor",userPlugin:!1},[Jp.name]:{folderName:"consoleShortcuts",userPlugin:!1},[Xp.name]:{folderName:"copyEmojiMarkdown",userPlugin:!1},[Vp.name]:{folderName:"copyFileContents",userPlugin:!1},[tm.name]:{folderName:"copyStickerLinks",userPlugin:!1},[om.name]:{folderName:"copyUserURLs",userPlugin:!1},[nm.name]:{folderName:"crashHandler",userPlugin:!1},[lm.name]:{folderName:"customCommands",userPlugin:!1},[cm.name]:{folderName:"customIdle",userPlugin:!1},[Di.name]:{folderName:"customRPC",userPlugin:!1},[fm.name]:{folderName:"dearrow",userPlugin:!1},[za.name]:{folderName:"decor",userPlugin:!1},[vm.name]:{folderName:"disableCallIdle",userPlugin:!1},[bm.name]:{folderName:"dontRoundMyTimestamps",userPlugin:!1},[xm.name]:{folderName:"experiments",userPlugin:!1},[_a.name]:{folderName:"expressionCloner",userPlugin:!1},[wm.name]:{folderName:"f8break",userPlugin:!1},[Rm.name]:{folderName:"fakeNitro",userPlugin:!1},[Dm.name]:{folderName:"fakeProfileThemes",userPlugin:!1},[Lm.name]:{folderName:"favEmojiFirst",userPlugin:!1},[_m.name]:{folderName:"fixCodeblockGap",userPlugin:!1},[Om.name]:{folderName:"fixImagesQuality",userPlugin:!1},[Em.name]:{folderName:"fixSpotifyEmbeds.desktop",userPlugin:!1},[Um.name]:{folderName:"fixYoutubeEmbeds.desktop",userPlugin:!1},[Bm.name]:{folderName:"forceOwnerCrown",userPlugin:!1},[Fm.name]:{folderName:"friendInvites",userPlugin:!1},[$m.name]:{folderName:"fullSearchContext",userPlugin:!1},[Gm.name]:{folderName:"fullUserInChatbox",userPlugin:!1},[zm.name]:{folderName:"gameActivityToggle",userPlugin:!1},[Wm.name]:{folderName:"gifPaste",userPlugin:!1},[qm.name]:{folderName:"gifProviderSwitcher",userPlugin:!1},[Ym.name]:{folderName:"greetStickerPicker",userPlugin:!1},[Zm.name]:{folderName:"hideAttachments",userPlugin:!1},[Qm.name]:{folderName:"iLoveSpam",userPlugin:!1},[Jm.name]:{folderName:"ignoreActivities",userPlugin:!1},[Xm.name]:{folderName:"imageFilename",userPlugin:!1},[Vm.name]:{folderName:"imageLink",userPlugin:!1},[ef.name]:{folderName:"imageZoom",userPlugin:!1},[tf.name]:{folderName:"implicitRelationships",userPlugin:!1},[of.name]:{folderName:"ircColors",userPlugin:!1},[nf.name]:{folderName:"keepCurrentChannel",userPlugin:!1},[sf.name]:{folderName:"loadingQuotes",userPlugin:!1},[lf.name]:{folderName:"memberCount",userPlugin:!1},[cf.name]:{folderName:"mentionAvatars",userPlugin:!1},[df.name]:{folderName:"messageClickActions",userPlugin:!1},[pf.name]:{folderName:"messageLatency",userPlugin:!1},[ff.name]:{folderName:"messageLinkEmbeds",userPlugin:!1},[hf.name]:{folderName:"messageLogger",userPlugin:!1},[yf.name]:{folderName:"moreQuickReactions",userPlugin:!1},[Sf.name]:{folderName:"musicRichPresence",userPlugin:!1},[Tf.name]:{folderName:"mutualGroupDMs",userPlugin:!1},[If.name]:{folderName:"newGuildSettings",userPlugin:!1},[rn.name]:{folderName:"noBlockedMessages",userPlugin:!1},[Pf.name]:{folderName:"noDevtoolsWarning",userPlugin:!1},[Mf.name]:{folderName:"noF1",userPlugin:!1},[Nf.name]:{folderName:"noMaskedUrlPaste",userPlugin:!1},[Cf.name]:{folderName:"noMiddleClickPaste",userPlugin:!1},[Af.name]:{folderName:"noMosaic",userPlugin:!1},[kf.name]:{folderName:"noOnboardingDelay",userPlugin:!1},[Rf.name]:{folderName:"noPendingCount",userPlugin:!1},[Df.name]:{folderName:"noProfileThemes",userPlugin:!1},[on.name]:{folderName:"noReplyMention",userPlugin:!1},[Lf.name]:{folderName:"noServerEmojis",userPlugin:!1},[_f.name]:{folderName:"noSystemBadge.discordDesktop",userPlugin:!1},[Of.name]:{folderName:"noTypingAnimation",userPlugin:!1},[Ef.name]:{folderName:"noUnblockToJump",userPlugin:!1},[Uf.name]:{folderName:"notificationVolume",userPlugin:!1},[Bf.name]:{folderName:"onePingPerDM",userPlugin:!1},[Ff.name]:{folderName:"oneko",userPlugin:!1},[zn.name]:{folderName:"openInApp",userPlugin:!1},[$f.name]:{folderName:"overrideForumDefaults",userPlugin:!1},[Gf.name]:{folderName:"pauseInvitesForever",userPlugin:!1},[Hf.name]:{folderName:"permissionFreeWill",userPlugin:!1},[_s.name]:{folderName:"permissionsViewer",userPlugin:!1},[Zf.name]:{folderName:"petpet",userPlugin:!1},[Qf.name]:{folderName:"pictureInPicture",userPlugin:!1},[Vf.name]:{folderName:"pinDms",userPlugin:!1},[eg.name]:{folderName:"plainFolderIcon",userPlugin:!1},[tg.name]:{folderName:"platformIndicators",userPlugin:!1},[og.name]:{folderName:"previewMessage",userPlugin:!1},[rg.name]:{folderName:"quickMention",userPlugin:!1},[ng.name]:{folderName:"quickReply",userPlugin:!1},[ig.name]:{folderName:"reactErrorDecoder",userPlugin:!1},[sg.name]:{folderName:"readAllNotificationsButton",userPlugin:!1},[cg.name]:{folderName:"relationshipNotifier",userPlugin:!1},[ug.name]:{folderName:"replaceGoogleSearch",userPlugin:!1},[dg.name]:{folderName:"replyTimestamp",userPlugin:!1},[pg.name]:{folderName:"revealAllSpoilers",userPlugin:!1},[fg.name]:{folderName:"reverseImageSearch",userPlugin:!1},[wg.name]:{folderName:"reviewDB",userPlugin:!1},[Tg.name]:{folderName:"roleColorEverywhere",userPlugin:!1},[Ig.name]:{folderName:"secretRingTone",userPlugin:!1},[Mg.name]:{folderName:"sendTimestamps",userPlugin:!1},[Ng.name]:{folderName:"serverInfo",userPlugin:!1},[Cg.name]:{folderName:"serverListIndicators",userPlugin:!1},[Dg.name]:{folderName:"shikiCodeblocks.desktop",userPlugin:!1},[Lg.name]:{folderName:"showAllMessageButtons",userPlugin:!1},[Og.name]:{folderName:"showConnections",userPlugin:!1},[tl.name]:{folderName:"showHiddenChannels",userPlugin:!1},[Eg.name]:{folderName:"showHiddenThings",userPlugin:!1},[Ug.name]:{folderName:"showMeYourName",userPlugin:!1},[Bg.name]:{folderName:"showTimeoutDuration",userPlugin:!1},[Fg.name]:{folderName:"silentMessageToggle",userPlugin:!1},[$g.name]:{folderName:"silentTyping",userPlugin:!1},[Gg.name]:{folderName:"sortFriendRequests",userPlugin:!1},[Hg.name]:{folderName:"spotifyControls",userPlugin:!1},[zg.name]:{folderName:"spotifyCrack",userPlugin:!1},[Wg.name]:{folderName:"spotifyShareCommands",userPlugin:!1},[jg.name]:{folderName:"startupTimings",userPlugin:!1},[qg.name]:{folderName:"stickerPaste",userPlugin:!1},[Kg.name]:{folderName:"streamerModeOnStream",userPlugin:!1},[Zg.name]:{folderName:"superReactionTweaks",userPlugin:!1},[Jg.name]:{folderName:"textReplace",userPlugin:!1},[Xg.name]:{folderName:"themeAttributes",userPlugin:!1},[eh.name]:{folderName:"translate",userPlugin:!1},[oh.name]:{folderName:"typingIndicator",userPlugin:!1},[il.name]:{folderName:"typingTweaks",userPlugin:!1},[rh.name]:{folderName:"unindent",userPlugin:!1},[nh.name]:{folderName:"unlockedAvatarZoom",userPlugin:!1},[ih.name]:{folderName:"unsuppressEmbeds",userPlugin:!1},[sh.name]:{folderName:"userMessagesPronouns",userPlugin:!1},[uh.name]:{folderName:"userVoiceShow",userPlugin:!1},[ph.name]:{folderName:"usrbg",userPlugin:!1},[mh.name]:{folderName:"validReply",userPlugin:!1},[gh.name]:{folderName:"validUser",userPlugin:!1},[hh.name]:{folderName:"vcDoubleClick",userPlugin:!1},[xh.name]:{folderName:"vcNarrator",userPlugin:!1},[Ts.name]:{folderName:"vencordToolbox",userPlugin:!1},[wh.name]:{folderName:"viewIcons",userPlugin:!1},[Ih.name]:{folderName:"viewRaw",userPlugin:!1},[Ph.name]:{folderName:"voiceDownload",userPlugin:!1},[Mh.name]:{folderName:"voiceMessages",userPlugin:!1},[_splitLargeMessagesPlugin.name]:{folderName:"splitLargeMessages",userPlugin:!1},[_catboxUploadPlugin.name]:{folderName:"catboxUploadButton",userPlugin:!1},[_splitLargeMessagesPlugin.name]:{folderName:"splitLargeMessages",userPlugin:!1},[_catboxUploadPlugin.name]:{folderName:"catboxUploadButton",userPlugin:!1},[Nh.name]:{folderName:"volumeBooster",userPlugin:!1},[Ch.name]:{folderName:"whoReacted",userPlugin:!1},[kh.name]:{folderName:"xsOverlay",userPlugin:!1},[Rh.name]:{folderName:"youtubeAdblock.desktop",userPlugin:!1}},yx={"WebRichPresence (arRPC)":"web",DevCompanion:"dev",DisableDeepLinks:"web",WebContextMenus:"web",WebKeybinds:"web",WebPWA:"browser",WebScreenShare:"browser",WebScreenShareFixes:"web"};a();(window.VencordStyles??=new Map).set("src/nativeTitleBar.css",{name:"src/nativeTitleBar.css",source:`[data-window-chrome="true"] {
+var G7=x({multiplier:{description:"Volume Multiplier",type:5,markers:ir(1,5,.5),default:2,stickToMarkers:!0}}),Nh=h({name:"VolumeBooster",authors:[m.Nuckyz,m.sadan],description:"Allows you to set the user and stream volume above the default maximum",tags:["Voice","Utility"],settings:G7,patches:[{find:"#{intl::USER_VOLUME}",replacement:{match:/(?<=maxValue:)\i\.isPlatformEmbedded\?(\i\.\i):\i\.\i(?=,)/,replace:(e,t)=>`${t}*$self.settings.store.multiplier`}},{find:"currentVolume:",replacement:{match:/(?<=maxValue:)\i\.\i\?(\d+?):\d+?(?=,)/,replace:(e,t)=>`${t}*$self.settings.store.multiplier`}},{find:"streamSourceNode",predicate:()=>!1,group:!0,replacement:[{match:/Math\.max.{0,30}\)\)/,replace:"arguments[0]"},{match:/\}return"video"/,replace:"this.updateAudioElement();$&"},{match:/\.volume=this\._volume\/100;/,replace:".volume=0.00;$self.patchVolume(this);"}]},{find:"AudioContextSettingsMigrated",replacement:[{match:/(?<=isLocalMute\(\i,\i\),volume:(\i).+?\(0,\i\.\i\)\(\i,\i,\{volume:)\1(?=\}\))/,replace:"$&>200?200:$&"},{match:/(?<=Object\.entries\(\i\.localMutes\).+?volume:).+?(?=,)/,replace:"$&>200?200:$&"},{match:/(?<=Object\.entries\(\i\.localVolumes\).+?volume:).+?(?=})/,replace:"$&>200?200:$&"}]},{find:'="MediaEngineStore",',replacement:[{match:/(\.settings\.audioContextSettings.+?)(\i\[\i\])=(\i\.volume)(.+?setLocalVolume\(\i,).+?\)/,replace:(e,t,o,n,i)=>t+`(${o}>200?void 0:${o}=${n})`+i+`${o}??${n})`}]}],patchVolume(e){if(e.stream.getAudioTracks().length!==0){if(e.streamSourceNode??=e.audioContext.createMediaStreamSource(e.stream),!e.gainNode){let t=e.gainNode=e.audioContext.createGain();e.streamSourceNode.connect(t),t.connect(e.audioContext.destination)}e.sinkId!=null&&e.sinkId!==e.audioContext.sinkId&&"setSinkId"in AudioContext.prototype&&e.audioContext.setSinkId(e.sinkId==="default"?"":e.sinkId),e.gainNode.gain.value=e._mute?0:e._volume/100}}});a();w();ee();lt();b();var $2=null,H7=new Ro,WP={};function z7(e,t,o){let n=t.name+(t.id?`:${t.id}`:"");return nt.get({url:bt.Endpoints.REACTIONS(e.channel_id,e.id,n),query:{limit:100,type:o},oldFormErrors:!0}).then(i=>{for(let s of i.body)L.dispatch({type:"USER_UPDATE",user:s});L.dispatch({type:"MESSAGE_REACTION_ADD_USERS",channelId:e.channel_id,messageId:e.id,users:i.body,emoji:t,reactionType:o})}).catch(console.error).finally(()=>Tr(250))}function W7(e,t,o){let n=`${e.id}:${t.name}:${t.id??""}:${o}`,i=WP[n]??={fetched:!1,users:new Map};return i.fetched||(H7.unshift(()=>z7(e,t,o)),i.fetched=!0),i.users}function zP(e){e.stopPropagation()}function j7({message:e,users:t}){return ui(()=>{$2?.scrollCounter>0&&$2.setAutomaticAnchor(null)}),r("div",{style:{marginLeft:"0.5em",transform:"scale(0.9)"}},r("div",{onClick:zP,onKeyDown:zP,style:jP.store.clickableAvatars?{}:{pointerEvents:"none"}},r(Mr,{users:t,guildId:K.getChannel(e.channel_id)?.guild_id,renderIcon:!1,max:5,showDefaultAvatarsForNullUsers:!0,showUserPopout:!0})))}var jP=x({clickableAvatars:{description:"While this is enabled, clicking a reacting user's avatar will open their profile instead of adding the reaction",type:3,default:!0,restartNeeded:!0}}),Ch=h({name:"WhoReacted",description:"Renders the avatars of users who reacted to a message",tags:["Reactions","Chat","Appearance"],authors:[m.Ven,m.KannaDev,m.newwares,m.paige],settings:jP,patches:[{find:",reactionRef:",replacement:{match:/(\i)\?null:\(0,\i\.jsx\)\(\i\.\i,{className:\i\.reactionCount,.*?}\),(?<=(emoji:\i,message:\i,type:\i).+?)/,replace:"$&$1?null:$self.renderUsers({$2}),"}},{find:'"MessageReactionsStore"',replacement:{match:/CONNECTION_OPEN:function\(\){(\i)={}/,replace:"$&;$self.reactions=$1;"}},{find:"cleanAutomaticAnchor(){",replacement:{match:/constructor\(\i\)\{(?=.{0,100}(?:automaticAnchor|\.messages\.loadingMore))/,replace:"$&$self.setScrollObj(this);"}}],renderUsers:N.wrap(({message:e,emoji:t,type:o})=>{let n=Vo();if(Z(()=>{let l=c=>{c?.messageId===e.id&&n()};return L.subscribe("MESSAGE_REACTION_ADD_USERS",l),()=>L.unsubscribe("MESSAGE_REACTION_ADD_USERS",l)},[e.id,n]),e.reactions.length>10)return null;let i=W7(e,t,o),s=Array.from(i,([l])=>k.getUser(l)).filter(Boolean);return xe(rn.name)&&(s=s.filter(l=>!rn.shouldIgnoreUser(l.id))),s.length===0?null:r(j7,{message:e,users:s})},{noop:!0}),setScrollObj(e){$2=e},set reactions(e){WP=e}});a();w();le();F();b();var Ah=lo(e=>e.ANNOUNCEMENT_THREAD===10),q7=fe(".SUPPRESS_NOTIFICATIONS))return!1"),Pke=new O("XSOverlay"),Ft=x({webSocketPort:{type:1,description:"Websocket port",default:42070,async onChange(){await G2()}},preferUDP:{type:3,displayName:"Prefer UDP",description:"Enable if you use an older build of XSOverlay unable to connect through websockets. This setting is ignored on web.",default:!1,disabled:()=>!1},botNotifications:{type:3,description:"Allow bot notifications",default:!1},serverNotifications:{type:3,description:"Allow server notifications",default:!0},dmNotifications:{type:3,displayName:"DM Notifications",description:"Allow Direct Message notifications",default:!0},groupDmNotifications:{type:3,displayName:"Group DM Notifications",description:"Allow Group DM notifications",default:!0},callNotifications:{type:3,description:"Allow call notifications",default:!0},pingColor:{type:0,description:"User mention color",default:"#7289da"},channelPingColor:{type:0,description:"Channel mention color",default:"#8a2be2"},soundPath:{type:0,description:"Notification sound (default/warning/error)",default:"default"},timeout:{type:1,description:"Notification duration (secs)",default:3},lengthBasedTimeout:{type:3,description:"Extend duration with message length",default:!0},opacity:{type:5,description:"Notif opacity",default:1,markers:ir(0,1,.1)},volume:{type:5,description:"Volume",default:.2,markers:ir(0,1,.1)}}),Qn;async function G2(){return Qn&&Qn.close(),Qn=new WebSocket(`ws://127.0.0.1:${Ft.store.webSocketPort??42070}/?client=Vencord`),new Promise((e,t)=>{Qn.onopen=e,Qn.onerror=t,setTimeout(t,3e3)})}var KP=VencordNative.pluginHelpers.XSOverlay,kh=h({name:"XSOverlay",description:"Forwards discord notifications to XSOverlay, for easy viewing in VR",tags:["Notifications"],authors:[m.Nyako],searchTerms:["vr","notify"],reporterTestable:2,settings:Ft,flux:{CALL_UPDATE({call:e}){if(e?.ringing?.includes(k.getCurrentUser().id)&&Ft.store.callNotifications){let t=K.getChannel(e.channel_id);qP("Incoming call",`${t.name} is calling you...`)}},MESSAGE_CREATE({message:e,optimistic:t}){if(t)return;let o=K.getChannel(e.channel_id);if(!Z7(e,e.channel_id))return;let n=Ft.store.pingColor.replaceAll("#","").trim(),i=Ft.store.channelPingColor.replaceAll("#","").trim(),s=e.content,l="";if(o.guild_id){let f=Re.getGuild(o.guild_id);l=`${e.author.username} (${f.name}, #${o.name})`}switch(o.type){case Ah.DM:l=e.author.username.trim();break;case Ah.GROUP_DM:let f=o.name.trim()??o.rawRecipients.map(g=>g.username).join(", ");l=`${e.author.username} (${f})`;break}if(e.referenced_message&&(l+=" (reply)"),e.embeds.length>0&&(s+=" [embed] ",e.content===""&&(s="sent message embed(s)")),e.sticker_items&&(s+=" [sticker] ",e.content===""&&(s="sent a sticker")),e.attachments.filter(f=>typeof f?.content_type=="string"&&f?.content_type.startsWith("image")).forEach(f=>{s+=` [image: ${f.filename}] `}),e.attachments.filter(f=>f&&!f.content_type?.startsWith("image")).forEach(f=>{s+=` [attachment: ${f.filename}] `}),e.mentions.length>0&&(s=s.replace(/<@!?(\d{17,20})>/g,(f,g)=>`<color=#${n}><b>@${k.getUser(g)?.username||"unknown-user"}</color></b>`)),e.mention_roles.length>0)for(let f of e.mention_roles){let g=gt.getRole(o.guild_id,f);if(!g)continue;let y=g.colorString??`#${n}`;s=s.replace(`<@&${f}>`,`<b><color=${y}>@${g.name}</color></b>`)}let u=s.match(new RegExp("(<a?:\\w+:\\d+>)","g")),d=s.match(new RegExp("<(#\\d+)>","g"));if(u)for(let f of u)s=s.replace(new RegExp(`${f}`,"g"),`:${f.split(":")[1]}:`);if(d)for(let f of d){let g=f.split("<#")[1];g=g.substring(0,g.length-1),s=s.replace(new RegExp(`${f}`,"g"),`<b><color=#${i}>#${K.getChannel(g).name}</color></b>`)}K7(o)||Y7(l,s,e)}},start:G2,stop(){Qn.close(),KP.closeSocket()},settingsAboutComponent:()=>r(p,null,r(te,{onClick:()=>qP("This is a test notification! explode","Hello from Vendor!")},"Send test notification"))});function K7(e){return e.type===Ah.DM&&Ft.store.dmNotifications||e.type===Ah.GROUP_DM&&Ft.store.groupDmNotifications?!1:!Ft.store.serverNotifications}function Y7(e,t,o){fetch(`https://cdn.discordapp.com/avatars/${o.author.id}/${o.author.avatar}.png?size=128`).then(n=>n.blob()).then(n=>new Promise(i=>{let s=new FileReader;s.onload=()=>i(s.result.split(",")[1]),s.readAsDataURL(n)})).then(n=>{let i={type:1,timeout:Ft.store.lengthBasedTimeout?QP(t):Ft.store.timeout,height:ZP(t),opacity:Ft.store.opacity,volume:Ft.store.volume,audioPath:Ft.store.soundPath,title:e,content:t,useBase64Icon:!0,icon:n,sourceApp:"Vencord"};YP(i)})}function qP(e,t){let o={type:1,timeout:Ft.store.lengthBasedTimeout?QP(e):Ft.store.timeout,height:ZP(e),opacity:Ft.store.opacity,volume:Ft.store.volume,audioPath:Ft.store.soundPath,title:t,content:e,useBase64Icon:!1,icon:"default",sourceApp:"Vencord"};YP(o)}async function YP(e){if(Ft.store.preferUDP){KP.sendToOverlay(e);return}let t={sender:"Vencord",target:"xsoverlay",command:"SendNotification",jsonData:JSON.stringify(e),rawData:null};Qn.readyState!==Qn.OPEN&&await G2(),Qn.send(JSON.stringify(t))}function Z7(e,t){let o=k.getCurrentUser();return e.author.id===o.id||e.author.bot&&!Ft.store.botNotifications?!1:q7(e,t)}function ZP(e){return e.length<=100?100:e.length<=200?150:e.length<=300?200:250}function QP(e){return e.length<=100?3:e.length<=200?4:e.length<=300?5:6}a();w();var Rh=h({name:"YoutubeAdblock",description:"Block ads in YouTube embeds and the WatchTogether activity via AdGuard",tags:["Media","Utility"],authors:[m.ImLvna,m.Ven]});var He={[Vn.name]:Vn,[rp.name]:rp,[np.name]:np,[ip.name]:ip,[sp.name]:sp,[ap.name]:ap,[lp.name]:lp,[cp.name]:cp,[up.name]:up,[dp.name]:dp,[pp.name]:pp,[mp.name]:mp,[fp.name]:fp,[gp.name]:gp,[hp.name]:hp,[vp.name]:vp,[bp.name]:bp,[_r.name]:_r,[Sp.name]:Sp,[wp.name]:wp,[Tp.name]:Tp,[Ip.name]:Ip,[Pp.name]:Pp,[Mp.name]:Mp,[Np.name]:Np,[kp.name]:kp,[Lp.name]:Lp,[_p.name]:_p,[Op.name]:Op,[Up.name]:Up,[Bp.name]:Bp,[Fp.name]:Fp,[$p.name]:$p,[Gp.name]:Gp,[Hp.name]:Hp,[zp.name]:zp,[Wp.name]:Wp,[qp.name]:qp,[Kp.name]:Kp,[xs.name]:xs,[Yp.name]:Yp,[Zp.name]:Zp,[Jp.name]:Jp,[Xp.name]:Xp,[Vp.name]:Vp,[tm.name]:tm,[om.name]:om,[nm.name]:nm,[lm.name]:lm,[cm.name]:cm,[Di.name]:Di,[fm.name]:fm,[za.name]:za,[vm.name]:vm,[bm.name]:bm,[xm.name]:xm,[_a.name]:_a,[wm.name]:wm,[Rm.name]:Rm,[Dm.name]:Dm,[Lm.name]:Lm,[_m.name]:_m,[Om.name]:Om,[Em.name]:Em,[Um.name]:Um,[Bm.name]:Bm,[Fm.name]:Fm,[$m.name]:$m,[Gm.name]:Gm,[zm.name]:zm,[Wm.name]:Wm,[qm.name]:qm,[Ym.name]:Ym,[Zm.name]:Zm,[Qm.name]:Qm,[Jm.name]:Jm,[Xm.name]:Xm,[Vm.name]:Vm,[ef.name]:ef,[tf.name]:tf,[of.name]:of,[nf.name]:nf,[sf.name]:sf,[lf.name]:lf,[cf.name]:cf,[df.name]:df,[pf.name]:pf,[ff.name]:ff,[hf.name]:hf,[yf.name]:yf,[Sf.name]:Sf,[Tf.name]:Tf,[If.name]:If,[rn.name]:rn,[Pf.name]:Pf,[Mf.name]:Mf,[Nf.name]:Nf,[Cf.name]:Cf,[Af.name]:Af,[kf.name]:kf,[Rf.name]:Rf,[Df.name]:Df,[on.name]:on,[Lf.name]:Lf,[_f.name]:_f,[Of.name]:Of,[Ef.name]:Ef,[Uf.name]:Uf,[Bf.name]:Bf,[Ff.name]:Ff,[zn.name]:zn,[$f.name]:$f,[Gf.name]:Gf,[Hf.name]:Hf,[_s.name]:_s,[Zf.name]:Zf,[Qf.name]:Qf,[Vf.name]:Vf,[eg.name]:eg,[tg.name]:tg,[og.name]:og,[rg.name]:rg,[ng.name]:ng,[ig.name]:ig,[sg.name]:sg,[cg.name]:cg,[ug.name]:ug,[dg.name]:dg,[pg.name]:pg,[fg.name]:fg,[wg.name]:wg,[Tg.name]:Tg,[Ig.name]:Ig,[Mg.name]:Mg,[Ng.name]:Ng,[Cg.name]:Cg,[Dg.name]:Dg,[Lg.name]:Lg,[Og.name]:Og,[tl.name]:tl,[Eg.name]:Eg,[Ug.name]:Ug,[Bg.name]:Bg,[Fg.name]:Fg,[$g.name]:$g,[Gg.name]:Gg,[Hg.name]:Hg,[zg.name]:zg,[Wg.name]:Wg,[jg.name]:jg,[qg.name]:qg,[Kg.name]:Kg,[Zg.name]:Zg,[Jg.name]:Jg,[Xg.name]:Xg,[eh.name]:eh,[oh.name]:oh,[il.name]:il,[rh.name]:rh,[nh.name]:nh,[ih.name]:ih,[sh.name]:sh,[uh.name]:uh,[ph.name]:ph,[mh.name]:mh,[gh.name]:gh,[hh.name]:hh,[xh.name]:xh,[Ts.name]:Ts,[wh.name]:wh,[Ih.name]:Ih,[Ph.name]:Ph,[Mh.name]:Mh,[_splitLargeMessagesPlugin.name]:_splitLargeMessagesPlugin,[_catboxUploadPlugin.name]:_catboxUploadPlugin,[_splitLargeMessagesPlugin.name]:_splitLargeMessagesPlugin,[_catboxUploadPlugin.name]:_catboxUploadPlugin,[_splitLargeMessagesPlugin.name]:_splitLargeMessagesPlugin,[_catboxUploadPlugin.name]:_catboxUploadPlugin,[_splitLargeMessagesPlugin.name]:_splitLargeMessagesPlugin,[_catboxUploadPlugin.name]:_catboxUploadPlugin,[_dmArchivePlugin.name]:_dmArchivePlugin,[_splitLargeMessagesPlugin.name]:_splitLargeMessagesPlugin,[_catboxUploadPlugin.name]:_catboxUploadPlugin,[_dmArchivePlugin.name]:_dmArchivePlugin,[_splitLargeMessagesPlugin.name]:_splitLargeMessagesPlugin,[_catboxUploadPlugin.name]:_catboxUploadPlugin,[_dmArchivePlugin.name]:_dmArchivePlugin,[Nh.name]:Nh,[Ch.name]:Ch,[kh.name]:kh,[Rh.name]:Rh},Ni={[Vn.name]:{folderName:"_api/badges",userPlugin:!1},[rp.name]:{folderName:"_api/chatButtons.ts",userPlugin:!1},[np.name]:{folderName:"_api/commands.ts",userPlugin:!1},[ip.name]:{folderName:"_api/contextMenu.ts",userPlugin:!1},[sp.name]:{folderName:"_api/dynamicImageModalApi.ts",userPlugin:!1},[ap.name]:{folderName:"_api/memberListDecorators",userPlugin:!1},[lp.name]:{folderName:"_api/messageAccessories.ts",userPlugin:!1},[cp.name]:{folderName:"_api/messageDecorations",userPlugin:!1},[up.name]:{folderName:"_api/messageEvents.ts",userPlugin:!1},[dp.name]:{folderName:"_api/messagePopover.ts",userPlugin:!1},[pp.name]:{folderName:"_api/messageUpdater.ts",userPlugin:!1},[mp.name]:{folderName:"_api/notices.ts",userPlugin:!1},[fp.name]:{folderName:"_api/serverList.ts",userPlugin:!1},[gp.name]:{folderName:"_api/userSettings.ts",userPlugin:!1},[hp.name]:{folderName:"_core/concatenatedComponentExtractor.tsx",userPlugin:!1},[vp.name]:{folderName:"_core/fixDiscordCss.ts",userPlugin:!1},[bp.name]:{folderName:"_core/noTrack.ts",userPlugin:!1},[_r.name]:{folderName:"_core/settings.tsx",userPlugin:!1},[Sp.name]:{folderName:"_core/supportHelper.tsx",userPlugin:!1},[wp.name]:{folderName:"accountPanelServerProfile",userPlugin:!1},[Tp.name]:{folderName:"addAttachments",userPlugin:!1},[Ip.name]:{folderName:"alwaysAnimate",userPlugin:!1},[Pp.name]:{folderName:"alwaysExpandRoles",userPlugin:!1},[Mp.name]:{folderName:"alwaysTrust",userPlugin:!1},[Np.name]:{folderName:"anonymiseFileNames",userPlugin:!1},[kp.name]:{folderName:"autoDndWhilePlaying.discordDesktop",userPlugin:!1},[Lp.name]:{folderName:"betterFolders",userPlugin:!1},[_p.name]:{folderName:"betterGifAltText",userPlugin:!1},[Op.name]:{folderName:"betterGifPicker",userPlugin:!1},[Up.name]:{folderName:"betterRoleContext",userPlugin:!1},[Bp.name]:{folderName:"betterRoleDot",userPlugin:!1},[Fp.name]:{folderName:"betterSessions",userPlugin:!1},[$p.name]:{folderName:"betterSettings",userPlugin:!1},[Gp.name]:{folderName:"betterUploadButton",userPlugin:!1},[Hp.name]:{folderName:"biggerStreamPreview",userPlugin:!1},[zp.name]:{folderName:"blurNsfw",userPlugin:!1},[Wp.name]:{folderName:"callTimer",userPlugin:!1},[qp.name]:{folderName:"characterCounter",userPlugin:!1},[Kp.name]:{folderName:"clearURLs",userPlugin:!1},[xs.name]:{folderName:"clientTheme",userPlugin:!1},[Yp.name]:{folderName:"colorSighted",userPlugin:!1},[Zp.name]:{folderName:"consoleJanitor",userPlugin:!1},[Jp.name]:{folderName:"consoleShortcuts",userPlugin:!1},[Xp.name]:{folderName:"copyEmojiMarkdown",userPlugin:!1},[Vp.name]:{folderName:"copyFileContents",userPlugin:!1},[tm.name]:{folderName:"copyStickerLinks",userPlugin:!1},[om.name]:{folderName:"copyUserURLs",userPlugin:!1},[nm.name]:{folderName:"crashHandler",userPlugin:!1},[lm.name]:{folderName:"customCommands",userPlugin:!1},[cm.name]:{folderName:"customIdle",userPlugin:!1},[Di.name]:{folderName:"customRPC",userPlugin:!1},[fm.name]:{folderName:"dearrow",userPlugin:!1},[za.name]:{folderName:"decor",userPlugin:!1},[vm.name]:{folderName:"disableCallIdle",userPlugin:!1},[bm.name]:{folderName:"dontRoundMyTimestamps",userPlugin:!1},[xm.name]:{folderName:"experiments",userPlugin:!1},[_a.name]:{folderName:"expressionCloner",userPlugin:!1},[wm.name]:{folderName:"f8break",userPlugin:!1},[Rm.name]:{folderName:"fakeNitro",userPlugin:!1},[Dm.name]:{folderName:"fakeProfileThemes",userPlugin:!1},[Lm.name]:{folderName:"favEmojiFirst",userPlugin:!1},[_m.name]:{folderName:"fixCodeblockGap",userPlugin:!1},[Om.name]:{folderName:"fixImagesQuality",userPlugin:!1},[Em.name]:{folderName:"fixSpotifyEmbeds.desktop",userPlugin:!1},[Um.name]:{folderName:"fixYoutubeEmbeds.desktop",userPlugin:!1},[Bm.name]:{folderName:"forceOwnerCrown",userPlugin:!1},[Fm.name]:{folderName:"friendInvites",userPlugin:!1},[$m.name]:{folderName:"fullSearchContext",userPlugin:!1},[Gm.name]:{folderName:"fullUserInChatbox",userPlugin:!1},[zm.name]:{folderName:"gameActivityToggle",userPlugin:!1},[Wm.name]:{folderName:"gifPaste",userPlugin:!1},[qm.name]:{folderName:"gifProviderSwitcher",userPlugin:!1},[Ym.name]:{folderName:"greetStickerPicker",userPlugin:!1},[Zm.name]:{folderName:"hideAttachments",userPlugin:!1},[Qm.name]:{folderName:"iLoveSpam",userPlugin:!1},[Jm.name]:{folderName:"ignoreActivities",userPlugin:!1},[Xm.name]:{folderName:"imageFilename",userPlugin:!1},[Vm.name]:{folderName:"imageLink",userPlugin:!1},[ef.name]:{folderName:"imageZoom",userPlugin:!1},[tf.name]:{folderName:"implicitRelationships",userPlugin:!1},[of.name]:{folderName:"ircColors",userPlugin:!1},[nf.name]:{folderName:"keepCurrentChannel",userPlugin:!1},[sf.name]:{folderName:"loadingQuotes",userPlugin:!1},[lf.name]:{folderName:"memberCount",userPlugin:!1},[cf.name]:{folderName:"mentionAvatars",userPlugin:!1},[df.name]:{folderName:"messageClickActions",userPlugin:!1},[pf.name]:{folderName:"messageLatency",userPlugin:!1},[ff.name]:{folderName:"messageLinkEmbeds",userPlugin:!1},[hf.name]:{folderName:"messageLogger",userPlugin:!1},[yf.name]:{folderName:"moreQuickReactions",userPlugin:!1},[Sf.name]:{folderName:"musicRichPresence",userPlugin:!1},[Tf.name]:{folderName:"mutualGroupDMs",userPlugin:!1},[If.name]:{folderName:"newGuildSettings",userPlugin:!1},[rn.name]:{folderName:"noBlockedMessages",userPlugin:!1},[Pf.name]:{folderName:"noDevtoolsWarning",userPlugin:!1},[Mf.name]:{folderName:"noF1",userPlugin:!1},[Nf.name]:{folderName:"noMaskedUrlPaste",userPlugin:!1},[Cf.name]:{folderName:"noMiddleClickPaste",userPlugin:!1},[Af.name]:{folderName:"noMosaic",userPlugin:!1},[kf.name]:{folderName:"noOnboardingDelay",userPlugin:!1},[Rf.name]:{folderName:"noPendingCount",userPlugin:!1},[Df.name]:{folderName:"noProfileThemes",userPlugin:!1},[on.name]:{folderName:"noReplyMention",userPlugin:!1},[Lf.name]:{folderName:"noServerEmojis",userPlugin:!1},[_f.name]:{folderName:"noSystemBadge.discordDesktop",userPlugin:!1},[Of.name]:{folderName:"noTypingAnimation",userPlugin:!1},[Ef.name]:{folderName:"noUnblockToJump",userPlugin:!1},[Uf.name]:{folderName:"notificationVolume",userPlugin:!1},[Bf.name]:{folderName:"onePingPerDM",userPlugin:!1},[Ff.name]:{folderName:"oneko",userPlugin:!1},[zn.name]:{folderName:"openInApp",userPlugin:!1},[$f.name]:{folderName:"overrideForumDefaults",userPlugin:!1},[Gf.name]:{folderName:"pauseInvitesForever",userPlugin:!1},[Hf.name]:{folderName:"permissionFreeWill",userPlugin:!1},[_s.name]:{folderName:"permissionsViewer",userPlugin:!1},[Zf.name]:{folderName:"petpet",userPlugin:!1},[Qf.name]:{folderName:"pictureInPicture",userPlugin:!1},[Vf.name]:{folderName:"pinDms",userPlugin:!1},[eg.name]:{folderName:"plainFolderIcon",userPlugin:!1},[tg.name]:{folderName:"platformIndicators",userPlugin:!1},[og.name]:{folderName:"previewMessage",userPlugin:!1},[rg.name]:{folderName:"quickMention",userPlugin:!1},[ng.name]:{folderName:"quickReply",userPlugin:!1},[ig.name]:{folderName:"reactErrorDecoder",userPlugin:!1},[sg.name]:{folderName:"readAllNotificationsButton",userPlugin:!1},[cg.name]:{folderName:"relationshipNotifier",userPlugin:!1},[ug.name]:{folderName:"replaceGoogleSearch",userPlugin:!1},[dg.name]:{folderName:"replyTimestamp",userPlugin:!1},[pg.name]:{folderName:"revealAllSpoilers",userPlugin:!1},[fg.name]:{folderName:"reverseImageSearch",userPlugin:!1},[wg.name]:{folderName:"reviewDB",userPlugin:!1},[Tg.name]:{folderName:"roleColorEverywhere",userPlugin:!1},[Ig.name]:{folderName:"secretRingTone",userPlugin:!1},[Mg.name]:{folderName:"sendTimestamps",userPlugin:!1},[Ng.name]:{folderName:"serverInfo",userPlugin:!1},[Cg.name]:{folderName:"serverListIndicators",userPlugin:!1},[Dg.name]:{folderName:"shikiCodeblocks.desktop",userPlugin:!1},[Lg.name]:{folderName:"showAllMessageButtons",userPlugin:!1},[Og.name]:{folderName:"showConnections",userPlugin:!1},[tl.name]:{folderName:"showHiddenChannels",userPlugin:!1},[Eg.name]:{folderName:"showHiddenThings",userPlugin:!1},[Ug.name]:{folderName:"showMeYourName",userPlugin:!1},[Bg.name]:{folderName:"showTimeoutDuration",userPlugin:!1},[Fg.name]:{folderName:"silentMessageToggle",userPlugin:!1},[$g.name]:{folderName:"silentTyping",userPlugin:!1},[Gg.name]:{folderName:"sortFriendRequests",userPlugin:!1},[Hg.name]:{folderName:"spotifyControls",userPlugin:!1},[zg.name]:{folderName:"spotifyCrack",userPlugin:!1},[Wg.name]:{folderName:"spotifyShareCommands",userPlugin:!1},[jg.name]:{folderName:"startupTimings",userPlugin:!1},[qg.name]:{folderName:"stickerPaste",userPlugin:!1},[Kg.name]:{folderName:"streamerModeOnStream",userPlugin:!1},[Zg.name]:{folderName:"superReactionTweaks",userPlugin:!1},[Jg.name]:{folderName:"textReplace",userPlugin:!1},[Xg.name]:{folderName:"themeAttributes",userPlugin:!1},[eh.name]:{folderName:"translate",userPlugin:!1},[oh.name]:{folderName:"typingIndicator",userPlugin:!1},[il.name]:{folderName:"typingTweaks",userPlugin:!1},[rh.name]:{folderName:"unindent",userPlugin:!1},[nh.name]:{folderName:"unlockedAvatarZoom",userPlugin:!1},[ih.name]:{folderName:"unsuppressEmbeds",userPlugin:!1},[sh.name]:{folderName:"userMessagesPronouns",userPlugin:!1},[uh.name]:{folderName:"userVoiceShow",userPlugin:!1},[ph.name]:{folderName:"usrbg",userPlugin:!1},[mh.name]:{folderName:"validReply",userPlugin:!1},[gh.name]:{folderName:"validUser",userPlugin:!1},[hh.name]:{folderName:"vcDoubleClick",userPlugin:!1},[xh.name]:{folderName:"vcNarrator",userPlugin:!1},[Ts.name]:{folderName:"vencordToolbox",userPlugin:!1},[wh.name]:{folderName:"viewIcons",userPlugin:!1},[Ih.name]:{folderName:"viewRaw",userPlugin:!1},[Ph.name]:{folderName:"voiceDownload",userPlugin:!1},[Mh.name]:{folderName:"voiceMessages",userPlugin:!1},[_splitLargeMessagesPlugin.name]:{folderName:"splitLargeMessages",userPlugin:!1},[_catboxUploadPlugin.name]:{folderName:"catboxUploadButton",userPlugin:!1},[_splitLargeMessagesPlugin.name]:{folderName:"splitLargeMessages",userPlugin:!1},[_catboxUploadPlugin.name]:{folderName:"catboxUploadButton",userPlugin:!1},[_splitLargeMessagesPlugin.name]:{folderName:"splitLargeMessages",userPlugin:!1},[_catboxUploadPlugin.name]:{folderName:"catboxUploadButton",userPlugin:!1},[_splitLargeMessagesPlugin.name]:{folderName:"splitLargeMessages",userPlugin:!1},[_catboxUploadPlugin.name]:{folderName:"catboxUploadButton",userPlugin:!1},[_dmArchivePlugin.name]:{folderName:"dmArchive",userPlugin:!1},[_splitLargeMessagesPlugin.name]:{folderName:"splitLargeMessages",userPlugin:!1},[_catboxUploadPlugin.name]:{folderName:"catboxUploadButton",userPlugin:!1},[_dmArchivePlugin.name]:{folderName:"dmArchive",userPlugin:!1},[_splitLargeMessagesPlugin.name]:{folderName:"splitLargeMessages",userPlugin:!1},[_catboxUploadPlugin.name]:{folderName:"catboxUploadButton",userPlugin:!1},[_dmArchivePlugin.name]:{folderName:"dmArchive",userPlugin:!1},[Nh.name]:{folderName:"volumeBooster",userPlugin:!1},[Ch.name]:{folderName:"whoReacted",userPlugin:!1},[kh.name]:{folderName:"xsOverlay",userPlugin:!1},[Rh.name]:{folderName:"youtubeAdblock.desktop",userPlugin:!1}},yx={"WebRichPresence (arRPC)":"web",DevCompanion:"dev",DisableDeepLinks:"web",WebContextMenus:"web",WebKeybinds:"web",WebPWA:"browser",WebScreenShare:"browser",WebScreenShareFixes:"web"};a();(window.VencordStyles??=new Map).set("src/nativeTitleBar.css",{name:"src/nativeTitleBar.css",source:`[data-window-chrome="true"] {
     margin-inline-end: 12px !important;
 }
 
