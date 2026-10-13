@@ -269,6 +269,70 @@ export const SoundboardEverywhere = {
         }
     },
 
+    start() {
+        try {
+            if ((window as any)._sb_hooked) return;
+            (window as any)._sb_hooked = true;
+            const self = this;
+
+            const origFetch = window.fetch;
+            window.fetch = function(resource, init) {
+                const url = typeof resource === "string" ? resource : (resource as Request)?.url;
+                if (url && typeof url === "string" && url.includes("/send-soundboard-sound")) {
+                    try {
+                        let soundId = null;
+                        if (init?.body) {
+                            const parsed = typeof init.body === "string" ? JSON.parse(init.body) : init.body;
+                            soundId = parsed?.sound_id;
+                        }
+                        if (soundId) {
+                            self.playSound({ soundId: soundId, volume: 1 });
+                            return Promise.resolve(new Response(null, { status: 204 }));
+                        }
+                    } catch (e) {
+                        console.error("[SoundboardEverywhere] fetch intercept error:", e);
+                    }
+                }
+                return origFetch.apply(this, arguments as any);
+            };
+
+            const origOpen = XMLHttpRequest.prototype.open;
+            const origSend = XMLHttpRequest.prototype.send;
+            XMLHttpRequest.prototype.open = function(_method: string, url: string | URL) {
+                (this as any)._sb_url = String(url);
+                return origOpen.apply(this, arguments as any);
+            };
+            XMLHttpRequest.prototype.send = function(body) {
+                if ((this as any)._sb_url && typeof (this as any)._sb_url === "string" && (this as any)._sb_url.includes("/send-soundboard-sound")) {
+                    try {
+                        let soundId = null;
+                        if (body) {
+                            const parsed = typeof body === "string" ? JSON.parse(body) : body;
+                            soundId = parsed?.sound_id;
+                        }
+                        if (soundId) {
+                            self.playSound({ soundId: soundId, volume: 1 });
+                            Object.defineProperty(this, "status", { value: 204, writable: true });
+                            Object.defineProperty(this, "readyState", { value: 4, writable: true });
+                            Object.defineProperty(this, "responseText", { value: "", writable: true });
+                            setTimeout(() => {
+                                this.dispatchEvent(new Event("readystatechange"));
+                                this.dispatchEvent(new Event("load"));
+                                this.dispatchEvent(new Event("loadend"));
+                            }, 5);
+                            return;
+                        }
+                    } catch (e) {
+                        console.error("[SoundboardEverywhere] XHR intercept error:", e);
+                    }
+                }
+                return origSend.apply(this, arguments as any);
+            };
+        } catch (err) {
+            console.error("[SoundboardEverywhere] start hook error:", err);
+        }
+    },
+
     stop() {
         for (const playback of playbacks) stopPlayback(playback);
         for (const [stream] of mixedInputs) {
