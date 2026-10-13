@@ -43,8 +43,8 @@ func main() {
 		fmt.Print(banner)
 		fmt.Println("Select an option:")
 		fmt.Println("  [1] Install Discord Voice Notes & Vencord (Standard)")
-		fmt.Println("  [2] Install Voice Notes + Enable Free Nitro (FakeNitro & Soundboard Everywhere)")
-		fmt.Println("  [3] Install Custom Themes (Kemono Friends, GGO Kirito, Akame Ga Kill)")
+		fmt.Println("  [2] Install Voice Notes + Enable Free Nitro (FakeNitro & Profile Themes)")
+		fmt.Println("  [3] Install Custom Themes (12 High-Contrast Themes with Custom Chat Text)")
 		fmt.Println("  [4] Run System Diagnostics (Doctor)")
 		fmt.Println("  [5] Restore Vanilla Discord (Unpatch / Revert)")
 		fmt.Println("  [6] Exit")
@@ -323,13 +323,6 @@ func updateSettings(enableFakeNitro bool) error {
 			}
 			fpt["enabled"] = true
 			plugins["FakeProfileThemes"] = fpt
-
-			sbe, _ := plugins["SoundboardEverywhere"].(map[string]interface{})
-			if sbe == nil {
-				sbe = make(map[string]interface{})
-			}
-			sbe["enabled"] = true
-			plugins["SoundboardEverywhere"] = sbe
 		}
 
 		settings["plugins"] = plugins
@@ -357,6 +350,14 @@ func doInstallThemes(reader *bufio.Reader) {
 	_ = os.MkdirAll(vencordAssetsDir, 0755)
 
 	themeFiles := []string{
+		"BlackHairedBeauty.theme.css",
+		"AnimeProgrammerGirl.theme.css",
+		"FubukiOnePunchMan.theme.css",
+		"BrunetteCrescentMoon.theme.css",
+		"StylishTrendyWoman.theme.css",
+		"BlondeColorfulSunset.theme.css",
+		"FantasyButterflyLand.theme.css",
+		"QueenLongHairFantasy.theme.css",
 		"NewKemonoFriends.theme.css",
 		"GGOKirito.theme.css",
 		"OldAkameGaKill.theme.css",
@@ -376,9 +377,17 @@ func doInstallThemes(reader *bufio.Reader) {
 	}
 
 	assetFiles := []string{
-		"kemono_background.png",
-		"ggo_background.png",
-		"akame_background.png",
+		"bg_1.jpg",
+		"bg_2.jpg",
+		"bg_3.jpg",
+		"bg_4.webp",
+		"bg_5.webp",
+		"bg_6.webp",
+		"bg_7.jpg",
+		"bg_8.jpg",
+		"background.png",
+		"ggo_kirito_background.png",
+		"akame_old_background.jpg",
 		"akame_new_background.png",
 	}
 	for _, af := range assetFiles {
@@ -491,9 +500,8 @@ func doInstall(enableFakeNitro bool, reader *bufio.Reader) {
 		fmt.Println("  1. Launch Discord.")
 		fmt.Println("  2. In any chat, right-click the '+' attachment button and click 'Send Voice Message'.")
 		if enableFakeNitro {
-			fmt.Println("  3. FakeNitro & Soundboard Everywhere are active!")
+			fmt.Println("  3. FakeNitro & Profile Themes are active!")
 			fmt.Println("     - Custom emojis and 1080p 60FPS streaming are unlocked.")
-			fmt.Println("     - Soundboard sounds can be previewed or injected directly into voice calls.")
 		}
 	} else {
 		fmt.Println("\n[!] Could not patch any Discord installations. Check permissions or close Discord.")

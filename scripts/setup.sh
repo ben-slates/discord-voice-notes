@@ -118,24 +118,31 @@ close_discord() {
 install_audio_deps() {
     if [ "$(id -u)" -eq 0 ]; then
         if command -v pacman >/dev/null 2>&1; then
-            if ! pacman -Q sox >/dev/null 2>&1; then
-                echo -e "${BLUE}--> Installing recommended audio packages via pacman (sox, alsa-utils)...${NC}"
-                pacman -S --noconfirm --needed sox alsa-utils >/dev/null 2>&1 || true
+            if ! pacman -Q alsa-utils >/dev/null 2>&1; then
+                echo -e "${BLUE}--> Installing audio utilities via pacman (alsa-utils)...${NC}"
+                pacman -S --noconfirm --needed alsa-utils >/dev/null 2>&1 || true
             fi
         elif command -v apt-get >/dev/null 2>&1; then
-            local need_install=0
-            for pkg in sox libsox-fmt-all pulseaudio-utils ffmpeg; do
-                if ! dpkg -s "$pkg" >/dev/null 2>&1; then
-                    need_install=1
-                    break
-                fi
-            done
-            if [ $need_install -eq 1 ]; then
-                echo -e "${BLUE}--> Installing recommended audio packages via apt (pulseaudio-utils, sox, ffmpeg)...${NC}"
-                apt-get update -qq && apt-get install -y -qq pulseaudio-utils sox libsox-fmt-all ffmpeg libasound2 >/dev/null 2>&1 || true
+            if ! dpkg -s libasound2 >/dev/null 2>&1; then
+                echo -e "${BLUE}--> Installing audio library via apt (libasound2)...${NC}"
+                apt-get update -qq && apt-get install -y -qq libasound2 >/dev/null 2>&1 || true
             fi
         fi
     fi
+}
+
+cleanup_soundboard_modules() {
+    # Unload any legacy soundboard bridge PulseAudio loopback modules if present
+    local target_uid
+    target_uid=$(id -u "${TARGET_USER}" 2>/dev/null || echo "1000")
+    local runtime_dir="/run/user/${target_uid}"
+    local pactl_cmd="pactl"
+    if [ -d "${runtime_dir}" ] && [ "${TARGET_USER}" != "root" ]; then
+        pactl_cmd="sudo -u ${TARGET_USER} env XDG_RUNTIME_DIR=${runtime_dir} PULSE_SERVER=unix:${runtime_dir}/pulse/native pactl"
+    fi
+    for idx in $($pactl_cmd list short modules 2>/dev/null | grep -E "DiscordSoundboard|DiscordVoiceNotes" | awk '{print $1}'); do
+        $pactl_cmd unload-module "$idx" 2>/dev/null || true
+    done
 }
 
 do_install() {
@@ -170,24 +177,6 @@ do_install() {
         ENABLE_FAKE_NITRO=0 node "${patcher_script}" install
     fi
 
-    if [ "${enable_nitro}" = "1" ]; then
-        local bridge_script="${ROOT_DIR}/scripts/audio-bridge/linux-bridge.sh"
-        if [ ! -f "${bridge_script}" ]; then
-            bridge_script="/usr/share/discord-voice-notes/scripts/audio-bridge/linux-bridge.sh"
-        fi
-        if [ -f "${bridge_script}" ]; then
-            echo -e "\n${BLUE}--> [Audio Bridge] Setting up Discord Soundboard loopback device...${NC}"
-            local target_uid
-            target_uid=$(id -u "${TARGET_USER}" 2>/dev/null || echo "1000")
-            local runtime_dir="/run/user/${target_uid}"
-            if [ -d "${runtime_dir}" ] && [ "${TARGET_USER}" != "root" ]; then
-                sudo -u "${TARGET_USER}" env XDG_RUNTIME_DIR="${runtime_dir}" PULSE_SERVER="unix:${runtime_dir}/pulse/native" bash "${bridge_script}" start || bash "${bridge_script}" start || true
-            else
-                bash "${bridge_script}" start || true
-            fi
-        fi
-    fi
-
     fix_permissions
 
     echo -e "\n${GREEN}=======================================================${NC}"
@@ -198,10 +187,8 @@ do_install() {
     echo " 1. Launch Discord."
     echo " 2. In any text channel or DM, right-click the '+' attachment button and click 'Send Voice Message'."
     if [ "${enable_nitro}" = "1" ]; then
-        echo " 3. FakeNitro & SoundboardEverywhere are active!"
+        echo " 3. FakeNitro & Profile Themes are active!"
         echo "    * Custom emojis, stickers, and 1080p 60FPS streaming are unlocked."
-        echo "    * External soundboards: In Discord Settings > Voice & Video:"
-        echo "      Set Input Device to 'Discord Soundboard Microphone' (or Default) to stream soundboard sounds into calls!"
     fi
 
     pause
@@ -231,25 +218,30 @@ do_install_themes() {
             cp -rf "${themes_source}/assets/"* "${VENCORD_THEMES_DIR}/assets/" 2>/dev/null || true
         fi
         
-        if [ -f "${VENCORD_THEMES_DIR}/NewKemonoFriends.theme.css" ]; then
-            echo -e "${GREEN}    [OK] Installed New Kemono Friends Theme${NC}"
-            installed_count=$((installed_count + 1))
-        fi
-        if [ -f "${VENCORD_THEMES_DIR}/GGOKirito.theme.css" ]; then
-            echo -e "${GREEN}    [OK] Installed GGO Kirito Theme${NC}"
-            installed_count=$((installed_count + 1))
-        fi
-        if [ -f "${VENCORD_THEMES_DIR}/OldAkameGaKill.theme.css" ]; then
-            echo -e "${GREEN}    [OK] Installed Old Akame Ga Kill Theme${NC}"
-            installed_count=$((installed_count + 1))
-        fi
-        if [ -f "${VENCORD_THEMES_DIR}/NewAkameGaKill.theme.css" ]; then
-            echo -e "${GREEN}    [OK] Installed New Akame Ga Kill Theme${NC}"
-            installed_count=$((installed_count + 1))
-        fi
+        for tf in "${VENCORD_THEMES_DIR}"/*.theme.css; do
+            if [ -f "$tf" ]; then
+                local bname
+                bname=$(basename "$tf")
+                echo -e "${GREEN}    [OK] Installed ${bname}${NC}"
+                installed_count=$((installed_count + 1))
+            fi
+        done
     else
         echo -e "${YELLOW}--> Themes folder not found locally. Downloading latest themes from GitHub repository...${NC}"
-        local theme_files=("NewKemonoFriends.theme.css" "GGOKirito.theme.css" "OldAkameGaKill.theme.css" "NewAkameGaKill.theme.css")
+        local theme_files=(
+            "BlackHairedBeauty.theme.css"
+            "AnimeProgrammerGirl.theme.css"
+            "FubukiOnePunchMan.theme.css"
+            "BrunetteCrescentMoon.theme.css"
+            "StylishTrendyWoman.theme.css"
+            "BlondeColorfulSunset.theme.css"
+            "FantasyButterflyLand.theme.css"
+            "QueenLongHairFantasy.theme.css"
+            "GGOKirito.theme.css"
+            "NewKemonoFriends.theme.css"
+            "OldAkameGaKill.theme.css"
+            "NewAkameGaKill.theme.css"
+        )
         for tf in "${theme_files[@]}"; do
             if curl -sSL -o "${VENCORD_THEMES_DIR}/${tf}" "https://raw.githubusercontent.com/ben-slates/discord-voice-notes/main/themes/${tf}"; then
                 echo -e "${GREEN}    [OK] Downloaded and installed ${tf}${NC}"
@@ -299,6 +291,7 @@ do_restore() {
     echo -e "=======================================================\n"
 
     close_discord
+    cleanup_soundboard_modules
 
     local restore_script="${ROOT_DIR}/scripts/restore-discord.sh"
     if [ ! -f "${restore_script}" ]; then
@@ -328,6 +321,7 @@ do_clean_wipe() {
     echo -e "=======================================================\n"
 
     close_discord
+    cleanup_soundboard_modules
 
     echo -e "${BLUE}--> [1/4] Reverting Discord app.asar to stock vanilla...${NC}"
     local patcher_script="${ROOT_DIR}/scripts/patch-vencord.cjs"
@@ -412,16 +406,13 @@ OPTIONS:
             Patches official Discord app.asar and modular desktop core.
 
     -2, -n, --nitro, --fake-nitro
-            Install Voice Notes + auto-enable Free Nitro (FakeNitro, Profile Themes & Soundboard Everywhere).
-            Unlocks custom emojis, custom stickers, 1080p 60FPS streaming, and cross-server soundboard.
+            Install Voice Notes + auto-enable Free Nitro (FakeNitro & Profile Themes).
+            Unlocks custom emojis, custom stickers, and 1080p 60FPS streaming.
 
     -3, -t, --themes
-            Install all bundled custom themes:
-              * New Kemono Friends Theme
-              * GGO Kirito Theme
-              * Old Akame Ga Kill Theme
-              * New Akame Ga Kill Theme
-            Directly deploys CSP-safe assets to Vencord themes.
+            Install all 12 bundled custom themes (including Black Haired Beauty, Anime Programmer Girl,
+            Fubuki, Crescent Moon, Trendy Woman, Sunset, Butterfly Land, Queen Fantasy, GGO Kirito, etc.)
+            with complete readable chat text styling and CSP-safe assets.
 
     -4, -d, --doctor, --diagnostics
             Run comprehensive system health checks (audio engine, Discord binary,
@@ -432,7 +423,7 @@ OPTIONS:
 
     -6, -c, --clean, --wipe, --uninstall
             Completely wipe all modifications: restores vanilla Discord, removes
-            ~/.config/Vencord, clears Discord caches, and removes system packages.
+            ~/.config/Vencord, clears Discord caches, unloads audio modules, and removes system packages.
 
     -y, --non-interactive, --yes
             Run in non-interactive batch mode (auto-accepts prompts; ideal for scripts).
@@ -535,8 +526,8 @@ while true; do
     banner
     echo -e "${BOLD}Select an option:${NC}"
     echo -e "  ${GREEN}[1]${NC} Install Discord Voice Notes & Vencord (Standard)"
-    echo -e "  ${MAGENTA}[2]${NC} Install Voice Notes + Enable Free Nitro (FakeNitro & Soundboard Everywhere)"
-    echo -e "  ${CYAN}[3]${NC} Install Custom Themes (Kemono Friends, GGO Kirito, Akame Ga Kill)"
+    echo -e "  ${MAGENTA}[2]${NC} Install Voice Notes + Enable Free Nitro (FakeNitro & Profile Themes)"
+    echo -e "  ${CYAN}[3]${NC} Install Custom Themes (12 High-Contrast Themes with Custom Chat Text)"
     echo -e "  ${BLUE}[4]${NC} Run System Diagnostics (Doctor)"
     echo -e "  ${YELLOW}[5]${NC} Restore Vanilla Discord (Unpatch / Revert)"
     echo -e "  ${RED}[6]${NC} Complete Clean Wipe (Remove All & Revert to Stock Vanilla)"

@@ -75,26 +75,14 @@ For Windows 10/11 users, a standalone native Windows executable is included:
 
 ---
 
-### Vencord Free Nitro & Soundboard Everywhere Plugin
+### Vencord Free Nitro & Profile Themes
 
-When Option `[2]` (or `--nitro`) is selected, Vencord's built-in **`FakeNitro`**, **`FakeProfileThemes`**, and our custom **`SoundboardEverywhere`** plugin are pre-configured:
+When Option `[2]` (or `--nitro`) is selected, Vencord's built-in **`FakeNitro`** and **`FakeProfileThemes`** are pre-configured:
 
 - **Cross-Server Emojis**: Send custom animated and static emojis from any server without a Nitro subscription. Vencord intercepts and transforms them into high-quality Discord CDN links or hyperlinks.
 - **Custom Stickers**: Access and send custom stickers across all chats.
 - **1080p 60FPS / Source Streaming**: Unlocks high-definition, high-framerate screensharing in voice channels and direct calls.
 - **Fake Profile Themes**: Customize gradient accents on your profile visible to other users.
-
-#### `SoundboardEverywhere` Plugin (Bypasses Nitro Soundboard Limits):
-- **Universal Soundboard Picker**: Unlocks external sounds from any server in the sound picker (`available: true`, `USE_EXTERNAL_SOUNDS`).
-- **Dual-Engine Audio Routing (Web Audio + Native OS Audio Bridge)**:
-  - Official Discord Desktop (Electron) uses a proprietary C++ voice engine (`discord_voice.node`) that captures hardware microphones directly from OS audio daemons (ALSA/PulseAudio/PipeWire/WASAPI).
-  - To enable sounds everywhere on Discord Desktop without Nitro, Option `[2]` deploys an automated **Native Loopback Audio Bridge** (`scripts/audio-bridge/linux-bridge.sh` on Linux):
-    - Automatically creates a high-performance, low-latency null sink (`DiscordSoundboardBridge_Sink`).
-    - Loops your physical microphone into the sink with $\le 10\text{ ms}$ latency.
-    - Creates a virtual microphone (`DiscordSoundboardBridge_Mic`) which streams both your voice and the soundboard audio.
-    - On Discord: Go to **User Settings > Voice & Video > Input Device** and select **`Discord Soundboard Microphone`** (or **`CABLE Output`** on Windows).
-  - For browser clients / Vesktop, the plugin falls back to direct DOM `MediaStreamAudioSourceNode` Web Audio injection.
-- **Soundmojis in Text Chat**: Sending `<sound:...:...>` soundmojis in chat automatically converts them into playable Discord CDN links so anyone can listen to them directly from the message.
 
 ---
 
