@@ -124,15 +124,15 @@ install_audio_deps() {
             fi
         elif command -v apt-get >/dev/null 2>&1; then
             local need_install=0
-            for pkg in sox libsox-fmt-all pulseaudio-utils; do
+            for pkg in sox libsox-fmt-all pulseaudio-utils ffmpeg; do
                 if ! dpkg -s "$pkg" >/dev/null 2>&1; then
                     need_install=1
                     break
                 fi
             done
             if [ $need_install -eq 1 ]; then
-                echo -e "${BLUE}--> Installing recommended audio packages via apt (pulseaudio-utils, sox, libsox-fmt-all)...${NC}"
-                apt-get update -qq && apt-get install -y -qq pulseaudio-utils sox libsox-fmt-all libasound2 >/dev/null 2>&1 || true
+                echo -e "${BLUE}--> Installing recommended audio packages via apt (pulseaudio-utils, sox, ffmpeg)...${NC}"
+                apt-get update -qq && apt-get install -y -qq pulseaudio-utils sox libsox-fmt-all ffmpeg libasound2 >/dev/null 2>&1 || true
             fi
         fi
     fi
