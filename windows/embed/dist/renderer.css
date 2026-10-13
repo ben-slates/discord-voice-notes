@@ -35,18 +35,6 @@ html.vc-has-active-theme {
     --voice-call-background: transparent !important;
     --call-background: transparent !important;
     --voice-empty-state-background: transparent !important;
-    --background-primary: transparent !important;
-    --background-secondary: transparent !important;
-    --background-secondary-alt: transparent !important;
-    --background-tertiary: transparent !important;
-    --background-floating: rgba(0, 0, 0, 0.6) !important;
-    --bg-base-primary: transparent !important;
-    --bg-base-secondary: transparent !important;
-    --bg-base-tertiary: transparent !important;
-    --bg-surface-raised: rgba(0, 0, 0, 0.4) !important;
-    --bg-surface-overlay: rgba(0, 0, 0, 0.5) !important;
-    --channel-container: transparent !important;
-    --chat-background: transparent !important;
 }
 
 /* Server icon sidebar */
