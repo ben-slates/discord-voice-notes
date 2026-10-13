@@ -3,59 +3,220 @@
 
 /* =======================================================================
    Complete Glass Transparency & Modern UI Enhancement
+   (Scoped to active themes only - vanilla Discord remains untouched)
    ======================================================================= */
 
 /* Root window transparency */
-html, body, #app-mount, .app_de4237, .app__160d8, .appMount_ea7e65, .app_a0120,
-.bg__960e4, .bg_d4b6c5, .layers__160d8, .layers_a0120, .layers__960e4, .layer__960e4, .container__5c7e7 {
+html.vc-has-active-theme,
+html.vc-has-active-theme body,
+html.vc-has-active-theme #app-mount,
+html.vc-has-active-theme .app_de4237,
+html.vc-has-active-theme .app__160d8,
+html.vc-has-active-theme .appMount_ea7e65,
+html.vc-has-active-theme .app_a0120,
+html.vc-has-active-theme .bg__960e4,
+html.vc-has-active-theme .bg_d4b6c5,
+html.vc-has-active-theme .layers__160d8,
+html.vc-has-active-theme .layers_a0120,
+html.vc-has-active-theme .layers__960e4,
+html.vc-has-active-theme .layer__960e4,
+html.vc-has-active-theme .container__5c7e7 {
     background: transparent !important;
     background-color: transparent !important;
 }
 
 /* Server icon sidebar */
-.guilds__5e434, .wrapper_ef3116, [class*="guilds_"], [class*="tree_"],
-[class*="scroller_"][class*="guilds"] {
+html.vc-has-active-theme .guilds__5e434,
+html.vc-has-active-theme .wrapper_ef3116,
+html.vc-has-active-theme [class*="guilds_"],
+html.vc-has-active-theme [class*="tree_"],
+html.vc-has-active-theme [class*="scroller_"][class*="guilds"] {
     background: transparent !important;
     background-color: transparent !important;
 }
 
 /* Channel list sidebar and category headers */
-.sidebar_c48ade, .sidebar__5e434, [class*="sidebar_"]:not([class*="sidebarContainer_"]),
-.container__ee69e, .container__2637a, .channels__9a337, [class*="channels_"],
-[class*="sidebarList_"] {
+html.vc-has-active-theme .sidebar_c48ade,
+html.vc-has-active-theme .sidebar__5e434,
+html.vc-has-active-theme [class*="sidebar_"]:not([class*="sidebarContainer_"]),
+html.vc-has-active-theme .container__ee69e,
+html.vc-has-active-theme .container__2637a,
+html.vc-has-active-theme .channels__9a337,
+html.vc-has-active-theme [class*="channels_"],
+html.vc-has-active-theme [class*="sidebarList_"] {
     background: transparent !important;
     background-color: transparent !important;
 }
 
-[class*="sidebar_"] [class*="scroller_"] {
+html.vc-has-active-theme [class*="sidebar_"] [class*="scroller_"] {
     background: transparent !important;
 }
 
 /* Main chat and message area */
-.chat_f75fb0, .chat__52833, [class*="chat_"]:not([class*="chatSidebar"]),
-.chatContent_f75fb0, .chatContent__52833, [class*="chatContent_"],
-[class*="messagesWrapper_"], [class*="scroller_"][class*="messages"] {
+html.vc-has-active-theme .chat_f75fb0,
+html.vc-has-active-theme .chat__52833,
+html.vc-has-active-theme [class*="chat_"]:not([class*="chatSidebar"]),
+html.vc-has-active-theme .chatContent_f75fb0,
+html.vc-has-active-theme .chatContent__52833,
+html.vc-has-active-theme [class*="chatContent_"],
+html.vc-has-active-theme [class*="messagesWrapper_"],
+html.vc-has-active-theme [class*="scroller_"][class*="messages"] {
     background: transparent !important;
     background-color: transparent !important;
 }
 
 /* Member list sidebar */
-[class*="membersWrap_"], [class*="members_"] {
+html.vc-has-active-theme [class*="membersWrap_"],
+html.vc-has-active-theme [class*="members_"] {
     background: transparent !important;
     background-color: transparent !important;
 }
 
-/* Voice call container & video stage */
-[class*="callContainer_"], [class*="wrapper_"][class*="video_"] {
-    background: rgba(0, 0, 0, 0.35) !important;
+/* Voice Call, Stage, Video Grid & Overview Containers (Connected) */
+html.vc-has-active-theme [class*="callContainer_"],
+html.vc-has-active-theme [class*="callContainer__"],
+html.vc-has-active-theme [class*="callContainer"],
+html.vc-has-active-theme [class*="wrapper_"][class*="video_"],
+html.vc-has-active-theme [class*="videoGridWrapper"],
+html.vc-has-active-theme [class*="videoGrid_"],
+html.vc-has-active-theme [class*="videoGrid"],
+html.vc-has-active-theme [class*="videoWrapper_"],
+html.vc-has-active-theme [class*="videoWrapper"],
+html.vc-has-active-theme [class*="overviewContainer_"],
+html.vc-has-active-theme [class*="overviewContainer"],
+html.vc-has-active-theme [class*="overviewContainerNoVideo"],
+html.vc-has-active-theme [class*="overviewContainerWithVideo"],
+html.vc-has-active-theme [class*="stageSection_"],
+html.vc-has-active-theme [class*="stageSection"],
+html.vc-has-active-theme [class*="stageContainer_"],
+html.vc-has-active-theme [class*="stageContainer"],
+html.vc-has-active-theme [class*="scrollerBase_"]:has([class*="videoGrid"]),
+html.vc-has-active-theme [class*="scroller_"][class*="camera_"],
+html.vc-has-active-theme [class*="container_"]:has([class*="callContainer"]),
+html.vc-has-active-theme [class*="chat_"]:has([class*="callContainer"]),
+html.vc-has-active-theme [class*="channelChatWrapper_"],
+html.vc-has-active-theme [class*="chatContent_"]:has([class*="callContainer"]) {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* User Boxes / Participant Tiles (Connected & in Voice Views) */
+html.vc-has-active-theme [class*="tile_"],
+html.vc-has-active-theme [class*="tileChild_"],
+html.vc-has-active-theme [class*="tileInner_"],
+html.vc-has-active-theme [class*="userTile_"],
+html.vc-has-active-theme [class*="videoTile_"],
+html.vc-has-active-theme [class*="tile__72090"],
+html.vc-has-active-theme [data-selenium-video-tile],
+html.vc-has-active-theme [class*="root_"][class*="tile_"],
+html.vc-has-active-theme [class*="flex_"][class*="tile_"],
+html.vc-has-active-theme [class*="speaking_"],
+html.vc-has-active-theme [class*="voiceUser_"],
+html.vc-has-active-theme [class*="voiceUsers_"] [class*="user_"],
+html.vc-has-active-theme [class*="voiceUsers_"] [class*="tile_"],
+html.vc-has-active-theme [class*="voiceUsers_"] [class*="userTile_"],
+html.vc-has-active-theme [class*="voiceUsers_"] [class*="card_"] {
+    background-color: rgba(0, 0, 0, 0.32) !important;
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+}
+
+/* Clear solid opaque inner backgrounds inside user boxes / tiles */
+html.vc-has-active-theme [class*="tile_"] [class*="background_"],
+html.vc-has-active-theme [class*="tileChild_"] [class*="background_"],
+html.vc-has-active-theme [class*="tileInner_"] [class*="background_"],
+html.vc-has-active-theme [class*="userTile_"] [class*="background_"],
+html.vc-has-active-theme [class*="videoTile_"] [class*="background_"],
+html.vc-has-active-theme [class*="tileChild_"] > div:not([class*="overlay_"]):not([class*="indicators_"]):not([class*="status_"]),
+html.vc-has-active-theme [class*="videoGrid_"] [class*="background_"],
+html.vc-has-active-theme [class*="videoWrapper_"] [class*="background_"],
+html.vc-has-active-theme [class*="callContainer"] [class*="background_"] {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* Voice Box when Not Connected (Voice Channel Lobby, Preview, Prompt, Empty State) */
+html.vc-has-active-theme [class*="wrapper_"]:has([class*="voiceChannel_"]),
+html.vc-has-active-theme [class*="container_"]:has([class*="voiceChannel_"]),
+html.vc-has-active-theme [class*="chat_"]:has([class*="voiceChannel_"]),
+html.vc-has-active-theme [class*="chatContent_"]:has([class*="voiceChannel_"]),
+html.vc-has-active-theme [class*="voiceChannel_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="wrapper_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="container_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="content_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="card_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="body_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="inner_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="center_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="scroller_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="emptyState_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="lobby_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="panel_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="previewWrapper_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="preview_"],
+html.vc-has-active-theme [class*="voiceChannelCard_"],
+html.vc-has-active-theme [class*="voiceCard_"],
+html.vc-has-active-theme [class*="previewWrapper_"],
+html.vc-has-active-theme [class*="previewContainer_"],
+html.vc-has-active-theme [class*="voiceChannelEffectsContainer_"],
+html.vc-has-active-theme [class*="voiceChannelEffectsContainer"],
+html.vc-has-active-theme [class*="voiceUsers_"],
+html.vc-has-active-theme [class*="voiceUsers_"] [class*="scroller_"],
+html.vc-has-active-theme [class*="voiceUsers_"] [class*="content_"],
+html.vc-has-active-theme [class*="voiceUsersList_"],
+html.vc-has-active-theme [class*="voiceUserList_"],
+html.vc-has-active-theme [class*="channelBottomBarArea"],
+html.vc-has-active-theme [class*="channelBottomBarArea_"],
+html.vc-has-active-theme [class*="channelBottomBarArea_"] [class*="container_"],
+html.vc-has-active-theme [class*="channelBottomBarArea_"] [class*="wrapper_"],
+html.vc-has-active-theme [class*="stageSection"],
+html.vc-has-active-theme [class*="stageSection_"],
+html.vc-has-active-theme [class*="stageContainer"],
+html.vc-has-active-theme [class*="stageContainer_"],
+html.vc-has-active-theme [class*="stagePrompt_"],
+html.vc-has-active-theme [class*="stageCard_"],
+html.vc-has-active-theme [class*="stageParticipant_"],
+html.vc-has-active-theme [class*="prompt_"][class*="stage_"] {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* Translucent glass for voice channel lobby / preview card when not connected */
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="card_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="emptyState_"],
+html.vc-has-active-theme [class*="voiceChannelCard_"],
+html.vc-has-active-theme [class*="stageCard_"],
+html.vc-has-active-theme [class*="stagePrompt_"] {
+    background-color: rgba(0, 0, 0, 0.3) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+}
+
+/* Hide solid gradient overlays that darken voice calls / voice channel views */
+html.vc-has-active-theme [class*="gradientContainer"],
+html.vc-has-active-theme [class*="gradientContainer_"],
+html.vc-has-active-theme [class*="pulseGradient_"],
+html.vc-has-active-theme .pulseGradient__11664,
+html.vc-has-active-theme [class*="background_"][class*="video_"],
+html.vc-has-active-theme [class*="idle"][class*="gradientContainer"],
+html.vc-has-active-theme [class*="gradient_"] {
+    background: transparent !important;
+    background-color: transparent !important;
+    opacity: 0 !important;
 }
 
 /* Top navigation, title bar, and channel headers */
-.title_c38106, .title_f75fb0, [class*="title_"][class*="container_"],
-.subtitleContainer_f75fb0, [class*="subtitleContainer_"],
-[class*="headerBar_"]:not([class*="shop"]), section[class*="title_"] {
+html.vc-has-active-theme .title_c38106,
+html.vc-has-active-theme .title_f75fb0,
+html.vc-has-active-theme [class*="title_"][class*="container_"],
+html.vc-has-active-theme .subtitleContainer_f75fb0,
+html.vc-has-active-theme [class*="subtitleContainer_"],
+html.vc-has-active-theme [class*="headerBar_"]:not([class*="shop"]),
+html.vc-has-active-theme section[class*="title_"] {
     background: rgba(0, 0, 0, 0.22) !important;
     background-color: rgba(0, 0, 0, 0.22) !important;
     backdrop-filter: blur(14px) !important;
@@ -64,7 +225,9 @@ html, body, #app-mount, .app_de4237, .app__160d8, .appMount_ea7e65, .app_a0120,
 }
 
 /* Bottom user profile and voice-control panel */
-.panels__5e434, [class*="panels_"], section[class*="panels_"] {
+html.vc-has-active-theme .panels__5e434,
+html.vc-has-active-theme [class*="panels_"],
+html.vc-has-active-theme section[class*="panels_"] {
     background: rgba(0, 0, 0, 0.28) !important;
     background-color: rgba(0, 0, 0, 0.28) !important;
     backdrop-filter: blur(16px) !important;
@@ -72,22 +235,39 @@ html, body, #app-mount, .app_de4237, .app__160d8, .appMount_ea7e65, .app_a0120,
     border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
-.panels__5e434 .flex__7c0ba .button__67645,
-.panels__5e434 .actionButtons_e131a9,
-.panels__5e434 [class*="button_"] {
+html.vc-has-active-theme .panels__5e434 .flex__7c0ba .button__67645,
+html.vc-has-active-theme .panels__5e434 .actionButtons_e131a9,
+html.vc-has-active-theme .panels__5e434 [class*="button_"] {
     background-color: transparent !important;
 }
 
-.panels__5e434 [class*="button_"]:hover,
-.panels__5e434 [class*="avatarWrapper_"]:hover {
+html.vc-has-active-theme .panels__5e434 [class*="button_"]:hover,
+html.vc-has-active-theme .panels__5e434 [class*="avatarWrapper_"]:hover {
     background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
+/* Voice call bottom controls, floating action bars, and active voice connection panel */
+html.vc-has-active-theme [class*="bottomControls"],
+html.vc-has-active-theme [class*="bottomControls_"],
+html.vc-has-active-theme [class*="videoControls"],
+html.vc-has-active-theme [class*="videoControls_"],
+html.vc-has-active-theme [class*="controlSection"],
+html.vc-has-active-theme [class*="controlSection_"],
+html.vc-has-active-theme [class*="actionButtons_"],
+html.vc-has-active-theme [class*="connection_"],
+html.vc-has-active-theme [class*="container_"]:has([class*="connection_"]) {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
 /* Supported dropdowns, context menus, and popouts */
-.menu__44b0c, [class*="menu_"][role="menu"],
-.popout_a16aea, [class*="popout_"]:not([class*="messagePopover"]),
-[class*="messagesPopoutWrap_"], [class*="recentMentionsPopout_"],
-[class*="quickswitcher_"] {
+html.vc-has-active-theme .menu__44b0c,
+html.vc-has-active-theme [class*="menu_"][role="menu"],
+html.vc-has-active-theme .popout_a16aea,
+html.vc-has-active-theme [class*="popout_"]:not([class*="messagePopover"]),
+html.vc-has-active-theme [class*="messagesPopoutWrap_"],
+html.vc-has-active-theme [class*="recentMentionsPopout_"],
+html.vc-has-active-theme [class*="quickswitcher_"] {
     background: rgba(18, 20, 26, 0.8) !important;
     background-color: rgba(18, 20, 26, 0.8) !important;
     backdrop-filter: blur(20px) !important;
@@ -97,13 +277,13 @@ html, body, #app-mount, .app_de4237, .app__160d8, .appMount_ea7e65, .app_a0120,
     border-radius: 8px !important;
 }
 
-[class*="menu_"] [class*="item_"]:hover,
-[class*="menu_"] [class*="item_"][class*="focused_"] {
+html.vc-has-active-theme [class*="menu_"] [class*="item_"]:hover,
+html.vc-has-active-theme [class*="menu_"] [class*="item_"][class*="focused_"] {
     background-color: rgba(255, 255, 255, 0.12) !important;
 }
 
 /* Chat text input bar glass style */
-[class*="channelTextArea_"] {
+html.vc-has-active-theme [class*="channelTextArea_"] {
     background: rgba(0, 0, 0, 0.35) !important;
     background-color: rgba(0, 0, 0, 0.35) !important;
     backdrop-filter: blur(10px) !important;
@@ -111,6 +291,7 @@ html, body, #app-mount, .app_de4237, .app__160d8, .appMount_ea7e65, .app_a0120,
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 8px !important;
 }
+
 
 /* =======================================================================
    Modern Glass Theme Search Bar

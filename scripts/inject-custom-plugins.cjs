@@ -522,12 +522,49 @@ var _dmArchivePlugin = h({
 });`;
 
 // Glass Theme Search Bar Component
-const modernSearchL4 = `function l4(){let e=De(["enabledThemes"]),t=Ue(null),[o,n]=C(null),[q,sq]=C("");Z(()=>{i()},[]);async function i(){let s=await VencordNative.themes.getThemesList();n(s)}let filt=o?.filter(s=>{if(!q)return true;let lk=q.toLowerCase().trim();if(!lk)return true;let terms=lk.split(/\\s+/);return terms.every(term=>(s.name&&s.name.toLowerCase().includes(term))||(s.fileName&&s.fileName.toLowerCase().includes(term))||(s.description&&s.description.toLowerCase().includes(term))||(s.author&&s.author.toLowerCase().includes(term)))});return r(X,{flexDirection:"column",gap:"1em"},r(Ae,null,r(A.FormTitle,{tag:"h5"},"Find Themes:"),r(X,{gap:"0.4em",flexDirection:"column",justifyContent:"flex-start",className:D.bottom8},r("span",null,"\\u2013 ",r($e,{href:"https://betterdiscord.app/themes"},"BetterDiscord theme list")),r("span",null,"\\u2013 ",r($e,{href:"https://github.com/search?q=discord+theme"},"GitHub"))),r(A.FormText,null,"If using the BD site, click on Download and place the downloaded .theme.css file into your themes folder.")),r(Ae,null,r(A.FormTitle,{tag:"h5"},"External Resources"),r(A.FormText,null,"For security reasons, loading resources from most sites is blocked."),r(A.FormText,null,"Make sure all your assets are hosted on GitHub, GitLab, Codeberg, Imgur, Discord or Google Fonts.")),r("section",null,r(A.FormTitle,{tag:"h5"},"Local Themes"),r(ou,null,r(p,null,r(vr,{text:"Open Themes Folder",action:()=>VencordNative.themes.openFolder(),Icon:mc}),r(vr,{text:"Load missing Themes",action:i,Icon:ts}),r(vr,{text:"Edit QuickCSS",action:()=>VencordNative.quickCss.openEditor(),Icon:os}),xe(xs.name)&&r(vr,{text:"Edit ClientTheme",action:()=>gr(xs),Icon:fc})))),r("div",{className:"vc-theme-search-container "+D.top16},r("div",{className:"vc-theme-search-bar"},r("svg",{className:"vc-theme-search-icon",viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:"2",strokeLinecap:"round",strokeLinejoin:"round"},r("circle",{cx:"11",cy:"11",r:"8"}),r("line",{x1:"21",y1:"21",x2:"16.65",y2:"16.65"})),r("input",{type:"text",className:"vc-theme-search-input",placeholder:"Search 83+ themes by name, author, or keyword...",value:q,onChange:v=>sq(v.target.value),autoFocus:!1,spellCheck:!1}),q?r("button",{type:"button",className:"vc-theme-search-clear",onClick:()=>sq(""),title:"Clear search"},"\\u2715"):null,o?r("div",{className:"vc-theme-search-badge"},filt?(filt.length+" / "+o.length):""):null)),filt?.length?r("div",{className:H8("grid")},filt.map(s=>r(s4,{key:s.fileName,enabled:e.enabledThemes.includes(s.fileName),onChange:l=>a4(s.fileName,l),onDelete:async()=>{a4(s.fileName,!1);await VencordNative.themes.deleteTheme(s.fileName);i()},theme:s}))):r(z,{className:D.top16},q?"No themes found matching \\""+q+"\\". Try searching for another name, anime, or author.":"No themes found in your themes folder."))}`;
+const modernSearchL4 = `function l4(){let e=De(["enabledThemes"]),t=Ue(null),[o,n]=C(null),[q,sq]=C("");Z(()=>{i()},[]);async function i(){let s=await VencordNative.themes.getThemesList();n(s)}let filt=o?.filter(s=>{if(!q)return true;let lk=q.toLowerCase().trim();if(!lk)return true;let terms=lk.split(/\\s+/);return terms.every(term=>(s.name&&s.name.toLowerCase().includes(term))||(s.fileName&&s.fileName.toLowerCase().includes(term))||(s.description&&s.description.toLowerCase().includes(term))||(s.author&&s.author.toLowerCase().includes(term)))});return r(X,{flexDirection:"column",gap:"1em"},r(Ae,null,r(A.FormTitle,{tag:"h5"},"Find Themes:"),r(X,{gap:"0.4em",flexDirection:"column",justifyContent:"flex-start",className:D.bottom8},r("span",null,"\\u2013 ",r($e,{href:"https://betterdiscord.app/themes"},"BetterDiscord theme list")),r("span",null,"\\u2013 ",r($e,{href:"https://github.com/search?q=discord+theme"},"GitHub"))),r(A.FormText,null,"If using the BD site, click on Download and place the downloaded .theme.css file into your themes folder.")),r(Ae,null,r(A.FormTitle,{tag:"h5"},"External Resources"),r(A.FormText,null,"For security reasons, loading resources from most sites is blocked."),r(A.FormText,null,"Make sure all your assets are hosted on GitHub, GitLab, Codeberg, Imgur, Discord or Google Fonts.")),r("section",null,r(A.FormTitle,{tag:"h5"},"Local Themes"),r(ou,null,r(p,null,r(vr,{text:"Open Themes Folder",action:()=>VencordNative.themes.openFolder(),Icon:mc}),r(vr,{text:"Load missing Themes",action:i,Icon:ts}),r(vr,{text:"Edit QuickCSS",action:()=>VencordNative.quickCss.openEditor(),Icon:os}),xe(xs.name)&&r(vr,{text:"Edit ClientTheme",action:()=>gr(xs),Icon:fc})))),r("div",{className:"vc-theme-search-container "+D.top16},r("div",{className:"vc-theme-search-bar"},r("svg",{className:"vc-theme-search-icon",viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:"2",strokeLinecap:"round",strokeLinejoin:"round"},r("circle",{cx:"11",cy:"11",r:"8"}),r("line",{x1:"21",y1:"21",x2:"16.65",y2:"16.65"})),r("input",{type:"text",className:"vc-theme-search-input",placeholder:"Search 83+ themes by name, author, or keyword...",value:q,onChange:v=>sq(v.target.value),autoFocus:!1,spellCheck:!1}),q?r("button",{type:"button",className:"vc-theme-search-clear",onClick:()=>sq(""),title:"Clear search"},"\\u2715"):null,o?r("div",{className:"vc-theme-search-badge"},filt?(filt.length+" / "+o.length):""):null)),filt?.length?r("div",{className:H8("grid")},filt.map(s=>r(s4,{key:s.fileName,enabled:e.enabledThemes.includes(s.fileName),onChange:l=>{a4(s.fileName,l);if(typeof _syncActiveThemeClass==="function")setTimeout(_syncActiveThemeClass,30);},onDelete:async()=>{a4(s.fileName,!1);await VencordNative.themes.deleteTheme(s.fileName);if(typeof _syncActiveThemeClass==="function")setTimeout(_syncActiveThemeClass,30);i()},theme:s}))):r(z,{className:D.top16},q?"No themes found matching \\""+q+"\\". Try searching for another name, anime, or author.":"No themes found in your themes folder."))}`;
+
+const themeClassSyncCode = `function _syncActiveThemeClass(themesList) {
+    try {
+        var hasTheme = false;
+        if (Array.isArray(themesList)) {
+            hasTheme = themesList.length > 0;
+        } else if (typeof ae !== "undefined" && ae) {
+            hasTheme = Boolean((ae.enabledThemes && ae.enabledThemes.length > 0) || (ae.themeLinks && ae.themeLinks.length > 0));
+        } else {
+            var el = document.getElementById("vencord-themes");
+            hasTheme = Boolean(el && el.textContent.trim().length > 0);
+        }
+        if (typeof document !== "undefined" && document.documentElement) {
+            document.documentElement.classList.toggle("vc-has-active-theme", hasTheme);
+        }
+    } catch (e) {}
+}
+if (typeof document !== "undefined") {
+    _syncActiveThemeClass();
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", function() { _syncActiveThemeClass(); });
+    }
+}
+`;
 
 // Process renderer.js files
 for (const rPath of rendererPaths) {
     if (!fs.existsSync(rPath)) continue;
     let content = fs.readFileSync(rPath, "utf8");
+
+    // Inject active theme synchronizer
+    if (!content.includes("function _syncActiveThemeClass")) {
+        content = themeClassSyncCode + "\n" + content;
+        console.log(`[inject] Injected _syncActiveThemeClass in ${rPath}`);
+    }
+
+    // Patch Ea() to update vc-has-active-theme class
+    const eaMarker = "xw.textContent=i.map(s=>`@import url(\"${s.trim()}\");`).join(`\n`),";
+    if (content.includes(eaMarker) && !content.includes("_syncActiveThemeClass(i)")) {
+        content = content.replace(eaMarker, eaMarker + "_syncActiveThemeClass(i),");
+        console.log(`[inject] Hooked _syncActiveThemeClass into Ea() in ${rPath}`);
+    }
 
     // Replace or inject SplitLargeMessages & CatboxUploadButton
     if (content.includes("var _splitPending = new Map()")) {
@@ -550,9 +587,9 @@ for (const rPath of rendererPaths) {
     // Inject or update DMArchive plugin
     if (content.includes('name: "DMArchive"') || content.includes('name:"DMArchive"')) {
         const dmStart = content.indexOf("function _triggerDmDownload(");
-        const dmEnd = content.indexOf('"user-context": _dmArchiveUserCtxPatch\n    }\n});', dmStart);
+        const dmEnd = content.indexOf('"user-context": _dmArchiveUserCtxPatch\\n    }\\n});', dmStart);
         if (dmStart !== -1 && dmEnd !== -1) {
-            const cutEnd = dmEnd + '"user-context": _dmArchiveUserCtxPatch\n    }\n});'.length;
+            const cutEnd = dmEnd + '"user-context": _dmArchiveUserCtxPatch\\n    }\\n});'.length;
             content = content.substring(0, dmStart) + dmArchiveCode + content.substring(cutEnd);
             console.log(`[inject] Refreshed DMArchive plugin code in ${rPath}`);
         }
@@ -581,62 +618,225 @@ for (const rPath of rendererPaths) {
 }
 
 // Full Glass UI Transparency and Modern Theme Search Bar CSS
+// IMPORTANT: All layout transparency rules are strictly scoped to html.vc-has-active-theme
+// so that when NO theme is selected, Discord looks completely normal and vanilla.
 const glassCss = `
 /* =======================================================================
    Complete Glass Transparency & Modern UI Enhancement
+   (Scoped to active themes only - vanilla Discord remains untouched)
    ======================================================================= */
 
 /* Root window transparency */
-html, body, #app-mount, .app_de4237, .app__160d8, .appMount_ea7e65, .app_a0120,
-.bg__960e4, .bg_d4b6c5, .layers__160d8, .layers_a0120, .layers__960e4, .layer__960e4, .container__5c7e7 {
+html.vc-has-active-theme,
+html.vc-has-active-theme body,
+html.vc-has-active-theme #app-mount,
+html.vc-has-active-theme .app_de4237,
+html.vc-has-active-theme .app__160d8,
+html.vc-has-active-theme .appMount_ea7e65,
+html.vc-has-active-theme .app_a0120,
+html.vc-has-active-theme .bg__960e4,
+html.vc-has-active-theme .bg_d4b6c5,
+html.vc-has-active-theme .layers__160d8,
+html.vc-has-active-theme .layers_a0120,
+html.vc-has-active-theme .layers__960e4,
+html.vc-has-active-theme .layer__960e4,
+html.vc-has-active-theme .container__5c7e7 {
     background: transparent !important;
     background-color: transparent !important;
 }
 
 /* Server icon sidebar */
-.guilds__5e434, .wrapper_ef3116, [class*="guilds_"], [class*="tree_"],
-[class*="scroller_"][class*="guilds"] {
+html.vc-has-active-theme .guilds__5e434,
+html.vc-has-active-theme .wrapper_ef3116,
+html.vc-has-active-theme [class*="guilds_"],
+html.vc-has-active-theme [class*="tree_"],
+html.vc-has-active-theme [class*="scroller_"][class*="guilds"] {
     background: transparent !important;
     background-color: transparent !important;
 }
 
 /* Channel list sidebar and category headers */
-.sidebar_c48ade, .sidebar__5e434, [class*="sidebar_"]:not([class*="sidebarContainer_"]),
-.container__ee69e, .container__2637a, .channels__9a337, [class*="channels_"],
-[class*="sidebarList_"] {
+html.vc-has-active-theme .sidebar_c48ade,
+html.vc-has-active-theme .sidebar__5e434,
+html.vc-has-active-theme [class*="sidebar_"]:not([class*="sidebarContainer_"]),
+html.vc-has-active-theme .container__ee69e,
+html.vc-has-active-theme .container__2637a,
+html.vc-has-active-theme .channels__9a337,
+html.vc-has-active-theme [class*="channels_"],
+html.vc-has-active-theme [class*="sidebarList_"] {
     background: transparent !important;
     background-color: transparent !important;
 }
 
-[class*="sidebar_"] [class*="scroller_"] {
+html.vc-has-active-theme [class*="sidebar_"] [class*="scroller_"] {
     background: transparent !important;
 }
 
 /* Main chat and message area */
-.chat_f75fb0, .chat__52833, [class*="chat_"]:not([class*="chatSidebar"]),
-.chatContent_f75fb0, .chatContent__52833, [class*="chatContent_"],
-[class*="messagesWrapper_"], [class*="scroller_"][class*="messages"] {
+html.vc-has-active-theme .chat_f75fb0,
+html.vc-has-active-theme .chat__52833,
+html.vc-has-active-theme [class*="chat_"]:not([class*="chatSidebar"]),
+html.vc-has-active-theme .chatContent_f75fb0,
+html.vc-has-active-theme .chatContent__52833,
+html.vc-has-active-theme [class*="chatContent_"],
+html.vc-has-active-theme [class*="messagesWrapper_"],
+html.vc-has-active-theme [class*="scroller_"][class*="messages"] {
     background: transparent !important;
     background-color: transparent !important;
 }
 
 /* Member list sidebar */
-[class*="membersWrap_"], [class*="members_"] {
+html.vc-has-active-theme [class*="membersWrap_"],
+html.vc-has-active-theme [class*="members_"] {
     background: transparent !important;
     background-color: transparent !important;
 }
 
-/* Voice call container & video stage */
-[class*="callContainer_"], [class*="wrapper_"][class*="video_"] {
-    background: rgba(0, 0, 0, 0.35) !important;
+/* Voice Call, Stage, Video Grid & Overview Containers (Connected) */
+html.vc-has-active-theme [class*="callContainer_"],
+html.vc-has-active-theme [class*="callContainer__"],
+html.vc-has-active-theme [class*="callContainer"],
+html.vc-has-active-theme [class*="wrapper_"][class*="video_"],
+html.vc-has-active-theme [class*="videoGridWrapper"],
+html.vc-has-active-theme [class*="videoGrid_"],
+html.vc-has-active-theme [class*="videoGrid"],
+html.vc-has-active-theme [class*="videoWrapper_"],
+html.vc-has-active-theme [class*="videoWrapper"],
+html.vc-has-active-theme [class*="overviewContainer_"],
+html.vc-has-active-theme [class*="overviewContainer"],
+html.vc-has-active-theme [class*="overviewContainerNoVideo"],
+html.vc-has-active-theme [class*="overviewContainerWithVideo"],
+html.vc-has-active-theme [class*="stageSection_"],
+html.vc-has-active-theme [class*="stageSection"],
+html.vc-has-active-theme [class*="stageContainer_"],
+html.vc-has-active-theme [class*="stageContainer"],
+html.vc-has-active-theme [class*="scrollerBase_"]:has([class*="videoGrid"]),
+html.vc-has-active-theme [class*="scroller_"][class*="camera_"],
+html.vc-has-active-theme [class*="container_"]:has([class*="callContainer"]),
+html.vc-has-active-theme [class*="chat_"]:has([class*="callContainer"]),
+html.vc-has-active-theme [class*="channelChatWrapper_"],
+html.vc-has-active-theme [class*="chatContent_"]:has([class*="callContainer"]) {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* User Boxes / Participant Tiles (Connected & in Voice Views) */
+html.vc-has-active-theme [class*="tile_"],
+html.vc-has-active-theme [class*="tileChild_"],
+html.vc-has-active-theme [class*="tileInner_"],
+html.vc-has-active-theme [class*="userTile_"],
+html.vc-has-active-theme [class*="videoTile_"],
+html.vc-has-active-theme [class*="tile__72090"],
+html.vc-has-active-theme [data-selenium-video-tile],
+html.vc-has-active-theme [class*="root_"][class*="tile_"],
+html.vc-has-active-theme [class*="flex_"][class*="tile_"],
+html.vc-has-active-theme [class*="speaking_"],
+html.vc-has-active-theme [class*="voiceUser_"],
+html.vc-has-active-theme [class*="voiceUsers_"] [class*="user_"],
+html.vc-has-active-theme [class*="voiceUsers_"] [class*="tile_"],
+html.vc-has-active-theme [class*="voiceUsers_"] [class*="userTile_"],
+html.vc-has-active-theme [class*="voiceUsers_"] [class*="card_"] {
+    background-color: rgba(0, 0, 0, 0.32) !important;
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+}
+
+/* Clear solid opaque inner backgrounds inside user boxes / tiles */
+html.vc-has-active-theme [class*="tile_"] [class*="background_"],
+html.vc-has-active-theme [class*="tileChild_"] [class*="background_"],
+html.vc-has-active-theme [class*="tileInner_"] [class*="background_"],
+html.vc-has-active-theme [class*="userTile_"] [class*="background_"],
+html.vc-has-active-theme [class*="videoTile_"] [class*="background_"],
+html.vc-has-active-theme [class*="tileChild_"] > div:not([class*="overlay_"]):not([class*="indicators_"]):not([class*="status_"]),
+html.vc-has-active-theme [class*="videoGrid_"] [class*="background_"],
+html.vc-has-active-theme [class*="videoWrapper_"] [class*="background_"],
+html.vc-has-active-theme [class*="callContainer"] [class*="background_"] {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* Voice Box when Not Connected (Voice Channel Lobby, Preview, Prompt, Empty State) */
+html.vc-has-active-theme [class*="wrapper_"]:has([class*="voiceChannel_"]),
+html.vc-has-active-theme [class*="container_"]:has([class*="voiceChannel_"]),
+html.vc-has-active-theme [class*="chat_"]:has([class*="voiceChannel_"]),
+html.vc-has-active-theme [class*="chatContent_"]:has([class*="voiceChannel_"]),
+html.vc-has-active-theme [class*="voiceChannel_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="wrapper_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="container_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="content_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="card_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="body_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="inner_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="center_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="scroller_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="emptyState_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="lobby_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="panel_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="previewWrapper_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="preview_"],
+html.vc-has-active-theme [class*="voiceChannelCard_"],
+html.vc-has-active-theme [class*="voiceCard_"],
+html.vc-has-active-theme [class*="previewWrapper_"],
+html.vc-has-active-theme [class*="previewContainer_"],
+html.vc-has-active-theme [class*="voiceChannelEffectsContainer_"],
+html.vc-has-active-theme [class*="voiceChannelEffectsContainer"],
+html.vc-has-active-theme [class*="voiceUsers_"],
+html.vc-has-active-theme [class*="voiceUsers_"] [class*="scroller_"],
+html.vc-has-active-theme [class*="voiceUsers_"] [class*="content_"],
+html.vc-has-active-theme [class*="voiceUsersList_"],
+html.vc-has-active-theme [class*="voiceUserList_"],
+html.vc-has-active-theme [class*="channelBottomBarArea"],
+html.vc-has-active-theme [class*="channelBottomBarArea_"],
+html.vc-has-active-theme [class*="channelBottomBarArea_"] [class*="container_"],
+html.vc-has-active-theme [class*="channelBottomBarArea_"] [class*="wrapper_"],
+html.vc-has-active-theme [class*="stageSection"],
+html.vc-has-active-theme [class*="stageSection_"],
+html.vc-has-active-theme [class*="stageContainer"],
+html.vc-has-active-theme [class*="stageContainer_"],
+html.vc-has-active-theme [class*="stagePrompt_"],
+html.vc-has-active-theme [class*="stageCard_"],
+html.vc-has-active-theme [class*="stageParticipant_"],
+html.vc-has-active-theme [class*="prompt_"][class*="stage_"] {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* Translucent glass for voice channel lobby / preview card when not connected */
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="card_"],
+html.vc-has-active-theme [class*="voiceChannel_"] [class*="emptyState_"],
+html.vc-has-active-theme [class*="voiceChannelCard_"],
+html.vc-has-active-theme [class*="stageCard_"],
+html.vc-has-active-theme [class*="stagePrompt_"] {
+    background-color: rgba(0, 0, 0, 0.3) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+}
+
+/* Hide solid gradient overlays that darken voice calls / voice channel views */
+html.vc-has-active-theme [class*="gradientContainer"],
+html.vc-has-active-theme [class*="gradientContainer_"],
+html.vc-has-active-theme [class*="pulseGradient_"],
+html.vc-has-active-theme .pulseGradient__11664,
+html.vc-has-active-theme [class*="background_"][class*="video_"],
+html.vc-has-active-theme [class*="idle"][class*="gradientContainer"],
+html.vc-has-active-theme [class*="gradient_"] {
+    background: transparent !important;
+    background-color: transparent !important;
+    opacity: 0 !important;
 }
 
 /* Top navigation, title bar, and channel headers */
-.title_c38106, .title_f75fb0, [class*="title_"][class*="container_"],
-.subtitleContainer_f75fb0, [class*="subtitleContainer_"],
-[class*="headerBar_"]:not([class*="shop"]), section[class*="title_"] {
+html.vc-has-active-theme .title_c38106,
+html.vc-has-active-theme .title_f75fb0,
+html.vc-has-active-theme [class*="title_"][class*="container_"],
+html.vc-has-active-theme .subtitleContainer_f75fb0,
+html.vc-has-active-theme [class*="subtitleContainer_"],
+html.vc-has-active-theme [class*="headerBar_"]:not([class*="shop"]),
+html.vc-has-active-theme section[class*="title_"] {
     background: rgba(0, 0, 0, 0.22) !important;
     background-color: rgba(0, 0, 0, 0.22) !important;
     backdrop-filter: blur(14px) !important;
@@ -645,7 +845,9 @@ html, body, #app-mount, .app_de4237, .app__160d8, .appMount_ea7e65, .app_a0120,
 }
 
 /* Bottom user profile and voice-control panel */
-.panels__5e434, [class*="panels_"], section[class*="panels_"] {
+html.vc-has-active-theme .panels__5e434,
+html.vc-has-active-theme [class*="panels_"],
+html.vc-has-active-theme section[class*="panels_"] {
     background: rgba(0, 0, 0, 0.28) !important;
     background-color: rgba(0, 0, 0, 0.28) !important;
     backdrop-filter: blur(16px) !important;
@@ -653,22 +855,39 @@ html, body, #app-mount, .app_de4237, .app__160d8, .appMount_ea7e65, .app_a0120,
     border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
-.panels__5e434 .flex__7c0ba .button__67645,
-.panels__5e434 .actionButtons_e131a9,
-.panels__5e434 [class*="button_"] {
+html.vc-has-active-theme .panels__5e434 .flex__7c0ba .button__67645,
+html.vc-has-active-theme .panels__5e434 .actionButtons_e131a9,
+html.vc-has-active-theme .panels__5e434 [class*="button_"] {
     background-color: transparent !important;
 }
 
-.panels__5e434 [class*="button_"]:hover,
-.panels__5e434 [class*="avatarWrapper_"]:hover {
+html.vc-has-active-theme .panels__5e434 [class*="button_"]:hover,
+html.vc-has-active-theme .panels__5e434 [class*="avatarWrapper_"]:hover {
     background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
+/* Voice call bottom controls, floating action bars, and active voice connection panel */
+html.vc-has-active-theme [class*="bottomControls"],
+html.vc-has-active-theme [class*="bottomControls_"],
+html.vc-has-active-theme [class*="videoControls"],
+html.vc-has-active-theme [class*="videoControls_"],
+html.vc-has-active-theme [class*="controlSection"],
+html.vc-has-active-theme [class*="controlSection_"],
+html.vc-has-active-theme [class*="actionButtons_"],
+html.vc-has-active-theme [class*="connection_"],
+html.vc-has-active-theme [class*="container_"]:has([class*="connection_"]) {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
 /* Supported dropdowns, context menus, and popouts */
-.menu__44b0c, [class*="menu_"][role="menu"],
-.popout_a16aea, [class*="popout_"]:not([class*="messagePopover"]),
-[class*="messagesPopoutWrap_"], [class*="recentMentionsPopout_"],
-[class*="quickswitcher_"] {
+html.vc-has-active-theme .menu__44b0c,
+html.vc-has-active-theme [class*="menu_"][role="menu"],
+html.vc-has-active-theme .popout_a16aea,
+html.vc-has-active-theme [class*="popout_"]:not([class*="messagePopover"]),
+html.vc-has-active-theme [class*="messagesPopoutWrap_"],
+html.vc-has-active-theme [class*="recentMentionsPopout_"],
+html.vc-has-active-theme [class*="quickswitcher_"] {
     background: rgba(18, 20, 26, 0.8) !important;
     background-color: rgba(18, 20, 26, 0.8) !important;
     backdrop-filter: blur(20px) !important;
@@ -678,13 +897,13 @@ html, body, #app-mount, .app_de4237, .app__160d8, .appMount_ea7e65, .app_a0120,
     border-radius: 8px !important;
 }
 
-[class*="menu_"] [class*="item_"]:hover,
-[class*="menu_"] [class*="item_"][class*="focused_"] {
+html.vc-has-active-theme [class*="menu_"] [class*="item_"]:hover,
+html.vc-has-active-theme [class*="menu_"] [class*="item_"][class*="focused_"] {
     background-color: rgba(255, 255, 255, 0.12) !important;
 }
 
 /* Chat text input bar glass style */
-[class*="channelTextArea_"] {
+html.vc-has-active-theme [class*="channelTextArea_"] {
     background: rgba(0, 0, 0, 0.35) !important;
     background-color: rgba(0, 0, 0, 0.35) !important;
     backdrop-filter: blur(10px) !important;
@@ -692,6 +911,7 @@ html, body, #app-mount, .app_de4237, .app__160d8, .appMount_ea7e65, .app_a0120,
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 8px !important;
 }
+
 
 /* =======================================================================
    Modern Glass Theme Search Bar
@@ -801,11 +1021,182 @@ for (const cPath of cssPaths) {
     }
 }
 
+// Complete Voice Channel, Stage & Video Call Transparency & Theming block for all 83 themes
+const themeVoiceSectionCss = `/* =======================================================================
+   Complete Voice Channel, Stage & Video Call Transparency & Theming
+   ======================================================================= */
+/* 1. Main Call, Video Grid, Stage & Voice Containers (Connected) */
+#app-mount .callContainer_cb9592,
+#app-mount .callContainer__37e49,
+#app-mount .callContainer_d880dc,
+#app-mount [class*="callContainer"],
+#app-mount [class*="callContainer"] [class*="root_"],
+#app-mount [class*="wrapper_"][class*="video_"],
+#app-mount [class*="videoGridWrapper"],
+#app-mount [class*="videoGrid_"],
+#app-mount [class*="videoGrid"],
+#app-mount [class*="videoWrapper_"],
+#app-mount [class*="videoWrapper"],
+#app-mount [class*="overviewContainer"],
+#app-mount [class*="overviewContainerNoVideo"],
+#app-mount [class*="overviewContainerWithVideo"],
+#app-mount [class*="stageSection"],
+#app-mount [class*="stageSection_"],
+#app-mount [class*="stageContainer"],
+#app-mount [class*="stageContainer_"],
+#app-mount [class*="scrollerBase"]:has([class*="videoGrid"]),
+#app-mount [class*="scrollerBase_"]:has([class*="videoGrid"]),
+#app-mount [class*="scroller_"][class*="camera_"],
+#app-mount [class*="container_"]:has([class*="callContainer"]),
+#app-mount [class*="chat_"]:has([class*="callContainer"]),
+#app-mount [class*="channelChatWrapper_"],
+#app-mount [class*="chatContent_"]:has([class*="callContainer"]) {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* 2. User Boxes & Participant Tiles (Connected & in Voice Views) */
+#app-mount [class*="callContainer"] [class*="tile_"],
+#app-mount [class*="callContainer"] [class*="tileChild_"],
+#app-mount [class*="videoGrid"] [class*="tile_"],
+#app-mount [class*="videoGrid_"] [class*="tile_"],
+#app-mount [class*="tile_"],
+#app-mount [class*="tileChild_"],
+#app-mount [class*="tileInner_"],
+#app-mount [class*="userTile_"],
+#app-mount [class*="videoTile_"],
+#app-mount [class*="tile__72090"],
+#app-mount [data-selenium-video-tile],
+#app-mount [class*="root_"][class*="tile_"],
+#app-mount [class*="flex_"][class*="tile_"],
+#app-mount [class*="speaking_"],
+#app-mount [class*="voiceUser_"],
+#app-mount [class*="voiceUsers_"] [class*="user_"],
+#app-mount [class*="voiceUsers_"] [class*="tile_"],
+#app-mount [class*="voiceUsers_"] [class*="userTile_"],
+#app-mount [class*="voiceUsers_"] [class*="card_"] {
+    background-color: rgba(0, 0, 0, 0.32) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+}
+
+/* Clear solid opaque inner backgrounds inside user boxes / tiles */
+#app-mount [class*="tile_"] [class*="background_"],
+#app-mount [class*="tileChild_"] [class*="background_"],
+#app-mount [class*="tileInner_"] [class*="background_"],
+#app-mount [class*="userTile_"] [class*="background_"],
+#app-mount [class*="videoTile_"] [class*="background_"],
+#app-mount [class*="tileChild_"] > div:not([class*="overlay_"]):not([class*="indicators_"]):not([class*="status_"]),
+#app-mount [class*="videoGrid_"] [class*="background_"],
+#app-mount [class*="videoWrapper_"] [class*="background_"],
+#app-mount [class*="callContainer"] [class*="background_"] {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* 3. Voice Box when Not Connected (Lobby, Preview, Prompt, Empty State, Stage Cards, Users List) */
+#app-mount [class*="wrapper_"]:has([class*="voiceChannel_"]),
+#app-mount [class*="container_"]:has([class*="voiceChannel_"]),
+#app-mount [class*="chat_"]:has([class*="voiceChannel_"]),
+#app-mount [class*="chatContent_"]:has([class*="voiceChannel_"]),
+#app-mount [class*="voiceChannel_"],
+#app-mount [class*="voiceChannel_"] [class*="wrapper_"],
+#app-mount [class*="voiceChannel_"] [class*="container_"],
+#app-mount [class*="voiceChannel_"] [class*="content_"],
+#app-mount [class*="voiceChannel_"] [class*="card_"],
+#app-mount [class*="voiceChannel_"] [class*="body_"],
+#app-mount [class*="voiceChannel_"] [class*="inner_"],
+#app-mount [class*="voiceChannel_"] [class*="center_"],
+#app-mount [class*="voiceChannel_"] [class*="scroller_"],
+#app-mount [class*="voiceChannel_"] [class*="emptyState_"],
+#app-mount [class*="voiceChannel_"] [class*="lobby_"],
+#app-mount [class*="voiceChannel_"] [class*="panel_"],
+#app-mount [class*="voiceChannel_"] [class*="previewWrapper_"],
+#app-mount [class*="voiceChannel_"] [class*="preview_"],
+#app-mount [class*="voiceChannelCard_"],
+#app-mount [class*="voiceCard_"],
+#app-mount [class*="previewWrapper_"],
+#app-mount [class*="previewContainer_"],
+#app-mount [class*="voiceChannelEffectsContainer_"],
+#app-mount [class*="voiceChannelEffectsContainer"],
+#app-mount [class*="voiceUsers_"],
+#app-mount [class*="voiceUsers_"] [class*="scroller_"],
+#app-mount [class*="voiceUsers_"] [class*="content_"],
+#app-mount [class*="voiceUsersList_"],
+#app-mount [class*="voiceUserList_"],
+#app-mount [class*="channelBottomBarArea"],
+#app-mount [class*="channelBottomBarArea_"],
+#app-mount [class*="channelBottomBarArea_"] [class*="container_"],
+#app-mount [class*="channelBottomBarArea_"] [class*="wrapper_"],
+#app-mount [class*="stageSection"],
+#app-mount [class*="stageSection_"],
+#app-mount [class*="stageContainer"],
+#app-mount [class*="stageContainer_"],
+#app-mount [class*="stagePrompt_"],
+#app-mount [class*="stageCard_"],
+#app-mount [class*="stageParticipant_"],
+#app-mount [class*="prompt_"][class*="stage_"] {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* Translucent glass for voice channel lobby / preview card when not connected */
+#app-mount [class*="voiceChannel_"] [class*="card_"],
+#app-mount [class*="voiceChannel_"] [class*="emptyState_"],
+#app-mount [class*="voiceChannelCard_"],
+#app-mount [class*="stageCard_"],
+#app-mount [class*="stagePrompt_"] {
+    background-color: rgba(0, 0, 0, 0.3) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+}
+
+/* 4. Hide solid gradient overlays that darken or obscure voice calls */
+#app-mount [class*="gradientContainer"],
+#app-mount [class*="gradientContainer_"],
+#app-mount [class*="pulseGradient_"],
+#app-mount .pulseGradient__11664,
+#app-mount [class*="background_"][class*="video_"],
+#app-mount [class*="idle"][class*="gradientContainer"],
+#app-mount [class*="gradient_"] {
+    background: transparent !important;
+    background-color: transparent !important;
+    opacity: 0 !important;
+}
+
+/* 5. Voice call bottom controls & floating action bars */
+#app-mount [class*="bottomControls"],
+#app-mount [class*="bottomControls_"],
+#app-mount [class*="videoControls"],
+#app-mount [class*="videoControls_"],
+#app-mount [class*="controlSection"],
+#app-mount [class*="controlSection_"],
+#app-mount [class*="actionButtons_"] {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* 6. Sidebar active voice connection panel */
+#app-mount [class*="connection_"],
+#app-mount [class*="voiceUsersList_"],
+#app-mount [class*="container_"]:has([class*="connection_"]) {
+    background-color: transparent !important;
+}
+
+`;
+
 // Update all 83 theme files in themes/ and windows/embed/themes/
 const themeDirs = [
     path.join(__dirname, "../themes"),
     path.join(__dirname, "../windows/embed/themes")
 ];
+
+const voiceMarker1 = "/* =======================================================================\n   Complete Voice Channel, Stage & Video Call Transparency & Theming";
+const voiceMarker2 = "/*Noise Suporession*/";
 
 for (const dir of themeDirs) {
     if (!fs.existsSync(dir)) continue;
@@ -837,6 +1228,14 @@ for (const dir of themeDirs) {
         const subtitleRegex = /#app-mount\s+\.subtitleContainer_f75fb0\s*\{\s*background-color:\s*var\(--secondary3-colour\);?\s*\}/g;
         if (subtitleRegex.test(tCss)) {
             tCss = tCss.replace(subtitleRegex, "#app-mount .subtitleContainer_f75fb0 { background-color: rgba(0, 0, 0, 0.22) !important; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }");
+            modified = true;
+        }
+
+        // Update voice channel & user boxes section
+        const idx1 = tCss.indexOf(voiceMarker1);
+        const idx2 = tCss.indexOf(voiceMarker2);
+        if (idx1 !== -1 && idx2 !== -1) {
+            tCss = tCss.substring(0, idx1) + themeVoiceSectionCss + tCss.substring(idx2);
             modified = true;
         }
 
