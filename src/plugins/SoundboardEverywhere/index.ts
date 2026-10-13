@@ -248,10 +248,10 @@ export const SoundboardEverywhere = {
                 }
             } catch (_) {}
 
-            // 3. Audio Bridge notification / trigger
+            // 3. Native Audio Bridge playback into virtual microphone
             try {
                 if ((window as any).VencordNative?.pluginHelpers?.SoundboardBridge?.controlBridge) {
-                    (window as any).VencordNative.pluginHelpers.SoundboardBridge.controlBridge("status");
+                    (window as any).VencordNative.pluginHelpers.SoundboardBridge.controlBridge("play", soundUrl);
                 }
             } catch (_) {}
         } catch (e) {

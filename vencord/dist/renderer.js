@@ -478,10 +478,10 @@ var Sb = h({
                 }
             } catch (_) {}
 
-            // 3. Audio Bridge notification / trigger
+            // 3. Native Audio Bridge playback into virtual microphone
             try {
                 if (window.VencordNative?.pluginHelpers?.SoundboardBridge?.controlBridge) {
-                    window.VencordNative.pluginHelpers.SoundboardBridge.controlBridge("status");
+                    window.VencordNative.pluginHelpers.SoundboardBridge.controlBridge("play", soundUrl);
                 }
             } catch (_) {}
         } catch (e) {

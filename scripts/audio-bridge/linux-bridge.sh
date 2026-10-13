@@ -122,6 +122,51 @@ status_bridge() {
     fi
 }
 
+play_sound() {
+    local target_sound="${2:-${1:-}}"
+    if [ -z "${target_sound}" ] || [ "${target_sound}" = "play" ]; then
+        shift 2>/dev/null || true
+        target_sound="${1:-}"
+    fi
+
+    if [ -z "${target_sound}" ]; then
+        echo "[ERROR] No sound URL or file provided to play." >&2
+        return 1
+    fi
+
+    local temp_file
+    if [[ "${target_sound}" =~ ^https?:// ]]; then
+        temp_file="/tmp/discord_sb_$(date +%s%N).ogg"
+        if has_cmd curl; then
+            curl -sL "${target_sound}" -o "${temp_file}" 2>/dev/null || true
+        elif has_cmd wget; then
+            wget -qO "${temp_file}" "${target_sound}" 2>/dev/null || true
+        fi
+    else
+        temp_file="${target_sound}"
+    fi
+
+    if [ -f "${temp_file}" ]; then
+        # 1. Inject into virtual null sink (captured by Discord microphone)
+        if has_cmd paplay; then
+            paplay --device="${BRIDGE_SINK}" "${temp_file}" 2>/dev/null &
+            # 2. Also play to default system sink so user hears it locally
+            paplay "${temp_file}" 2>/dev/null &
+        elif has_cmd pw-play; then
+            pw-play --target="${BRIDGE_SINK}" "${temp_file}" 2>/dev/null &
+            pw-play "${temp_file}" 2>/dev/null &
+        elif has_cmd sox; then
+            play -q "${temp_file}" 2>/dev/null &
+        elif has_cmd aplay; then
+            aplay -q "${temp_file}" 2>/dev/null &
+        fi
+
+        if [[ "${target_sound}" =~ ^https?:// ]]; then
+            (sleep 20 && rm -f "${temp_file}" 2>/dev/null) &
+        fi
+    fi
+}
+
 case "${ACTION}" in
     start)
         start_bridge
@@ -136,8 +181,11 @@ case "${ACTION}" in
     status)
         status_bridge
         ;;
+    play)
+        play_sound "$@"
+        ;;
     *)
-        echo "Usage: $0 {start|stop|restart|status}"
+        echo "Usage: $0 {start|stop|restart|status|play <url_or_file>}"
         exit 1
         ;;
 esac
