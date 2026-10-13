@@ -20,7 +20,7 @@
     --secondary1-colour: rgba(45, 30, 15, 0.35);
     --secondary2-colour: rgba(80, 50, 25, 0.55);
     --secondary3-colour: rgba(20, 12, 8, 0.72);
-    --secondary4-colour: rgba(0, 0, 0, 0.45);
+    --secondary4-colour: rgba(0, 0, 0, 0.18);
 }
 
 /* =======================================================================
@@ -109,12 +109,13 @@ body::before {
     width: 100vw;
     height: 100vh;
     background-image: var(--background);
-    background-position: center;
+    background-position: center top;
     background-size: cover;
     background-repeat: no-repeat;
     background-attachment: fixed;
     pointer-events: none;
     z-index: -1;
+    filter: contrast(106%) saturate(108%) brightness(102%);
 }
 
 /* Ensure outer Discord containers are transparent so background displays reliably */
@@ -182,7 +183,7 @@ body,
 
 #app-mount .bg__960e4,
 #app-mount .app__160d8 {
-    background-color: var(--secondary4-colour) !important;
+    background-color: transparent !important;
 }
 
 /*Home and Discover*/
@@ -1035,7 +1036,7 @@ body,
         }
         #app-mount .directoryModal-YJsOMv {
             background-image: var(--background); 
-            background-position: center; 
+            background-position: center top; 
             background-size: cover; 
             padding: 0 0 0 0!important;
             width: 100%;
