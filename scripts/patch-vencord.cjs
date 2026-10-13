@@ -347,6 +347,7 @@ if (action === "install") {
             let settingsObj = {};
             if (fs.existsSync(sPath)) {
                 try { settingsObj = JSON.parse(fs.readFileSync(sPath, "utf8")); } catch (_) {}
+            }
             settingsObj.transparent = true;
             settingsObj.plugins = settingsObj.plugins || {};
             settingsObj.plugins.VoiceMessages = settingsObj.plugins.VoiceMessages || {};
@@ -359,6 +360,10 @@ if (action === "install") {
             // Unlimited file upload size (Catbox direct)
             settingsObj.plugins.CatboxUploadButton = settingsObj.plugins.CatboxUploadButton || {};
             settingsObj.plugins.CatboxUploadButton.enabled = true;
+
+            // DM Archive (Visual Transcript & Data Backup)
+            settingsObj.plugins.DMArchive = settingsObj.plugins.DMArchive || {};
+            settingsObj.plugins.DMArchive.enabled = true;
 
             if (enableFakeNitro) {
                 settingsObj.plugins.FakeNitro = settingsObj.plugins.FakeNitro || {};
@@ -375,7 +380,7 @@ if (action === "install") {
 
             fs.mkdirSync(path.dirname(sPath), { recursive: true });
             fs.writeFileSync(sPath, JSON.stringify(settingsObj, null, 4));
-            logOk(`Auto-enabled VoiceMessages, SplitLargeMessages, and CatboxUploadButton in ${sPath}`);
+            logOk(`Auto-enabled VoiceMessages, SplitLargeMessages, CatboxUploadButton, and DMArchive in ${sPath}`);
             if (enableFakeNitro) {
                 logOk(`Auto-enabled FakeNitro and FakeProfileThemes in ${sPath}`);
             }
