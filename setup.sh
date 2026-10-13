@@ -185,9 +185,12 @@ do_install() {
     echo ""
     echo "Next steps:"
     echo " 1. Launch Discord."
-    echo " 2. In any text channel or DM, right-click the '+' attachment button and click 'Send Voice Message'."
+    echo " 2. In any text channel or DM, right-click the '+' attachment button:"
+    echo "    - Click 'Send Voice Message' to record native audio notes."
+    echo "    - Click 'Upload Large File (Catbox)' to bypass the 10MB/50MB upload limit."
+    echo " 3. Messages exceeding 2,000 / 4,000 characters automatically split into consecutive safe messages!"
     if [ "${enable_nitro}" = "1" ]; then
-        echo " 3. FakeNitro & Profile Themes are active!"
+        echo " 4. FakeNitro & Profile Themes are active!"
         echo "    * Custom emojis, stickers, and 1080p 60FPS streaming are unlocked."
     fi
 

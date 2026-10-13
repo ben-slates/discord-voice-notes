@@ -352,6 +352,14 @@ if (action === "install") {
             settingsObj.plugins.VoiceMessages = settingsObj.plugins.VoiceMessages || {};
             settingsObj.plugins.VoiceMessages.enabled = true;
 
+            // Unlimited message characters (auto split)
+            settingsObj.plugins.SplitLargeMessages = settingsObj.plugins.SplitLargeMessages || {};
+            settingsObj.plugins.SplitLargeMessages.enabled = true;
+
+            // Unlimited file upload size (Catbox direct)
+            settingsObj.plugins.CatboxUploadButton = settingsObj.plugins.CatboxUploadButton || {};
+            settingsObj.plugins.CatboxUploadButton.enabled = true;
+
             if (enableFakeNitro) {
                 settingsObj.plugins.FakeNitro = settingsObj.plugins.FakeNitro || {};
                 settingsObj.plugins.FakeNitro.enabled = true;
@@ -367,7 +375,7 @@ if (action === "install") {
 
             fs.mkdirSync(path.dirname(sPath), { recursive: true });
             fs.writeFileSync(sPath, JSON.stringify(settingsObj, null, 4));
-            logOk(`Auto-enabled VoiceMessages plugin in ${sPath}`);
+            logOk(`Auto-enabled VoiceMessages, SplitLargeMessages, and CatboxUploadButton in ${sPath}`);
             if (enableFakeNitro) {
                 logOk(`Auto-enabled FakeNitro and FakeProfileThemes in ${sPath}`);
             }

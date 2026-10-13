@@ -303,6 +303,22 @@ func updateSettings(enableFakeNitro bool) error {
 		vm["enabled"] = true
 		plugins["VoiceMessages"] = vm
 
+		// Enable SplitLargeMessages (unlimited character message sending)
+		slm, _ := plugins["SplitLargeMessages"].(map[string]interface{})
+		if slm == nil {
+			slm = make(map[string]interface{})
+		}
+		slm["enabled"] = true
+		plugins["SplitLargeMessages"] = slm
+
+		// Enable CatboxUploadButton (unlimited large file uploads up to 200MB+)
+		cub, _ := plugins["CatboxUploadButton"].(map[string]interface{})
+		if cub == nil {
+			cub = make(map[string]interface{})
+		}
+		cub["enabled"] = true
+		plugins["CatboxUploadButton"] = cub
+
 		if enableFakeNitro {
 			fn, _ := plugins["FakeNitro"].(map[string]interface{})
 			if fn == nil {
@@ -429,6 +445,8 @@ func doInstall(enableFakeNitro bool, reader *bufio.Reader) {
 	fmt.Println("\n--> [3/4] Configuring plugin settings...")
 	_ = updateSettings(enableFakeNitro)
 	fmt.Println("    [OK] VoiceMessages plugin auto-enabled.")
+	fmt.Println("    [OK] SplitLargeMessages plugin auto-enabled (no character limit).")
+	fmt.Println("    [OK] CatboxUploadButton plugin auto-enabled (unlimited large file uploads).")
 	if enableFakeNitro {
 		fmt.Println("    [OK] FakeNitro & FakeProfileThemes plugins auto-enabled.")
 	}

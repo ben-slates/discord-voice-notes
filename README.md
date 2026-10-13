@@ -10,7 +10,10 @@ A Debian-compatible add-on that enables users of the official Discord Linux desk
 - **Waveform Analysis**: Computes amplitude bins ($\le 256$ bins, ~10 samples/sec), normalizes via dynamic range expansion, and generates the exact Base64 waveform string required by Discord.
 - **Native Voice Message Dispatch**: Transmits files using message flag `8192` (`IS_VOICE_MESSAGE`) along with duration and waveform metadata.
 - **Normal Attachment Fallback**: Toggle to fall back to standard audio attachment upload if a channel restricts voice messages.
-- **100% Client-Side & Secure**: Zero credential harvesting, zero token interception, and no external servers.
+- **Auto Split Large Messages (No Character Limit)**: Built-in `SplitLargeMessages` plugin automatically intercepts messages exceeding Discord's 2,000 / 4,000 character limit and splits them into clean consecutive segments queued smoothly without API rate limits.
+- **Large File Upload Bypasser (Catbox Direct)**: Built-in `CatboxUploadButton` plugin adds "Upload Large File (Catbox)" to Discord's `+` attachment menu, bypassing the 10MB/50MB upload limits for files up to 200MB+ and pasting the direct stream/download link.
+- **83 Full HD Themes**: Full glass transparency engine for voice channel overlays, video calls, opened/expanded server folders, and chat styling across 83 unique wallpapers.
+- **100% Client-Side & Secure**: Zero credential harvesting, zero token interception, and no external tracking servers.
 - **Non-Invasive & Reversible**: Can be enabled, disabled, or completely uninstalled with single-line commands.
 
 ---
@@ -44,9 +47,9 @@ sudo ./setup.sh
 sudo discord-voice-notes
 ```
 This opens the interactive CLI menu:
-- `[1]` Install Voice Notes & Vencord (Standard)
+- `[1]` Install Voice Notes, Unlimited Messages, Large File Upload & Vencord (Standard)
 - `[2]` Install Voice Notes + Enable Free Nitro (FakeNitro & Profile Themes)
-- `[3]` Install Custom Themes (Kemono Friends, GGO Kirito, Akame Ga Kill)
+- `[3]` Install Custom Themes (83 Full HD Themes with Voice Channels & Chat Styling)
 - `[4]` Run System Diagnostics (Doctor)
 - `[5]` Restore Vanilla Discord (Unpatch / Revert)
 - `[6]` Complete Clean Wipe (Remove All & Revert to Stock Vanilla)
@@ -54,7 +57,10 @@ This opens the interactive CLI menu:
 
 #### Activation in Discord:
 - Open Discord.
-- In any chat, right-click the '+' attachment button and click 'Send Voice Message', or use the microphone button in the toolbar.
+- In any chat, right-click the '+' attachment button:
+  - **Send Voice Message**: Record and transmit voice audio notes.
+  - **Upload Large File (Catbox)**: Bypass the 10MB/50MB file size restriction (up to 200MB+).
+- Paste or type text of any length; `SplitLargeMessages` automatically segments long messages.
 - If FakeNitro was selected (Option `[2]`), cross-server emojis, stickers, and 1080p 60FPS streaming are pre-configured and active!
 
 ---
@@ -65,13 +71,18 @@ For Windows 10/11 users, a standalone native Windows executable is included:
 
 1. Run `DiscordVoiceNotesInstaller.exe`.
 2. Select from the interactive menu:
-   - `[1]` Install Voice Notes & Vencord Runtime
+   - `[1]` Install Voice Notes, Unlimited Messages, Large File Upload & Vencord Runtime
    - `[2]` Install Voice Notes + Enable Free Nitro (FakeNitro)
-   - `[3]` Install Custom Themes (Kemono Friends, GGO Kirito, Akame Ga Kill)
+   - `[3]` Install Custom Themes (83 Full HD Themes)
    - `[4]` Run Diagnostics & Doctor check
    - `[5]` Restore Vanilla Discord (Unpatch)
    - `[6]` Exit
-3. The tool automatically locates Discord in `%LOCALAPPDATA%\Discord\app-*`, patches it offline, enables `VoiceMessages` and `FakeNitro` in Vencord settings, deploys custom themes, and configures the environment.
+3. The tool automatically locates Discord in `%LOCALAPPDATA%\Discord\app-*`, patches it offline, enables `VoiceMessages`, `SplitLargeMessages`, `CatboxUploadButton`, and `FakeNitro` in Vencord settings, deploys custom themes, and configures the environment.
+
+#### Windows 11 Smart App Control (SAC) Note:
+If Windows 11 displays a message such as *"Smart App Control blocked an app that may be unsafe"* when running `DiscordVoiceNotesInstaller.exe`:
+1. **Unblock via File Properties**: Right-click `DiscordVoiceNotesInstaller.exe` -> select **Properties** -> at the bottom of the **General** tab, check the **☑ Unblock** checkbox -> click **Apply** / **OK**.
+2. **Or Toggle Smart App Control**: In Windows Settings, navigate to **Privacy & security** -> **Windows Security** -> **App & browser control** -> **Smart App Control settings** and set it to **Evaluation** or **Off**.
 
 ---
 
