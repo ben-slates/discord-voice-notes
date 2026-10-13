@@ -44,7 +44,7 @@ func main() {
 		fmt.Println("Select an option:")
 		fmt.Println("  [1] Install Discord Voice Notes & Vencord (Standard)")
 		fmt.Println("  [2] Install Voice Notes + Enable Free Nitro (FakeNitro & Profile Themes)")
-		fmt.Println("  [3] Install Custom Themes (12 High-Contrast Themes with Custom Chat Text)")
+		fmt.Println("  [3] Install Custom Themes (43 High-Contrast Themes with Custom Chat Text)")
 		fmt.Println("  [4] Run System Diagnostics (Doctor)")
 		fmt.Println("  [5] Restore Vanilla Discord (Unpatch / Revert)")
 		fmt.Println("  [6] Exit")
@@ -349,52 +349,35 @@ func doInstallThemes(reader *bufio.Reader) {
 	_ = os.MkdirAll(vencordThemesDir, 0755)
 	_ = os.MkdirAll(vencordAssetsDir, 0755)
 
-	themeFiles := []string{
-		"BlackHairedBeauty.theme.css",
-		"AnimeProgrammerGirl.theme.css",
-		"FubukiOnePunchMan.theme.css",
-		"BrunetteCrescentMoon.theme.css",
-		"StylishTrendyWoman.theme.css",
-		"BlondeColorfulSunset.theme.css",
-		"FantasyButterflyLand.theme.css",
-		"QueenLongHairFantasy.theme.css",
-		"NewKemonoFriends.theme.css",
-		"GGOKirito.theme.css",
-		"OldAkameGaKill.theme.css",
-		"NewAkameGaKill.theme.css",
-	}
-
+	entries, err := embeddedAssets.ReadDir("embed/themes")
 	installedCount := 0
-	for _, tf := range themeFiles {
-		data, err := embeddedAssets.ReadFile("embed/themes/" + tf)
-		if err == nil {
-			dest := filepath.Join(vencordThemesDir, tf)
-			if err := os.WriteFile(dest, data, 0644); err == nil {
-				fmt.Println("    [OK] Installed " + tf)
-				installedCount++
+	if err == nil {
+		for _, entry := range entries {
+			if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".theme.css") {
+				tf := entry.Name()
+				data, err := embeddedAssets.ReadFile("embed/themes/" + tf)
+				if err == nil {
+					dest := filepath.Join(vencordThemesDir, tf)
+					if err := os.WriteFile(dest, data, 0644); err == nil {
+						fmt.Println("    [OK] Installed " + tf)
+						installedCount++
+					}
+				}
 			}
 		}
 	}
 
-	assetFiles := []string{
-		"bg_1.jpg",
-		"bg_2.jpg",
-		"bg_3.jpg",
-		"bg_4.webp",
-		"bg_5.webp",
-		"bg_6.webp",
-		"bg_7.jpg",
-		"bg_8.jpg",
-		"background.png",
-		"ggo_kirito_background.png",
-		"akame_old_background.jpg",
-		"akame_new_background.png",
-	}
-	for _, af := range assetFiles {
-		data, err := embeddedAssets.ReadFile("embed/themes/assets/" + af)
-		if err == nil {
-			dest := filepath.Join(vencordAssetsDir, af)
-			_ = os.WriteFile(dest, data, 0644)
+	assetEntries, err := embeddedAssets.ReadDir("embed/themes/assets")
+	if err == nil {
+		for _, entry := range assetEntries {
+			if !entry.IsDir() {
+				af := entry.Name()
+				data, err := embeddedAssets.ReadFile("embed/themes/assets/" + af)
+				if err == nil {
+					dest := filepath.Join(vencordAssetsDir, af)
+					_ = os.WriteFile(dest, data, 0644)
+				}
+			}
 		}
 	}
 
