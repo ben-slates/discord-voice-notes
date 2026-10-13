@@ -341,6 +341,7 @@ func updateSettings(enableFakeNitro bool) error {
 			plugins["FakeProfileThemes"] = fpt
 		}
 
+		settings["transparent"] = true
 		settings["plugins"] = plugins
 		outData, err := json.MarshalIndent(settings, "", "    ")
 		if err == nil {

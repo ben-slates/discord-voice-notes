@@ -347,7 +347,7 @@ if (action === "install") {
             let settingsObj = {};
             if (fs.existsSync(sPath)) {
                 try { settingsObj = JSON.parse(fs.readFileSync(sPath, "utf8")); } catch (_) {}
-            }
+            settingsObj.transparent = true;
             settingsObj.plugins = settingsObj.plugins || {};
             settingsObj.plugins.VoiceMessages = settingsObj.plugins.VoiceMessages || {};
             settingsObj.plugins.VoiceMessages.enabled = true;

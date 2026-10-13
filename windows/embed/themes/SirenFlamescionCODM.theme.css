@@ -429,15 +429,13 @@ body,
             }
 
             /*VC Info*/
-                #app-mount .panels__5e434 {
-                    background-color: var(--secondary3-colour);
-                }
+                #app-mount .panels__5e434 { background-color: rgba(0, 0, 0, 0.28) !important; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid rgba(255, 255, 255, 0.08); }
 
                 #app-mount .sidebar__5e434::after { background-color: transparent; }
 
                 #app-mount .panels__5e434 .flex__7c0ba .button__67645,
                 #app-mount .panels__5e434 .actionButtons_e131a9 {
-                    background-color: var(--secondary3-colour);
+                    background-color: transparent !important;
                     border-radius: 3px;
                 }
 
@@ -588,7 +586,7 @@ body,
             background-color: transparent;
         }
 
-        #app-mount .subtitleContainer_f75fb0 { background-color: var(--secondary3-colour); }
+        #app-mount .subtitleContainer_f75fb0 { background-color: rgba(0, 0, 0, 0.22) !important; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
 
         #app-mount code { background-color: var(--secondary1-colour) }
 
@@ -1423,10 +1421,7 @@ body,
         position: left;
         margin-right: 10px;
     }
-    #app-mount .title_c38106 {
-        background-color: var(--secondary3-colour);
-        border-bottom: 3px solid var(--primary3-colour)
-    }
+    #app-mount .title_c38106 { background-color: rgba(0, 0, 0, 0.22) !important; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important; }
 
 
 /* User Profile Modal Inner & Popout Gradient Override */
