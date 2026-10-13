@@ -527,7 +527,7 @@ while true; do
     echo -e "${BOLD}Select an option:${NC}"
     echo -e "  ${GREEN}[1]${NC} Install Discord Voice Notes & Vencord (Standard)"
     echo -e "  ${MAGENTA}[2]${NC} Install Voice Notes + Enable Free Nitro (FakeNitro & Profile Themes)"
-    echo -e "  ${CYAN}[3]${NC} Install Custom Themes (70 Full HD Themes with Voice Channels & Chat Styling)"
+    echo -e "  ${CYAN}[3]${NC} Install Custom Themes (83 Full HD Themes with Voice Channels & Chat Styling)"
     echo -e "  ${BLUE}[4]${NC} Run System Diagnostics (Doctor)"
     echo -e "  ${YELLOW}[5]${NC} Restore Vanilla Discord (Unpatch / Revert)"
     echo -e "  ${RED}[6]${NC} Complete Clean Wipe (Remove All & Revert to Stock Vanilla)"

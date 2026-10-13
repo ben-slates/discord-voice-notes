@@ -44,7 +44,7 @@ func main() {
 		fmt.Println("Select an option:")
 		fmt.Println("  [1] Install Discord Voice Notes & Vencord (Standard)")
 		fmt.Println("  [2] Install Voice Notes + Enable Free Nitro (FakeNitro & Profile Themes)")
-		fmt.Println("  [3] Install Custom Themes (70 Full HD Themes with Voice Channels & Chat Styling)")
+		fmt.Println("  [3] Install Custom Themes (83 Full HD Themes with Voice Channels & Chat Styling)")
 		fmt.Println("  [4] Run System Diagnostics (Doctor)")
 		fmt.Println("  [5] Restore Vanilla Discord (Unpatch / Revert)")
 		fmt.Println("  [6] Exit")
