@@ -487,13 +487,84 @@ body,
                     background-color: var(--secondary3-colour);
                 }
 
-                #app-mount .callContainer_cb9592,
-                #app-mount .callContainer_cb9592 .root_bfe55a,
-                #app-mount .wrapper_cb9592.video_cb9592 {
-                    background: transparent;
-                }
+                /* =======================================================================
+   Complete Voice Channel, Stage & Video Call Transparency & Theming
+   ======================================================================= */
+/* 1. Main Call, Video Grid, Stage & Voice Containers */
+#app-mount .callContainer_cb9592,
+#app-mount .callContainer__37e49,
+#app-mount .callContainer_d880dc,
+#app-mount [class*="callContainer"],
+#app-mount [class*="callContainer"] [class*="root_"],
+#app-mount [class*="wrapper_"][class*="video_"],
+#app-mount [class*="videoGridWrapper"],
+#app-mount [class*="videoGrid"],
+#app-mount [class*="videoWrapper"],
+#app-mount [class*="overviewContainer"],
+#app-mount [class*="overviewContainerNoVideo"],
+#app-mount [class*="overviewContainerWithVideo"],
+#app-mount [class*="stageSection"],
+#app-mount [class*="stageContainer"],
+#app-mount [class*="scrollerBase"]:has([class*="videoGrid"]),
+#app-mount [class*="scroller_"][class*="camera_"],
+#app-mount [class*="container_"]:has([class*="callContainer"]),
+#app-mount [class*="chat_"]:has([class*="callContainer"]),
+#app-mount [class*="channelChatWrapper_"],
+#app-mount [class*="chatContent_"]:has([class*="callContainer"]) {
+    background: transparent !important;
+    background-color: transparent !important;
+}
 
-                #app-mount .pulseGradient__11664 {opacity: 0%; }
+/* 2. When opening / selecting a voice channel before connecting (preview / prompt to connect) */
+#app-mount [class*="wrapper_"]:has([class*="voiceChannel_"]),
+#app-mount [class*="container_"]:has([class*="voiceChannel_"]),
+#app-mount [class*="chat_"]:has([class*="voiceChannel_"]),
+#app-mount [class*="voiceChannel_"],
+#app-mount [class*="voiceUsers_"],
+#app-mount [class*="voiceChannelEffectsContainer"],
+#app-mount [class*="channelBottomBarArea"] {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* 3. Hide solid gradient overlays that darken or obscure voice calls */
+#app-mount [class*="gradientContainer"],
+#app-mount [class*="pulseGradient_"],
+#app-mount .pulseGradient__11664,
+#app-mount [class*="background_"][class*="video_"],
+#app-mount [class*="idle"][class*="gradientContainer"] {
+    background: transparent !important;
+    background-color: transparent !important;
+    opacity: 0 !important;
+}
+
+/* 4. Glass translucent tiles for participants / cameras / screen-shares */
+#app-mount [class*="callContainer"] [class*="tile_"],
+#app-mount [class*="callContainer"] [class*="tileChild_"],
+#app-mount [class*="videoGrid"] [class*="tile_"],
+#app-mount [class*="tile__72090"] {
+    background-color: rgba(0, 0, 0, 0.35) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border-radius: 8px !important;
+}
+
+/* 5. Voice call bottom controls & floating action bars */
+#app-mount [class*="bottomControls"],
+#app-mount [class*="videoControls"],
+#app-mount [class*="controlSection"],
+#app-mount [class*="actionButtons_"] {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* 6. Sidebar active voice connection panel */
+#app-mount [class*="connection_"],
+#app-mount [class*="voiceUsersList_"],
+#app-mount [class*="container_"]:has([class*="connection_"]) {
+    background-color: transparent !important;
+}
 
             /*Noise Suporession*/
                 #app-mount .noiseCancellationPopout_e131a9 { background-color: var(--secondary3-colour); }
