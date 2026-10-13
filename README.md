@@ -12,7 +12,7 @@ A Debian-compatible add-on that enables users of the official Discord Linux desk
 - **Normal Attachment Fallback**: Toggle to fall back to standard audio attachment upload if a channel restricts voice messages.
 - **Auto Split Large Messages (No Character Limit)**: Built-in `SplitLargeMessages` plugin automatically intercepts messages exceeding Discord's 2,000 / 4,000 character limit and splits them into clean consecutive segments queued smoothly without API rate limits.
 - **Large File Upload Bypasser (Catbox Direct)**: Built-in `CatboxUploadButton` plugin adds "Upload Large File (Catbox)" to Discord's `+` attachment menu, bypassing the 10MB/50MB upload limits for files up to 200MB+ and pasting the direct stream/download link.
-- **83 Full HD Themes**: Full glass transparency engine for voice channel overlays, video calls, opened/expanded server folders, and chat styling across 83 unique wallpapers.
+- **83 Full HD Themes & Real-Time Theme Search Bar**: Full glass transparency engine for voice channel overlays, video calls, opened/expanded server folders, and chat styling across 83 unique wallpapers, plus an interactive real-time search bar in the Themes settings page to instantly filter themes by name, author, or keyword.
 - **100% Client-Side & Secure**: Zero credential harvesting, zero token interception, and no external tracking servers.
 - **Non-Invasive & Reversible**: Can be enabled, disabled, or completely uninstalled with single-line commands.
 

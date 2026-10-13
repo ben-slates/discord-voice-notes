@@ -155,5 +155,16 @@ content = content.replace(',[Mh.name]:Mh,', ',[Mh.name]:Mh,[_splitLargeMessagesP
 // Register in folder map
 content = content.replace('[Mh.name]:{folderName:"voiceMessages",userPlugin:!1},', '[Mh.name]:{folderName:"voiceMessages",userPlugin:!1},[_splitLargeMessagesPlugin.name]:{folderName:"splitLargeMessages",userPlugin:!1},[_catboxUploadPlugin.name]:{folderName:"catboxUploadButton",userPlugin:!1},');
 
+// Inject theme search bar if not present
+if (!content.includes('placeholder:"Search 83+ themes by name, author, or keyword..."')) {
+    const l4Start = content.indexOf("function l4(){");
+    const l4End = content.indexOf("}a();b();function c4(){", l4Start);
+    if (l4Start !== -1 && l4End !== -1) {
+        const origL4 = content.substring(l4Start, l4End + 1);
+        const searchL4 = `function l4(){let e=De(["enabledThemes"]),t=Ue(null),[o,n]=C(null),[q,sq]=C("");Z(()=>{i()},[]);async function i(){let s=await VencordNative.themes.getThemesList();n(s)}let filt=o?.filter(s=>{if(!q)return true;let lk=q.toLowerCase();return(s.name&&s.name.toLowerCase().includes(lk))||(s.fileName&&s.fileName.toLowerCase().includes(lk))||(s.description&&s.description.toLowerCase().includes(lk))||(s.author&&s.author.toLowerCase().includes(lk))});return r(X,{flexDirection:"column",gap:"1em"},r(Ae,null,r(A.FormTitle,{tag:"h5"},"Find Themes:"),r(X,{gap:"0.4em",flexDirection:"column",justifyContent:"flex-start",className:D.bottom8},r("span",null,"\\u2013 ",r($e,{href:"https://betterdiscord.app/themes"},"BetterDiscord theme list")),r("span",null,"\\u2013 ",r($e,{href:"https://github.com/search?q=discord+theme"},"GitHub"))),r(A.FormText,null,\x27If using the BD site, click on "Download" and place the downloaded .theme.css file into your themes folder.\x27)),r(Ae,null,r(A.FormTitle,{tag:"h5"},"External Resources"),r(A.FormText,null,"For security reasons, loading resources (styles, fonts, images, ...) from most sites is blocked."),r(A.FormText,null,"Make sure all your assets are hosted on GitHub, GitLab, Codeberg, Imgur, Discord or Google Fonts.")),r("section",null,r(A.FormTitle,{tag:"h5"},"Local Themes"),r(ou,null,r(p,null,r(vr,{text:"Open Themes Folder",action:()=>VencordNative.themes.openFolder(),Icon:mc}),r(vr,{text:"Load missing Themes",action:i,Icon:ts}),r(vr,{text:"Edit QuickCSS",action:()=>VencordNative.quickCss.openEditor(),Icon:os}),xe(xs.name)&&r(vr,{text:"Edit ClientTheme",action:()=>gr(xs),Icon:fc}))),r(N,{noop:!0},r(ct,{placeholder:"Search 83+ themes by name, author, or keyword...",value:q,onChange:v=>sq(v),className:D.top16,autoFocus:!1})),filt?.length?r("div",{className:H8("grid")},filt.map(s=>r(s4,{key:s.fileName,enabled:e.enabledThemes.includes(s.fileName),onChange:l=>a4(s.fileName,l),onDelete:async()=>{a4(s.fileName,!1),await VencordNative.themes.deleteTheme(s.fileName),i()},theme:s}))):r(z,{className:D.top16},"No themes found matching your search.")))}`;
+        content = content.replace(origL4, searchL4);
+    }
+}
+
 fs.writeFileSync(rendererPath, content, "utf8");
 console.log("[inject-custom-plugins] Injected successfully!");
