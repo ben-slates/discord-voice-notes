@@ -1,6 +1,16 @@
-# Discord Voice Notes for Debian Linux
+# Discord Voice Notes for Linux & Windows
 
-A Debian-compatible add-on that enables users of the official Discord Linux desktop application to record, preview, and send native Discord voice messages with real-time waveform visualization.
+A native add-on that enables users of the official Discord desktop application (Linux & Windows) to record, preview, and send native Discord voice messages with real-time waveform visualization, bypass upload limits, split long messages, and enjoy 83 glass themes.
+
+<p align="center">
+  <a href="docs/media/brag.mp4">
+    <img src="docs/media/brag.jpg" alt="Discord Voice Notes Launch Demo" width="850" style="max-width: 100%; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
+  </a>
+</p>
+
+<p align="center">
+  🎬 <b><a href="docs/media/brag.mp4">Click to Watch Launch Demo Video (brag.mp4)</a></b> &bull; <i>Native voice messages, live waveform visualization, 200MB uploads, zero character limits & 83 glass themes</i>
+</p>
 
 ## Key Features
 

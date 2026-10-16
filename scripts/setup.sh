@@ -343,6 +343,7 @@ do_clean_wipe() {
 
     echo -e "${BLUE}--> [2/4] Removing Vencord directory (${VENCORD_DIR})...${NC}"
     rm -rf "${VENCORD_DIR}"
+    rm -f "${TARGET_HOME}/.config/autostart/discord-voice-notes.desktop" 2>/dev/null || true
     echo -e "${GREEN}    [OK] Removed ~/.config/Vencord.${NC}"
 
     echo -e "${BLUE}--> [3/4] Purging Discord cache and modular core modules...${NC}"

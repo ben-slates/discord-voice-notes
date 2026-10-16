@@ -32,6 +32,13 @@ else
     echo "    [INFO] Userplugin directory not found (${USERPLUGIN_DIR})."
 fi
 
+# Clean up autostart persistence hook if present
+PERSISTENCE_DESKTOP="${TARGET_HOME}/.config/autostart/discord-voice-notes.desktop"
+if [ -f "${PERSISTENCE_DESKTOP}" ]; then
+    rm -f "${PERSISTENCE_DESKTOP}"
+    echo -e "${GREEN}    [OK] Persistence autostart hook removed.${NC}"
+fi
+
 # 2. Check if user wants to restore vanilla Discord
 RESTORE="${1:-}"
 if [ "${RESTORE}" = "--restore" ] || [ "${RESTORE}" = "--all" ]; then

@@ -532,6 +532,8 @@ const themeClassSyncCode = `function _syncActiveThemeClass(themesList) {
         } else if (typeof window !== "undefined" && window.Vencord && window.Vencord.Settings) {
             var s = window.Vencord.Settings;
             hasTheme = Boolean((s.enabledThemes && s.enabledThemes.length > 0) || (s.themeLinks && s.themeLinks.length > 0));
+        } else if (typeof ae !== "undefined" && ae) {
+            hasTheme = Boolean((ae.enabledThemes && ae.enabledThemes.length > 0) || (ae.themeLinks && ae.themeLinks.length > 0));
         } else if (typeof document !== "undefined") {
             var el = document.getElementById("vencord-themes");
             if (el && el.textContent) {
@@ -558,79 +560,42 @@ if (typeof document !== "undefined") {
 
 // Process renderer.js files
 for (const rPath of rendererPaths) {
-    if (!fs.existsSync(rPath)) continue;
-    let content = fs.readFileSync(rPath, "utf8");
-
-    // Inject active theme synchronizer
-    if (!content.includes("function _syncActiveThemeClass")) {
-        content = themeClassSyncCode + "\n" + content;
-        console.log(`[inject] Injected _syncActiveThemeClass in ${rPath}`);
+    const basePath = rPath.replace(/\.js$/, ".base.js");
+    let content = "";
+    if (fs.existsSync(basePath)) {
+        content = fs.readFileSync(basePath, "utf8");
+    } else if (fs.existsSync(rPath)) {
+        content = fs.readFileSync(rPath, "utf8");
     } else {
-        // Update existing definition
-        const fnStart = content.indexOf("function _syncActiveThemeClass(");
-        const fnEnd = content.indexOf("\n\n// Vencord 16ec4ea");
-        if (fnStart !== -1 && fnEnd !== -1) {
-            content = themeClassSyncCode.trim() + content.substring(fnEnd);
-            console.log(`[inject] Refreshed _syncActiveThemeClass in ${rPath}`);
-        }
+        continue;
     }
 
-    // Patch Ea() to update vc-has-active-theme class
+    // 1. Inject active theme synchronizer
+    content = themeClassSyncCode + "\n" + content;
+
+    // 2. Patch Ea() to update vc-has-active-theme class
     const eaMarker = "xw.textContent=i.map(s=>`@import url(\"${s.trim()}\");`).join(`\n`),";
-    if (content.includes(eaMarker) && !content.includes("_syncActiveThemeClass(i)")) {
+    if (content.includes(eaMarker)) {
         content = content.replace(eaMarker, eaMarker + "_syncActiveThemeClass(i),");
-        console.log(`[inject] Hooked _syncActiveThemeClass into Ea() in ${rPath}`);
     }
 
-    // Replace or inject SplitLargeMessages & CatboxUploadButton
-    if (content.includes("var _splitPending = new Map()")) {
-        const start = content.indexOf("var _splitPending = new Map()");
-        const end = content.indexOf("function _triggerCatboxUpload()");
-        if (start !== -1 && end !== -1) {
-            content = content.substring(0, start) + splitPluginCode + "\n\n" + content.substring(end);
-            console.log(`[inject] Replaced legacy split plugin with robust SplitLargeMessages in ${rPath}`);
-        }
-    } else if (!content.includes('name:"SplitLargeMessages"')) {
-        const marker = 'F2={waveform:"AAAAAAAAAAAA",duration:1};';
-        if (content.includes(marker)) {
-            content = content.replace(marker, marker + "\n" + splitPluginCode + "\n\n" + catboxCode + "\n");
-            content = content.replace(',[Mh.name]:Mh,', ',[Mh.name]:Mh,[_splitLargeMessagesPlugin.name]:_splitLargeMessagesPlugin,[_catboxUploadPlugin.name]:_catboxUploadPlugin,');
-            content = content.replace('[Mh.name]:{folderName:"voiceMessages",userPlugin:!1},', '[Mh.name]:{folderName:"voiceMessages",userPlugin:!1},[_splitLargeMessagesPlugin.name]:{folderName:"splitLargeMessages",userPlugin:!1},[_catboxUploadPlugin.name]:{folderName:"catboxUploadButton",userPlugin:!1},');
-            console.log(`[inject] Injected plugins in ${rPath}`);
-        }
+    // 3. Inject custom plugins (SplitLargeMessages, CatboxUploadButton, DMArchive)
+    const marker = 'F2={waveform:"AAAAAAAAAAAA",duration:1};';
+    if (content.includes(marker)) {
+        content = content.replace(marker, marker + "\n" + splitPluginCode + "\n\n" + catboxCode + "\n\n" + dmArchiveCode + "\n");
+        content = content.replace(',[Mh.name]:Mh,', ',[Mh.name]:Mh,[_splitLargeMessagesPlugin.name]:_splitLargeMessagesPlugin,[_catboxUploadPlugin.name]:_catboxUploadPlugin,[_dmArchivePlugin.name]:_dmArchivePlugin,');
+        content = content.replace('[Mh.name]:{folderName:"voiceMessages",userPlugin:!1},', '[Mh.name]:{folderName:"voiceMessages",userPlugin:!1},[_splitLargeMessagesPlugin.name]:{folderName:"splitLargeMessages",userPlugin:!1},[_catboxUploadPlugin.name]:{folderName:"catboxUploadButton",userPlugin:!1},[_dmArchivePlugin.name]:{folderName:"dmArchive",userPlugin:!1},');
     }
 
-    // Inject or update DMArchive plugin
-    if (content.includes('name: "DMArchive"') || content.includes('name:"DMArchive"')) {
-        const dmStart = content.indexOf("function _triggerDmDownload(");
-        const dmEnd = content.indexOf('"user-context": _dmArchiveUserCtxPatch\\n    }\\n});', dmStart);
-        if (dmStart !== -1 && dmEnd !== -1) {
-            const cutEnd = dmEnd + '"user-context": _dmArchiveUserCtxPatch\\n    }\\n});'.length;
-            content = content.substring(0, dmStart) + dmArchiveCode + content.substring(cutEnd);
-            console.log(`[inject] Refreshed DMArchive plugin code in ${rPath}`);
-        }
-    } else {
-        const catboxEnd = content.indexOf('var _catboxUploadPlugin = h({');
-        if (catboxEnd !== -1) {
-            const pluginEnd = content.indexOf('});', catboxEnd);
-            if (pluginEnd !== -1) {
-                content = content.substring(0, pluginEnd + 3) + "\n\n" + dmArchiveCode + content.substring(pluginEnd + 3);
-                content = content.replaceAll('[_catboxUploadPlugin.name]:_catboxUploadPlugin,', '[_catboxUploadPlugin.name]:_catboxUploadPlugin,[_dmArchivePlugin.name]:_dmArchivePlugin,');
-                content = content.replaceAll('[_catboxUploadPlugin.name]:{folderName:"catboxUploadButton",userPlugin:!1},', '[_catboxUploadPlugin.name]:{folderName:"catboxUploadButton",userPlugin:!1},[_dmArchivePlugin.name]:{folderName:"dmArchive",userPlugin:!1},');
-                console.log(`[inject] Injected DMArchive plugin into ${rPath}`);
-            }
-        }
-    }
-
-    // Replace l4() theme search bar
+    // 4. Replace l4() theme search bar
     const l4Start = content.indexOf("function l4(){");
     const l4End = content.indexOf("}a();b();function c4(){", l4Start);
     if (l4Start !== -1 && l4End !== -1) {
         content = content.substring(0, l4Start) + modernSearchL4 + content.substring(l4End + 1);
-        console.log(`[inject] Updated theme search bar component in ${rPath}`);
     }
 
     fs.writeFileSync(rPath, content, "utf8");
+    console.log(`[inject] Successfully injected plugins into ${rPath}`);
 }
 
 // Full Glass UI Transparency and Modern Theme Search Bar CSS
@@ -883,7 +848,6 @@ html.vc-has-active-theme [class*="tile__72090"],
 html.vc-has-active-theme [data-selenium-video-tile],
 html.vc-has-active-theme [class*="root_"][class*="tile_"],
 html.vc-has-active-theme [class*="flex_"][class*="tile_"],
-html.vc-has-active-theme [class*="speaking_"],
 html.vc-has-active-theme [class*="voiceUser_"],
 html.vc-has-active-theme [class*="voiceUsers_"] [class*="user_"],
 html.vc-has-active-theme [class*="voiceUsers_"] [class*="tile_"],

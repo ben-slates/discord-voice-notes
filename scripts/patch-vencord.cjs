@@ -394,6 +394,28 @@ if (action === "install") {
     const discordConf = path.join(targetHome, ".config", "discord");
     chownRecursive(discordConf);
 
+    // Step E: Install desktop autostart persistence hook across PC reboots
+    try {
+        const autostartDir = path.join(targetHome, ".config", "autostart");
+        fs.mkdirSync(autostartDir, { recursive: true });
+        const desktopEntry = path.join(autostartDir, "discord-voice-notes.desktop");
+        const scriptAbs = path.resolve(__filename);
+        const entryContent = [
+            "[Desktop Entry]",
+            "Type=Application",
+            "Name=Discord Voice Notes Auto-Patch",
+            "Comment=Maintains Discord Voice Notes & Vencord active across client updates",
+            `Exec=sh -c 'if [ -f "/usr/share/discord-voice-notes/scripts/patch-vencord.cjs" ]; then node "/usr/share/discord-voice-notes/scripts/patch-vencord.cjs" install >/dev/null 2>&1; elif [ -f "${scriptAbs}" ]; then node "${scriptAbs}" install >/dev/null 2>&1; elif command -v discord-voice-notes >/dev/null 2>&1; then discord-voice-notes --setup-vencord >/dev/null 2>&1; fi'`,
+            "Terminal=false",
+            "Hidden=false",
+            "NoDisplay=true",
+            "X-GNOME-Autostart-enabled=true"
+        ].join("\n") + "\n";
+        fs.writeFileSync(desktopEntry, entryContent, "utf8");
+        chownRecursive(autostartDir);
+        logOk(`Installed desktop autostart persistence hook in ${desktopEntry}`);
+    } catch (_) {}
+
     console.log("");
     if (patchedCount > 0) {
         console.log(`${GREEN}==========================================================${NC}`);
@@ -411,6 +433,15 @@ if (action === "install") {
     console.log("==========================================================");
     console.log("       Discord Voice Notes - Restoration & Unpatch        ");
     console.log("==========================================================");
+
+    // Remove autostart persistence hook
+    try {
+        const desktopEntry = path.join(targetHome, ".config", "autostart", "discord-voice-notes.desktop");
+        if (fs.existsSync(desktopEntry)) {
+            fs.unlinkSync(desktopEntry);
+            logOk(`Removed autostart persistence from ${desktopEntry}`);
+        }
+    } catch (_) {}
 
     const targets = discoverDiscordTargets();
     let restoredCount = 0;

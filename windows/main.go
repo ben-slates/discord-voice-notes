@@ -36,6 +36,55 @@ type DiscordInstall struct {
 }
 
 func main() {
+	args := os.Args[1:]
+	if len(args) > 0 {
+		nonInteractive := false
+		for _, arg := range args {
+			if arg == "-y" || arg == "--yes" || arg == "--silent" || arg == "--non-interactive" {
+				nonInteractive = true
+				break
+			}
+		}
+
+		var reader *bufio.Reader
+		if !nonInteractive {
+			reader = bufio.NewReader(os.Stdin)
+		}
+
+		firstArg := strings.ToLower(args[0])
+		switch firstArg {
+		case "-1", "--install", "-i", "--standard":
+			doInstall(false, reader)
+			return
+		case "-2", "--nitro", "-n", "--fake-nitro":
+			doInstall(true, reader)
+			return
+		case "-3", "--themes", "-t":
+			doInstallThemes(reader)
+			return
+		case "-4", "--doctor", "-d", "--diagnostics":
+			doDoctor(reader)
+			return
+		case "-5", "--restore", "-r", "--revert", "--unpatch":
+			doRestore(reader)
+			return
+		case "-h", "--help", "/?":
+			fmt.Println("Discord Voice Notes & Vencord Setup Tool for Windows")
+			fmt.Println("")
+			fmt.Println("Usage: DiscordVoiceNotesInstaller.exe [OPTION]")
+			fmt.Println("")
+			fmt.Println("Options:")
+			fmt.Println("  --install, -1, -i    Install Voice Notes & Vencord Runtime")
+			fmt.Println("  --nitro, -2, -n      Install Voice Notes + Free Nitro (FakeNitro)")
+			fmt.Println("  --themes, -3, -t     Install 83 Modern Full HD Themes")
+			fmt.Println("  --doctor, -4, -d     Run System Diagnostics")
+			fmt.Println("  --restore, -5, -r    Restore Vanilla Discord (Unpatch)")
+			fmt.Println("  --silent, -y         Run unattended without interactive prompts")
+			fmt.Println("  --help, -h           Show this help message")
+			return
+		}
+	}
+
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
@@ -82,6 +131,9 @@ func clearScreen() {
 }
 
 func pause(reader *bufio.Reader) {
+	if reader == nil {
+		return
+	}
 	fmt.Print("\nPress [Enter] to continue...")
 	_, _ = reader.ReadString('\n')
 }
@@ -104,6 +156,45 @@ func getLocalAppData() string {
 	return localAppData
 }
 
+func parseVersion(dirName string) []int {
+	trimmed := strings.TrimPrefix(dirName, "app-")
+	parts := strings.Split(trimmed, ".")
+	var nums []int
+	for _, p := range parts {
+		if n, err := strconv.Atoi(p); err == nil {
+			nums = append(nums, n)
+		} else {
+			nums = append(nums, 0)
+		}
+	}
+	return nums
+}
+
+func compareVersions(v1, v2 string) int {
+	p1 := parseVersion(v1)
+	p2 := parseVersion(v2)
+	maxLen := len(p1)
+	if len(p2) > maxLen {
+		maxLen = len(p2)
+	}
+	for i := 0; i < maxLen; i++ {
+		n1, n2 := 0, 0
+		if i < len(p1) {
+			n1 = p1[i]
+		}
+		if i < len(p2) {
+			n2 = p2[i]
+		}
+		if n1 > n2 {
+			return 1
+		}
+		if n1 < n2 {
+			return -1
+		}
+	}
+	return 0
+}
+
 func findDiscordInstalls() []DiscordInstall {
 	localAppData := getLocalAppData()
 	branches := []struct {
@@ -116,75 +207,168 @@ func findDiscordInstalls() []DiscordInstall {
 		{"DiscordDevelopment", "Discord Development"},
 	}
 
-	var results []DiscordInstall
+	candidateBases := []string{localAppData}
 
-	for _, b := range branches {
-		baseDir := filepath.Join(localAppData, b.folder)
-		if _, err := os.Stat(baseDir); os.IsNotExist(err) {
-			continue
-		}
-
-		entries, err := os.ReadDir(baseDir)
-		if err != nil {
-			continue
-		}
-
-		var latestApp string
-		for _, e := range entries {
-			if e.IsDir() && strings.HasPrefix(e.Name(), "app-") {
-				if e.Name() > latestApp {
-					latestApp = e.Name()
-				}
+	// Also check if C:\Users contains other user profiles with Discord (e.g. if run as Administrator)
+	usersDir := `C:\Users`
+	if uEntries, err := os.ReadDir(usersDir); err == nil {
+		for _, u := range uEntries {
+			if !u.IsDir() {
+				continue
+			}
+			uName := strings.ToLower(u.Name())
+			if uName == "public" || uName == "default" || uName == "default user" || uName == "all users" {
+				continue
+			}
+			userLocal := filepath.Join(usersDir, u.Name(), "AppData", "Local")
+			if !strings.EqualFold(userLocal, localAppData) {
+				candidateBases = append(candidateBases, userLocal)
 			}
 		}
+	}
 
-		if latestApp == "" {
-			continue
+	var results []DiscordInstall
+	seenPaths := make(map[string]bool)
+
+	for _, baseDir := range candidateBases {
+		for _, b := range branches {
+			branchDir := filepath.Join(baseDir, b.folder)
+			if _, err := os.Stat(branchDir); os.IsNotExist(err) {
+				continue
+			}
+
+			entries, err := os.ReadDir(branchDir)
+			if err != nil {
+				continue
+			}
+
+			var appFolders []string
+			for _, e := range entries {
+				if e.IsDir() && strings.HasPrefix(e.Name(), "app-") {
+					appFolders = append(appFolders, e.Name())
+				}
+			}
+
+			// Sort versions descending (newest first)
+			for i := 0; i < len(appFolders); i++ {
+				for j := i + 1; j < len(appFolders); j++ {
+					if compareVersions(appFolders[i], appFolders[j]) < 0 {
+						appFolders[i], appFolders[j] = appFolders[j], appFolders[i]
+					}
+				}
+			}
+
+			for _, appName := range appFolders {
+				resDir := filepath.Join(branchDir, appName, "resources")
+				if _, err := os.Stat(resDir); os.IsNotExist(err) {
+					continue
+				}
+
+				appAsar := filepath.Join(resDir, "app.asar")
+				origAsar := filepath.Join(resDir, "_app.asar")
+				if seenPaths[appAsar] {
+					continue
+				}
+				seenPaths[appAsar] = true
+
+				isPatched := false
+				if _, err := os.Stat(origAsar); err == nil {
+					isPatched = true
+				}
+
+				results = append(results, DiscordInstall{
+					Name:          fmt.Sprintf("%s (%s)", b.name, appName),
+					Path:          filepath.Join(branchDir, appName),
+					ResourcesPath: resDir,
+					AppAsar:       appAsar,
+					OrigAsar:      origAsar,
+					IsPatched:     isPatched,
+				})
+			}
 		}
-
-		resDir := filepath.Join(baseDir, latestApp, "resources")
-		if _, err := os.Stat(resDir); os.IsNotExist(err) {
-			continue
-		}
-
-		appAsar := filepath.Join(resDir, "app.asar")
-		origAsar := filepath.Join(resDir, "_app.asar")
-		isPatched := false
-
-		if _, err := os.Stat(origAsar); err == nil {
-			isPatched = true
-		}
-
-		results = append(results, DiscordInstall{
-			Name:          fmt.Sprintf("%s (%s)", b.name, latestApp),
-			Path:          filepath.Join(baseDir, latestApp),
-			ResourcesPath: resDir,
-			AppAsar:       appAsar,
-			OrigAsar:      origAsar,
-			IsPatched:     isPatched,
-		})
 	}
 
 	return results
 }
 
-func closeDiscordIfRunning(reader *bufio.Reader) {
+func closeDiscordIfRunning(nonInteractive bool, reader *bufio.Reader) {
+	processNames := []string{"Discord.exe", "DiscordCanary.exe", "DiscordPTB.exe", "DiscordDevelopment.exe"}
 	cmd := exec.Command("tasklist")
 	output, err := cmd.Output()
-	if err == nil && strings.Contains(strings.ToLower(string(output)), "discord.exe") {
-		fmt.Println("\n[!] Discord appears to be currently running.")
-		fmt.Print("    Would you like to automatically close Discord now? (Y/n): ")
-		input, _ := reader.ReadString('\n')
-		ans := strings.ToLower(strings.TrimSpace(input))
-		if ans == "" || ans == "y" || ans == "yes" {
-			fmt.Println("    Closing Discord processes...")
-			_ = exec.Command("taskkill", "/F", "/IM", "Discord.exe", "/T").Run()
-			_ = exec.Command("taskkill", "/F", "/IM", "DiscordCanary.exe", "/T").Run()
-			_ = exec.Command("taskkill", "/F", "/IM", "DiscordPTB.exe", "/T").Run()
-			time.Sleep(1 * time.Second)
-			fmt.Println("    [OK] Discord closed.")
+	if err == nil {
+		outLower := strings.ToLower(string(output))
+		found := false
+		for _, p := range processNames {
+			if strings.Contains(outLower, strings.ToLower(p)) {
+				found = true
+				break
+			}
+		}
+
+		if found {
+			fmt.Println("\n[!] Discord appears to be currently running.")
+			doClose := nonInteractive
+			if !nonInteractive && reader != nil {
+				fmt.Print("    Would you like to automatically close Discord now? (Y/n): ")
+				input, _ := reader.ReadString('\n')
+				ans := strings.ToLower(strings.TrimSpace(input))
+				if ans == "" || ans == "y" || ans == "yes" {
+					doClose = true
+				}
+			}
+
+			if doClose {
+				fmt.Println("    Closing Discord processes...")
+				for _, p := range processNames {
+					_ = exec.Command("taskkill", "/F", "/IM", p, "/T").Run()
+				}
+
+				// Wait for processes to exit and release file handles
+				for i := 0; i < 8; i++ {
+					time.Sleep(500 * time.Millisecond)
+					checkCmd := exec.Command("tasklist")
+					if chkOut, chkErr := checkCmd.Output(); chkErr == nil {
+						chkLower := strings.ToLower(string(chkOut))
+						stillRunning := false
+						for _, p := range processNames {
+							if strings.Contains(chkLower, strings.ToLower(p)) {
+								stillRunning = true
+								break
+							}
+						}
+						if !stillRunning {
+							break
+						}
+					}
+				}
+				fmt.Println("    [OK] Discord closed.")
+			}
 		}
 	}
+}
+
+func safeRename(src, dst string) error {
+	var err error
+	for i := 0; i < 8; i++ {
+		err = os.Rename(src, dst)
+		if err == nil {
+			return nil
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	return err
+}
+
+func safeRemove(path string) error {
+	var err error
+	for i := 0; i < 8; i++ {
+		err = os.Remove(path)
+		if err == nil || os.IsNotExist(err) {
+			return nil
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	return err
 }
 
 func copyEmbedDir(srcDir string, destDir string) error {
@@ -217,7 +401,7 @@ func writeAppAsar(outFile string, patcherPath string) error {
 	patcherPath = filepath.ToSlash(patcherPath)
 
 	pkgJson := "{\n\t\"name\": \"discord\",\n\t\"main\": \"index.js\"\n}"
-	indexJs := fmt.Sprintf("require(%q)", patcherPath)
+	indexJs := fmt.Sprintf("require(%q);\n", patcherPath)
 	indexBytes := []byte(indexJs)
 	pkgBytes := []byte(pkgJson)
 
@@ -272,6 +456,62 @@ func writeAppAsar(outFile string, patcherPath string) error {
 	}
 
 	return nil
+}
+
+func getStartupFolder() string {
+	appData := getAppData()
+	return filepath.Join(appData, "Microsoft", "Windows", "Start Menu", "Programs", "Startup")
+}
+
+func installStartupPersistence() {
+	startupDir := getStartupFolder()
+	_ = os.MkdirAll(startupDir, 0755)
+	vbsPath := filepath.Join(startupDir, "DiscordVoiceNotesAutoPatch.vbs")
+
+	vbsContent := `' Discord Voice Notes - Auto-Patch Persistence across Windows Reboots
+On Error Resume Next
+Set fso = CreateObject("Scripting.FileSystemObject")
+Set wsh = CreateObject("WScript.Shell")
+localApp = wsh.ExpandEnvironmentStrings("%LOCALAPPDATA%")
+appData = wsh.ExpandEnvironmentStrings("%APPDATA%")
+
+loaderPath = appData & "\Vencord\loader\app.asar"
+If Not fso.FileExists(loaderPath) Then WScript.Quit
+
+branches = Array("Discord", "DiscordCanary", "DiscordPTB", "DiscordDevelopment")
+For Each b In branches
+    baseDir = localApp & "\" & b
+    If fso.FolderExists(baseDir) Then
+        Set folder = fso.GetFolder(baseDir)
+        For Each subF In folder.SubFolders
+            If LCase(Left(subF.Name, 4)) = "app-" Then
+                resDir = subF.Path & "\resources"
+                If fso.FolderExists(resDir) Then
+                    appAsar = resDir & "\app.asar"
+                    origAsar = resDir & "\_app.asar"
+                    If fso.FileExists(appAsar) And Not fso.FileExists(origAsar) Then
+                        fso.MoveFile appAsar, origAsar
+                        fso.CopyFile loaderPath, appAsar, True
+                    End If
+                End If
+            End If
+        Next
+    End If
+Next
+`
+	if err := os.WriteFile(vbsPath, []byte(vbsContent), 0644); err == nil {
+		fmt.Println("    [OK] Windows startup auto-patch persistence installed.")
+		fmt.Printf("         %s\n", vbsPath)
+	}
+}
+
+func removeStartupPersistence() {
+	startupDir := getStartupFolder()
+	vbsPath := filepath.Join(startupDir, "DiscordVoiceNotesAutoPatch.vbs")
+	if _, err := os.Stat(vbsPath); err == nil {
+		_ = os.Remove(vbsPath)
+		fmt.Println("    [OK] Removed Windows startup auto-patch persistence.")
+	}
 }
 
 func updateSettings(enableFakeNitro bool) error {
@@ -428,7 +668,7 @@ func doInstall(enableFakeNitro bool, reader *bufio.Reader) {
 	}
 	fmt.Println("=======================================================")
 
-	closeDiscordIfRunning(reader)
+	closeDiscordIfRunning(reader == nil, reader)
 
 	appData := getAppData()
 	vencordDir := filepath.Join(appData, "Vencord")
@@ -470,15 +710,21 @@ func doInstall(enableFakeNitro bool, reader *bufio.Reader) {
 		return
 	}
 
+	// Prepare master loader for persistence across PC restarts and Discord updates
+	loaderDir := filepath.Join(vencordDir, "loader")
+	_ = os.MkdirAll(loaderDir, 0755)
+	masterLoader := filepath.Join(loaderDir, "app.asar")
+	_ = writeAppAsar(masterLoader, patcherJs)
+
 	patchedCount := 0
 	for _, inst := range installs {
 		fmt.Printf("    Found: %s\n", inst.Name)
 
 		// If already patched, refresh it
 		if inst.IsPatched {
-			fmt.Println("    Refreshing existing patch...")
-			_ = os.Remove(inst.AppAsar)
-			_ = os.Rename(inst.OrigAsar, inst.AppAsar)
+			fmt.Printf("    Refreshing existing patch on %s...\n", inst.Name)
+			_ = safeRemove(inst.AppAsar)
+			_ = safeRename(inst.OrigAsar, inst.AppAsar)
 		}
 
 		if _, err := os.Stat(inst.AppAsar); os.IsNotExist(err) {
@@ -487,7 +733,7 @@ func doInstall(enableFakeNitro bool, reader *bufio.Reader) {
 		}
 
 		// Rename original app.asar -> _app.asar
-		if err := os.Rename(inst.AppAsar, inst.OrigAsar); err != nil {
+		if err := safeRename(inst.AppAsar, inst.OrigAsar); err != nil {
 			fmt.Printf("    [ERROR] Failed to backup app.asar: %v\n", err)
 			continue
 		}
@@ -495,7 +741,7 @@ func doInstall(enableFakeNitro bool, reader *bufio.Reader) {
 		// Write new loader app.asar
 		if err := writeAppAsar(inst.AppAsar, patcherJs); err != nil {
 			fmt.Printf("    [ERROR] Failed to write loader app.asar: %v\n", err)
-			_ = os.Rename(inst.OrigAsar, inst.AppAsar) // rollback
+			_ = safeRename(inst.OrigAsar, inst.AppAsar) // rollback
 			continue
 		}
 
@@ -504,6 +750,8 @@ func doInstall(enableFakeNitro bool, reader *bufio.Reader) {
 	}
 
 	if patchedCount > 0 {
+		installStartupPersistence()
+
 		fmt.Println("\n=======================================================")
 		fmt.Printf(" Installation Complete! Patched %d Discord installation(s).\n", patchedCount)
 		fmt.Println("=======================================================")
@@ -522,11 +770,13 @@ func doInstall(enableFakeNitro bool, reader *bufio.Reader) {
 }
 
 func doRestore(reader *bufio.Reader) {
-fmt.Println("\n=======================================================")
+	fmt.Println("\n=======================================================")
 	fmt.Println(" Restoring Vanilla Discord (Reverting All Patches)     ")
 	fmt.Println("=======================================================")
 
-	closeDiscordIfRunning(reader)
+	closeDiscordIfRunning(reader == nil, reader)
+
+	removeStartupPersistence()
 
 	installs := findDiscordInstalls()
 	restoredCount := 0
@@ -534,8 +784,8 @@ fmt.Println("\n=======================================================")
 	for _, inst := range installs {
 		if _, err := os.Stat(inst.OrigAsar); err == nil {
 			fmt.Printf("--> Restoring %s...\n", inst.Name)
-			_ = os.Remove(inst.AppAsar)
-			if err := os.Rename(inst.OrigAsar, inst.AppAsar); err == nil {
+			_ = safeRemove(inst.AppAsar)
+			if err := safeRename(inst.OrigAsar, inst.AppAsar); err == nil {
 				fmt.Printf("    [OK] Restored original app.asar for %s\n", inst.Name)
 				restoredCount++
 			} else {
@@ -554,7 +804,7 @@ fmt.Println("\n=======================================================")
 }
 
 func doDoctor(reader *bufio.Reader) {
-fmt.Println("\n=======================================================")
+	fmt.Println("\n=======================================================")
 	fmt.Println(" System Diagnostic & Doctor Check (Windows)           ")
 	fmt.Println("=======================================================")
 
@@ -605,6 +855,14 @@ fmt.Println("\n=======================================================")
 		fmt.Printf("   [OK] FakeNitro plugin enabled:     %v\n", fnEnabled)
 	} else {
 		fmt.Println("   [INFO] Settings file not yet created.")
+	}
+
+	fmt.Println("\n4. Persistence Check:")
+	startupVbs := filepath.Join(getStartupFolder(), "DiscordVoiceNotesAutoPatch.vbs")
+	if _, err := os.Stat(startupVbs); err == nil {
+		fmt.Println("   [OK] Windows startup auto-patch persistence is ACTIVE.")
+	} else {
+		fmt.Println("   [INFO] Windows startup auto-patch persistence not configured (will be enabled upon install).")
 	}
 
 	pause(reader)

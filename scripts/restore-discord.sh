@@ -111,6 +111,14 @@ if [ -d "${USERPLUGIN_DIR}" ]; then
     fi
 fi
 
+# 4. Clean up autostart persistence hook if present
+PERSISTENCE_DESKTOP="${TARGET_HOME}/.config/autostart/discord-voice-notes.desktop"
+if [ -f "${PERSISTENCE_DESKTOP}" ]; then
+    rm -f "${PERSISTENCE_DESKTOP}"
+    echo -e "${GREEN}    [OK] Persistence autostart hook removed (${PERSISTENCE_DESKTOP})${NC}"
+    RESTORED_SOMETHING=1
+fi
+
 echo ""
 if [ ${RESTORED_SOMETHING} -gt 0 ]; then
     echo -e "${GREEN}Restoration complete: Discord has been returned to its vanilla state.${NC}"

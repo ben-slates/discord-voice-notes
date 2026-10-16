@@ -89,11 +89,15 @@ test("VoiceRecorderController - State Machine & Lifecycle Transitions", async (t
     (global as any).MediaStream = MockMediaStream;
     (global as any).MediaRecorder = MockMediaRecorder;
     (global as any).window = {};
-    (global as any).navigator = {
-        mediaDevices: {
-            getUserMedia: async () => mockStream
-        }
-    };
+    Object.defineProperty(globalThis, "navigator", {
+        value: {
+            mediaDevices: {
+                getUserMedia: async () => mockStream
+            }
+        },
+        configurable: true,
+        writable: true
+    });
 
     await t.test("transitions through idle -> requesting -> recording -> paused -> stopped", async () => {
         const stateHistory: string[] = [];
@@ -144,7 +148,11 @@ test("VoiceRecorderController - State Machine & Lifecycle Transitions", async (t
         assert.strictEqual(mockTrack.stopped, true);
     });
 
-    (global as any).navigator = originalNavigator;
+    Object.defineProperty(globalThis, "navigator", {
+        value: originalNavigator,
+        configurable: true,
+        writable: true
+    });
     (global as any).MediaRecorder = originalMediaRecorder;
     (global as any).window = originalWindow;
 });
@@ -153,15 +161,19 @@ test("VoiceRecorderController - Error & Permission Handling", async (t) => {
     const originalNavigator = (global as any).navigator;
 
     await t.test("handles NotAllowedError (permission denied) gracefully with user-friendly message", async () => {
-        (global as any).navigator = {
-            mediaDevices: {
-                getUserMedia: async () => {
-                    const err = new Error("Permission denied");
-                    err.name = "NotAllowedError";
-                    throw err;
+        Object.defineProperty(globalThis, "navigator", {
+            value: {
+                mediaDevices: {
+                    getUserMedia: async () => {
+                        const err = new Error("Permission denied");
+                        err.name = "NotAllowedError";
+                        throw err;
+                    }
                 }
-            }
-        };
+            },
+            configurable: true,
+            writable: true
+        });
 
         let capturedError: string | undefined;
         const controller = new VoiceRecorderController({
@@ -179,15 +191,19 @@ test("VoiceRecorderController - Error & Permission Handling", async (t) => {
     });
 
     await t.test("handles NotFoundError (no audio device) gracefully", async () => {
-        (global as any).navigator = {
-            mediaDevices: {
-                getUserMedia: async () => {
-                    const err = new Error("Devices not found");
-                    err.name = "NotFoundError";
-                    throw err;
+        Object.defineProperty(globalThis, "navigator", {
+            value: {
+                mediaDevices: {
+                    getUserMedia: async () => {
+                        const err = new Error("Devices not found");
+                        err.name = "NotFoundError";
+                        throw err;
+                    }
                 }
-            }
-        };
+            },
+            configurable: true,
+            writable: true
+        });
 
         const controller = new VoiceRecorderController();
         await assert.rejects(async () => {
@@ -198,7 +214,11 @@ test("VoiceRecorderController - Error & Permission Handling", async (t) => {
     });
 
     await t.test("handles missing navigator.mediaDevices in non-browser environments", async () => {
-        delete (global as any).navigator;
+        Object.defineProperty(globalThis, "navigator", {
+            value: undefined,
+            configurable: true,
+            writable: true
+        });
         const controller = new VoiceRecorderController();
 
         await assert.rejects(async () => {
@@ -208,5 +228,9 @@ test("VoiceRecorderController - Error & Permission Handling", async (t) => {
         assert.strictEqual(controller.getState(), "error");
     });
 
-    (global as any).navigator = originalNavigator;
+    Object.defineProperty(globalThis, "navigator", {
+        value: originalNavigator,
+        configurable: true,
+        writable: true
+    });
 });
